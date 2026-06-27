@@ -4,145 +4,240 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <title>震源 3D</title>
-<meta name="description" content="日本周辺の地震を3Dで探検。震源を実際の深さで立体表示し、傾けて回して見る。深さで色分け。気象庁(P2P)/USGS。">
+<meta name="description" content="日本周辺の地震を衛星写真の3Dで探検。震源を震度で色分けし深さの柱で表示。選んだ地震は震源から熱が広がるように震度を再生。気象庁(P2P)/USGS。">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/deck.gl@8.9.35/dist.min.js"></script>
 <style>
+/* ===== 変数 ===== */
 :root{
-  --ink:#05080d; --text:#eaf1f8; --muted:#8794a4; --dim:#54616f; --line:#1b2733;
+  --ink:#05080d; --text:#eef3f8; --muted:#8794a4; --dim:#54616f; --line:#1b2733;
   --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
   --sans:system-ui,-apple-system,"Hiragino Kaku Gothic ProN",sans-serif;
+  --s1:#9aa6b2; --s2:#2f9e6a; --s3:#2f7fd0; --s4:#e6c528; --s5w:#f0972e;
+  --s5s:#ed7424; --s6w:#e0432f; --s6s:#c01f1a; --s7:#9b1fb0;
   --st:env(safe-area-inset-top,0px); --sb:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(--text);font-family:var(--sans);-webkit-text-size-adjust:100%;}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
 #map{position:fixed;inset:0;}
-.maplibregl-ctrl-attrib{font-size:9px!important;background:rgba(5,8,13,.5)!important;}
+.maplibregl-ctrl-attrib{font-size:9px!important;background:rgba(5,8,13,.55)!important;}
 .maplibregl-ctrl-attrib a{color:#5a83b0!important;}
 .maplibregl-ctrl-bottom-right{margin-bottom:calc(2px + var(--sb));}
 
-/* 上：最小ワードマーク */
-.top{position:fixed;left:14px;top:calc(12px + var(--st));z-index:10;display:flex;align-items:baseline;gap:9px;pointer-events:none;}
-.brand{font-size:17px;font-weight:600;letter-spacing:.02em;}
+/* ===== 上：ブランド＋タブ＋ツール ===== */
+.top{position:fixed;left:12px;right:12px;top:calc(10px + var(--st));z-index:10;display:flex;align-items:center;gap:10px;}
+.brand{font-size:16px;font-weight:700;white-space:nowrap;}
 .brand b{color:#ff5b4a;}
-.tsub{font-family:var(--mono);font-size:11px;color:var(--muted);}
-.tools{position:fixed;right:12px;top:calc(10px + var(--st));z-index:10;display:flex;gap:8px;}
-.tbtn{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:rgba(10,16,23,.66);color:var(--text);
-  font-size:16px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+.seg{display:flex;background:rgba(8,13,19,.7);border:1px solid var(--line);border-radius:11px;padding:3px;backdrop-filter:blur(10px);}
+.seg button{height:34px;padding:0 13px;border-radius:8px;border:0;background:transparent;color:var(--muted);font-size:13px;font-weight:700;font-family:var(--sans);}
+.seg button.on{background:#fff;color:#05080d;}
+.spacer{flex:1;}
+.tbtn{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:rgba(8,13,19,.7);color:var(--text);
+  font-size:15px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px);}
+.tbtn:disabled{opacity:.35;}
+.tools{display:flex;gap:7px;}
 
-/* 深さ凡例 */
-.legend{position:fixed;left:14px;bottom:calc(14px + var(--sb));z-index:10;font-family:var(--mono);font-size:10px;color:var(--muted);pointer-events:none;}
-.legend .t{color:var(--dim);margin-bottom:6px;letter-spacing:.04em;}
-.lr{display:flex;align-items:center;gap:7px;margin:3px 0;}
-.lr i{width:11px;height:11px;border-radius:3px;}
+/* ===== 凡例 ===== */
+.legend{position:fixed;left:12px;bottom:calc(14px + var(--sb));z-index:9;font-family:var(--mono);font-size:10px;color:var(--muted);
+  background:rgba(8,13,19,.62);border:1px solid var(--line);border-radius:10px;padding:8px 10px;backdrop-filter:blur(8px);}
+.legend.hidden{display:none;}
+.lr{display:flex;align-items:center;gap:6px;margin:2px 0;}
+.lr i{width:10px;height:10px;border-radius:3px;}
 
-/* 選択カード */
-.info{position:fixed;left:12px;right:12px;bottom:calc(14px + var(--sb));z-index:12;background:rgba(9,14,20,.92);
-  border:1px solid var(--line);border-radius:15px;padding:13px 14px;backdrop-filter:blur(12px);
-  transform:translateY(140%);transition:transform .3s cubic-bezier(.2,.85,.25,1);box-shadow:0 10px 40px rgba(0,0,0,.5);}
-.info.on{transform:translateY(0);}
-.info .x{position:absolute;right:8px;top:8px;width:30px;height:30px;border:0;background:transparent;color:var(--muted);font-size:17px;}
-.info .h{display:flex;align-items:center;gap:10px;}
-.info .dh{flex:0 0 auto;width:8px;height:34px;border-radius:3px;}
-.info .pl{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-right:26px;}
-.info .g{display:flex;gap:18px;margin-top:10px;}
-.info .g div{display:flex;flex-direction:column;gap:2px;}
-.info .g .k{font-size:10px;color:var(--dim);font-family:var(--mono);letter-spacing:.05em;}
-.info .g .vv{font-family:var(--mono);font-size:16px;font-weight:600;}
-.info .sb{font-size:10px;color:var(--dim);font-family:var(--mono);}
+/* ===== 選択カード＋トランスポート ===== */
+.card{position:fixed;left:12px;right:12px;bottom:calc(14px + var(--sb));z-index:12;background:rgba(8,13,19,.93);
+  border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(12px);box-shadow:0 10px 36px rgba(0,0,0,.5);
+  transform:translateY(150%);transition:transform .3s cubic-bezier(.2,.85,.25,1);overflow:hidden;}
+.card.on{transform:translateY(0);}
+.crow{display:flex;align-items:center;gap:10px;padding:12px 12px 9px;}
+.dh{flex:0 0 auto;width:7px;height:32px;border-radius:3px;}
+.pl{flex:1;min-width:0;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.x{flex:0 0 auto;width:30px;height:30px;border:0;background:transparent;color:var(--muted);font-size:17px;}
+.gg{display:flex;gap:16px;padding:0 12px 9px;}
+.gg div{display:flex;flex-direction:column;gap:1px;}
+.gg .k{font-size:9px;color:var(--dim);font-family:var(--mono);letter-spacing:.04em;}
+.gg .v{font-family:var(--mono);font-size:14px;font-weight:600;}
 
-/* 一覧シート */
+.transport{border-top:1px solid var(--line);padding:9px 12px calc(10px + var(--sb));}
+.trow{display:flex;align-items:center;gap:11px;}
+.play{flex:0 0 auto;width:44px;height:44px;border-radius:10px;border:0;background:#ff5b4a;color:#05080d;font-size:16px;
+  display:flex;align-items:center;justify-content:center;}
+.ro{flex:1;display:flex;gap:14px;}
+.ro div{display:flex;flex-direction:column;gap:1px;}
+.ro .k{font-size:9px;color:var(--dim);font-family:var(--mono);}
+.ro .v{font-family:var(--mono);font-size:13px;font-weight:600;}
+.ro .t .v{color:#ff5b4a;font-size:15px;}
+.spd{flex:0 0 auto;height:34px;min-width:42px;border-radius:8px;border:1px solid var(--line);background:#0d141c;color:var(--text);font-family:var(--mono);font-weight:600;font-size:12px;}
+.tl{margin-top:8px;width:100%;-webkit-appearance:none;height:4px;border-radius:2px;background:#1c2935;}
+.tl::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:#ff5b4a;border:0;}
+
+/* ===== 一覧シート ===== */
 .bg{position:fixed;inset:0;background:rgba(2,4,7,.55);z-index:20;opacity:0;pointer-events:none;transition:opacity .25s;}
 .bg.on{opacity:1;pointer-events:auto;}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:30;height:78%;background:var(--ink);border-top:1px solid var(--line);
   border-radius:18px 18px 0 0;transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.85,.25,1);display:flex;flex-direction:column;}
 .sheet.on{transform:translateY(0);}
 .hd{width:38px;height:4px;border-radius:2px;background:#283643;margin:10px auto 4px;}
-.st{text-align:center;font-family:var(--mono);font-size:10px;color:var(--dim);padding-bottom:8px;letter-spacing:.05em;}
-.st b{color:var(--muted);}
+.stt{text-align:center;font-family:var(--mono);font-size:10px;color:var(--dim);padding-bottom:8px;}
+.stt b{color:var(--muted);}
 .list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 12px calc(18px + var(--sb));}
 .row{display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid #101a24;}
 .row:active{background:#0a121a;}
 .rb{flex:0 0 auto;width:42px;height:42px;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;color:#05080d;}
+.rb.dim{background:#26303c;color:#8794a4;}
 .rb .k{font-family:var(--mono);font-size:8px;font-weight:600;}.rb .v{font-family:var(--mono);font-weight:600;font-size:17px;}
 .rm{flex:1;min-width:0;}
 .rp{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .rs{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px;}
 .rt{flex:0 0 auto;font-family:var(--mono);font-size:11px;color:var(--dim);}
 
-.toast{position:fixed;left:50%;bottom:calc(20px + var(--sb));transform:translateX(-50%);z-index:40;background:#0b141d;
+.toast{position:fixed;left:50%;bottom:calc(20px + var(--sb));transform:translateX(-50%);z-index:40;background:#0c151e;
   border:1px solid var(--line);color:var(--text);padding:9px 15px;border-radius:8px;font-family:var(--mono);font-size:12px;
   opacity:0;pointer-events:none;transition:opacity .25s;max-width:88%;text-align:center;}
 .toast.on{opacity:1;}
 .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--dim);border-top-color:#ff5b4a;border-radius:50%;vertical-align:-2px;animation:sp .8s linear infinite;}
 @keyframes sp{to{transform:rotate(360deg);}}
-.hint{position:fixed;left:50%;bottom:calc(64px + var(--sb));transform:translateX(-50%);z-index:8;font-family:var(--mono);
-  font-size:11px;color:var(--dim);pointer-events:none;transition:opacity .5s;text-align:center;}
+.hint{position:fixed;left:50%;bottom:calc(70px + var(--sb));transform:translateX(-50%);z-index:8;font-family:var(--mono);
+  font-size:11px;color:var(--dim);pointer-events:none;transition:opacity .6s;text-align:center;background:rgba(5,8,13,.5);padding:5px 10px;border-radius:6px;}
 </style>
 </head>
 <body>
 <div id="map"></div>
 
-<div class="top"><div class="brand">震源<b>3D</b></div><div class="tsub" id="tsub">–</div></div>
-<div class="tools">
-  <button class="tbtn" id="btnRefresh" title="更新">⟳</button>
-  <button class="tbtn" id="btnList" title="一覧">☰</button>
+<div class="top">
+  <div class="brand">震源<b>3D</b></div>
+  <div class="seg">
+    <button class="on" id="tabRecent">最近</button>
+    <button id="tabMajor">巨大地震</button>
+  </div>
+  <div class="spacer"></div>
+  <div class="tools">
+    <button class="tbtn" id="btnRefresh" title="更新">⟳</button>
+    <button class="tbtn" id="btnList" title="一覧">☰</button>
+  </div>
 </div>
 
-<div class="legend">
-  <div class="t">深さ DEPTH</div>
-  <div class="lr"><i style="background:#ff453a"></i>〜30km</div>
-  <div class="lr"><i style="background:#ff9f0a"></i>〜70km</div>
-  <div class="lr"><i style="background:#ffd60a"></i>〜150km</div>
-  <div class="lr"><i style="background:#30d158"></i>〜300km</div>
-  <div class="lr"><i style="background:#0a84ff"></i>〜500km</div>
-  <div class="lr"><i style="background:#5e5ce6"></i>500km〜</div>
+<div class="legend" id="legend">
+  <div class="lr"><i style="background:var(--s7)"></i>震度7</div>
+  <div class="lr"><i style="background:var(--s6s)"></i>6強</div>
+  <div class="lr"><i style="background:var(--s6w)"></i>6弱</div>
+  <div class="lr"><i style="background:var(--s5s)"></i>5強</div>
+  <div class="lr"><i style="background:var(--s5w)"></i>5弱</div>
+  <div class="lr"><i style="background:var(--s4)"></i>4</div>
+  <div class="lr"><i style="background:var(--s3)"></i>3</div>
+  <div class="lr"><i style="background:var(--s2)"></i>2</div>
+  <div class="lr"><i style="background:var(--s1)"></i>1</div>
 </div>
 
 <div class="hint" id="hint">2本指で傾ける・回す / 震源をタップ</div>
 
-<div class="info" id="info">
-  <button class="x" id="infoX">×</button>
-  <div class="h"><div class="dh" id="iDh"></div><div class="pl" id="iPlace">–</div></div>
-  <div class="g">
-    <div><span class="k">震度</span><span class="vv" id="iInt">–</span></div>
-    <div><span class="k">M</span><span class="vv" id="iMag">–</span></div>
-    <div><span class="k">深さ</span><span class="vv" id="iDep">–</span></div>
+<div class="card" id="card">
+  <div class="crow">
+    <div class="dh" id="cDh"></div>
+    <div class="pl" id="cPlace">–</div>
+    <button class="x" id="cX">×</button>
   </div>
-  <div class="sb" id="iTime">–</div>
+  <div class="gg">
+    <div><span class="k">震度</span><span class="v" id="cInt">–</span></div>
+    <div><span class="k">M</span><span class="v" id="cMag">–</span></div>
+    <div><span class="k">深さ</span><span class="v" id="cDep">–</span></div>
+    <div><span class="k">発生</span><span class="v" id="cTime">–</span></div>
+  </div>
+  <div class="transport">
+    <div class="trow">
+      <button class="play" id="playBtn">▶</button>
+      <div class="ro">
+        <div class="t"><span class="k">経過</span><span class="v mono" id="rT">0.0s</span></div>
+        <div><span class="k">S波</span><span class="v mono" id="rR">0km</span></div>
+        <div><span class="k">P波</span><span class="v mono" id="rP">0km</span></div>
+      </div>
+      <button class="spd" id="spdBtn">×2</button>
+    </div>
+    <input class="tl" id="tl" type="range" min="0" max="1000" value="0">
+  </div>
 </div>
 
 <div class="bg" id="bg"></div>
 <div class="sheet" id="sheet">
   <div class="hd"></div>
-  <div class="st">最近の地震 · <b id="cnt">–</b>件 · 更新 <b id="updated">–</b> · <b id="src">–</b></div>
+  <div class="stt"><span id="vlab"></span> · <b id="cnt">–</b>件 · 更新 <b id="updated">–</b> · <b id="src">–</b></div>
   <div class="list" id="listEl"></div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_VERSION="v7.0";
+/* ===== 設定 ===== */
+const APP_VERSION="v8.0";
 const LS_KEY="jeq_cache_v2";
 const MAX_RECORDS=120, FETCH_TIMEOUT=8000, REFRESH_AFTER_MS=5*60*1000;
 const BBOX={latMin:24,latMax:46,lngMin:122,lngMax:154};
+const VP=6.5, VS=3.7;
 const SCOL={"1":"#9aa6b2","2":"#2f9e6a","3":"#2f7fd0","4":"#e6c528","5弱":"#f0972e","5強":"#ed7424","6弱":"#e0432f","6強":"#c01f1a","7":"#9b1fb0"};
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
 const fmtTime=ms=>{const d=new Date(ms);return `${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function scaleLabel(s){const m={10:"1",20:"2",30:"3",40:"4",45:"5弱",50:"5強",55:"6弱",60:"6強",70:"7"};return m[s]||null;}
+function shindoLabel(I){if(I<0.5)return null;if(I<1.5)return"1";if(I<2.5)return"2";if(I<3.5)return"3";if(I<4.5)return"4";if(I<5.0)return"5弱";if(I<5.5)return"5強";if(I<6.0)return"6弱";if(I<6.5)return"6強";return"7";}
 function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
-function depthRGB(km){
-  if(km<30)return[255,69,58]; if(km<70)return[255,159,10]; if(km<150)return[255,214,10];
-  if(km<300)return[48,209,88]; if(km<500)return[10,132,255]; return[94,92,230];
-}
-function depthCss(km){const c=depthRGB(km);return `rgb(${c[0]},${c[1]},${c[2]})`;}
+function hex2rgb(h){const n=parseInt(h.slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255];}
 
-/* ===== データ ===== */
-let DATA=[],lastFetch=0,loading=false;
+/* ===== 物理（司・翠川1999 + 童・山崎1996） ===== */
+function pgv(M,D,X){const lv=0.58*M+0.0038*D-1.29-Math.log10(X+0.0028*Math.pow(10,0.5*M))-0.002*X;return Math.pow(10,lv)*1.4;}
+function shindoAt(M,D,delta){const X=Math.sqrt(delta*delta+D*D);const v=pgv(M,D,X);if(v<=0)return 0;return 2.68+1.72*Math.log10(v);}
+function buildProfile(q){
+  const M=(q.mag!=null)?q.mag:4.5, D=(q.depth!=null)?q.depth:10;
+  let Rmax=40;
+  for(let d=4;d<=1200;d+=4){if(shindoAt(M,D,d)>=0.5)Rmax=d;else break;}
+  Rmax=clamp(Rmax,40,1100);
+  const maxI=shindoAt(M,D,0);
+  const tEnd=Math.sqrt(Rmax*Rmax+D*D)/VS+3;
+  return {M,D,Rmax,maxI,tEnd,tP0:D/VP,tS0:D/VS};
+}
+/* 連続震度→色（なめらかな熱用） */
+const CSTOPS=[[0,hex2rgb("#3a4452")],[1,hex2rgb("#9aa6b2")],[2,hex2rgb("#2f9e6a")],[3,hex2rgb("#2f7fd0")],
+  [4,hex2rgb("#e6c528")],[4.75,hex2rgb("#f0972e")],[5.25,hex2rgb("#ed7424")],[5.75,hex2rgb("#e0432f")],
+  [6.25,hex2rgb("#c01f1a")],[7,hex2rgb("#9b1fb0")]];
+function colorAtI(I){
+  I=clamp(I,0,7);
+  for(let i=0;i<CSTOPS.length-1;i++){
+    const [a,ca]=CSTOPS[i], [b,cb]=CSTOPS[i+1];
+    if(I>=a&&I<=b){const t=(b-a)?(I-a)/(b-a):0;
+      return [ca[0]+(cb[0]-ca[0])*t, ca[1]+(cb[1]-ca[1])*t, ca[2]+(cb[2]-ca[2])*t];}
+  }
+  return CSTOPS[CSTOPS.length-1][1];
+}
+function quakeColor(q){return q.intensity?hex2rgb(SCOL[q.intensity]):[90,103,117];}
+
+/* ===== 巨大地震（過去の代表的な地震・観測値ベース） ===== */
+const MAJOR_QUAKES=[
+ {place:"東北地方太平洋沖地震",t:"2011-03-11T14:46:18+09:00",lat:38.103,lng:142.860,mag:9.0,depth:24,intensity:"7"},
+ {place:"兵庫県南部地震（阪神・淡路）",t:"1995-01-17T05:46:52+09:00",lat:34.595,lng:135.035,mag:7.3,depth:16,intensity:"7"},
+ {place:"熊本地震（本震）",t:"2016-04-16T01:25:05+09:00",lat:32.755,lng:130.763,mag:7.3,depth:12,intensity:"7"},
+ {place:"令和6年能登半島地震",t:"2024-01-01T16:10:09+09:00",lat:37.497,lng:137.265,mag:7.6,depth:16,intensity:"7"},
+ {place:"北海道胆振東部地震",t:"2018-09-06T03:08:00+09:00",lat:42.686,lng:141.929,mag:6.7,depth:37,intensity:"7"},
+ {place:"新潟県中越地震",t:"2004-10-23T17:56:00+09:00",lat:37.290,lng:138.867,mag:6.8,depth:13,intensity:"7"},
+ {place:"福島県沖地震",t:"2022-03-16T23:36:00+09:00",lat:37.696,lng:141.640,mag:7.4,depth:57,intensity:"6強"},
+ {place:"福島県沖地震",t:"2021-02-13T23:08:00+09:00",lat:37.722,lng:141.835,mag:7.3,depth:55,intensity:"6強"},
+ {place:"新潟県中越沖地震",t:"2007-07-16T10:13:00+09:00",lat:37.557,lng:138.609,mag:6.8,depth:17,intensity:"6強"},
+ {place:"十勝沖地震",t:"2003-09-26T04:50:00+09:00",lat:41.779,lng:144.079,mag:8.0,depth:42,intensity:"6弱"}
+].map((d,i)=>({id:"major_"+i,t:Date.parse(d.t),lat:d.lat,lng:d.lng,depth:d.depth,mag:d.mag,
+  intensity:d.intensity,place:d.place,src:"気象庁(代表値)"}));
+
+/* ===== 状態 ===== */
+let mode="recent";
+let recentData=[],lastFetch=0,loading=false;
+let selByMode={recent:null,major:null};
+let map=null,overlay=null;
+let sel=null,profile=null,tSim=0,playing=false,speed=2,raf=null,lastTs=0;
+
+function DATA(){return mode==="recent"?recentData:MAJOR_QUAKES;}
+
+/* ===== データ取得 ===== */
 function withTimeout(){if(AbortSignal.timeout)return{signal:AbortSignal.timeout(FETCH_TIMEOUT)};const c=new AbortController();setTimeout(()=>c.abort(),FETCH_TIMEOUT);return{signal:c.signal};}
 async function fetchP2P(){
   const r=await fetch("https://api.p2pquake.net/v2/history?codes=551&limit=100",withTimeout());
@@ -171,31 +266,35 @@ async function fetchUSGS(){
     return{id:f.id,t:f.properties.time,lat:c[1],lng:c[0],depth:(c[2]!=null)?c[2]:10,mag:f.properties.mag,
       intensity:null,place:f.properties.place||"震源不明",src:"USGS"};});
 }
-function saveCache(){try{localStorage.setItem(LS_KEY,JSON.stringify({savedAt:Date.now(),data:DATA.slice(0,MAX_RECORDS)}));}catch(e){}}
+function saveCache(){try{localStorage.setItem(LS_KEY,JSON.stringify({savedAt:Date.now(),data:recentData.slice(0,MAX_RECORDS)}));}catch(e){}}
 function loadCache(){try{const o=JSON.parse(localStorage.getItem(LS_KEY)||"null");if(o&&Array.isArray(o.data))return o;}catch(e){}return null;}
 async function loadData(silent){
   if(loading)return;loading=true;$("btnRefresh").innerHTML='<span class="spin"></span>';
   let ok=false,src="";
-  try{DATA=await fetchP2P();src="JMA";ok=true;}
-  catch(e1){try{DATA=await fetchUSGS();src="USGS";ok=true;if(!silent)toast("JMA取得失敗→USGS");}catch(e2){ok=false;}}
-  if(ok){DATA.sort((a,b)=>b.t-a.t);DATA=DATA.slice(0,MAX_RECORDS);lastFetch=Date.now();saveCache();$("src").textContent=src;afterData();if(!silent)toast("更新 "+DATA.length+"件");}
-  else{const c=loadCache();if(c){DATA=c.data;$("src").textContent="CACHE";afterData();toast("通信失敗：保存データ");}else{toast("取得できませんでした");}}
+  try{recentData=await fetchP2P();src="JMA";ok=true;}
+  catch(e1){try{recentData=await fetchUSGS();src="USGS";ok=true;if(!silent)toast("JMA取得失敗→USGS");}catch(e2){ok=false;}}
+  if(ok){recentData.sort((a,b)=>b.t-a.t);recentData=recentData.slice(0,MAX_RECORDS);lastFetch=Date.now();saveCache();
+    if(mode==="recent")$("src").textContent=src;afterData();if(!silent)toast("更新 "+recentData.length+"件");}
+  else{const c=loadCache();if(c){recentData=c.data;if(mode==="recent")$("src").textContent="CACHE";afterData();toast("通信失敗：保存データ");}
+    else{toast("取得できませんでした");}}
   loading=false;$("btnRefresh").innerHTML="⟳";
 }
 let toastTimer=null;
 function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("on"),3000);}
 function afterData(){
-  $("cnt").textContent=DATA.length;$("updated").textContent=lastFetch?fmtTime(lastFetch):"–";
-  $("tsub").textContent=DATA.length+"件 · "+(lastFetch?fmtTime(lastFetch):"–");
+  if(mode!=="recent")return;
+  $("cnt").textContent=recentData.length;$("updated").textContent=lastFetch?fmtTime(lastFetch):"–";
   renderList();updateLayers();
 }
 function renderList(){
-  const wrap=$("listEl");wrap.innerHTML="";
-  for(const q of DATA){
+  const d=DATA();const wrap=$("listEl");wrap.innerHTML="";
+  for(const q of d){
     const row=document.createElement("div");row.className="row";
-    const lab=q.intensity,bg=lab?SCOL[lab]:"#26303c";
+    const lab=q.intensity;
+    const rbcls=lab?"":" dim";
+    const bg=lab?SCOL[lab]:"";
     const magTxt=(q.mag!=null)?"M"+q.mag.toFixed(1):"M–";
-    row.innerHTML=`<div class="rb" style="background:${bg};color:${lab?'#05080d':'#8794a4'}"><span class="k">震度</span><span class="v">${lab||'–'}</span></div>
+    row.innerHTML=`<div class="rb${rbcls}" style="${bg?'background:'+bg+';color:#05080d':''}"><span class="k">震度</span><span class="v">${lab||'–'}</span></div>
       <div class="rm"><div class="rp">${escapeHtml(q.place)}</div><div class="rs">${magTxt} · 深さ${q.depth}km</div></div>
       <div class="rt">${fmtTime(q.t)}</div>`;
     row.addEventListener("click",()=>{closeSheet();selectQuake(q,true);});
@@ -203,71 +302,157 @@ function renderList(){
   }
 }
 
-/* ===== 3D（MapLibre + deck.gl） ===== */
-let map=null,overlay=null,selId=null;
+/* ===== 地図（MapLibre + deck.gl, interleaved=trueで完全同期） ===== */
 function initMap(){
-  if(typeof maplibregl==="undefined"||typeof deck==="undefined"){toast("3Dエンジン読込失敗");return;}
+  if(typeof maplibregl==="undefined"||typeof deck==="undefined"){toast("地図エンジン読込失敗");return;}
   map=new maplibregl.Map({
     container:"map",
     style:{version:8,
-      sources:{gsi:{type:"raster",tiles:["https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png"],tileSize:256,attribution:"地理院タイル",maxzoom:18}},
-      layers:[{id:"bgc",type:"background",paint:{"background-color":"#05080d"}},{id:"gsi",type:"raster",source:"gsi"}]
+      sources:{sat:{type:"raster",tiles:["https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg"],tileSize:256,attribution:"地理院タイル(写真)",maxzoom:18}},
+      layers:[{id:"bgc",type:"background",paint:{"background-color":"#0a1622"}},{id:"sat",type:"raster",source:"sat"}]
     },
-    center:[138,37.2],zoom:4.1,pitch:58,bearing:0,maxPitch:80,minZoom:3,maxZoom:13,attributionControl:true
+    center:[138,37.2],zoom:4.3,pitch:55,bearing:0,maxPitch:80,minZoom:3,maxZoom:13,attributionControl:true
   });
   map.touchZoomRotate.enable();map.dragRotate.enable();
-  overlay=new deck.MapboxOverlay({interleaved:false,layers:[]});
+  overlay=new deck.MapboxOverlay({interleaved:true,layers:[]});
   map.addControl(overlay);
-  map.on("load",()=>{ if(DATA.length)updateLayers(); });
+  map.on("load",()=>updateLayers());
   setTimeout(()=>{const h=$("hint");if(h)h.style.opacity="0";},6000);
 }
+
+function heatLayers(){
+  if(!sel||!profile||!playing&&tSim<=0)return [];
+  const D=profile.D, VsT=VS*tSim, VpT=VP*tSim;
+  const dS=VsT>D?Math.sqrt(VsT*VsT-D*D):0, dP=VpT>D?Math.sqrt(VpT*VpT-D*D):0;
+  const dSc=Math.min(dS,profile.Rmax), dPc=Math.min(dP,profile.Rmax);
+  if(dSc<=0.3)return [];
+  const N=26,bandData=[];
+  for(let i=N;i>=1;i--){
+    const r=dSc*Math.pow(i/N,1.4);
+    const I=shindoAt(profile.M,D,r);
+    const c=colorAtI(I);
+    bandData.push({r,c});
+  }
+  const heat=new deck.ScatterplotLayer({
+    id:"heat",data:bandData,getPosition:()=>[sel.lng,sel.lat,0],
+    getRadius:d=>d.r*1000,radiusUnits:"meters",
+    getFillColor:d=>[d.c[0],d.c[1],d.c[2],150],stroked:false,
+    parameters:{depthTest:false}
+  });
+  const sFront=new deck.ScatterplotLayer({
+    id:"sfront",data:[{r:dSc}],getPosition:()=>[sel.lng,sel.lat,0],
+    getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,
+    getLineColor:[255,122,82,235],lineWidthUnits:"meters",getLineWidth:dSc*1000*0.006+800,
+    parameters:{depthTest:false}
+  });
+  const pFront=new deck.ScatterplotLayer({
+    id:"pfront",data:[{r:dPc}],getPosition:()=>[sel.lng,sel.lat,0],
+    getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,
+    getLineColor:[210,225,238,160],lineWidthUnits:"meters",getLineWidth:600,
+    parameters:{depthTest:false}
+  });
+  return [heat,pFront,sFront];
+}
 function quakeLayers(){
+  const d=DATA();
+  const withCol=d.filter(q=>q.intensity);
   const drop=new deck.LineLayer({
-    id:"drop",data:DATA,
-    getSourcePosition:d=>[d.lng,d.lat,0],
-    getTargetPosition:d=>[d.lng,d.lat,-(d.depth||10)*1000],
-    getColor:d=>{const c=depthRGB(d.depth||10);return [c[0],c[1],c[2],70];},
-    getWidth:1
+    id:"drop",data:withCol,
+    getSourcePosition:q=>[q.lng,q.lat,0],getTargetPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000],
+    getColor:q=>{const c=quakeColor(q);return[c[0],c[1],c[2],90];},getWidth:1
+  });
+  const col=new deck.ColumnLayer({
+    id:"col",data:withCol,diskResolution:14,extruded:true,
+    radius:1400,radiusScale:1,
+    getPosition:q=>[q.lng,q.lat],
+    getElevation:q=>-(q.depth||10)*1000,
+    getFillColor:q=>{const c=quakeColor(q);return[c[0],c[1],c[2],95];},
+    getLineColor:[0,0,0,0],
+    updateTriggers:{getFillColor:[selKey()]}
   });
   const pts=new deck.ScatterplotLayer({
-    id:"hypo",data:DATA,pickable:true,
-    getPosition:d=>[d.lng,d.lat,-(d.depth||10)*1000],
-    getRadius:d=>Math.max(2.4,((d.mag!=null)?d.mag:2.5)*1.7),
-    radiusUnits:"pixels",radiusMinPixels:2.4,radiusMaxPixels:34,
-    getFillColor:d=>{const c=depthRGB(d.depth||10);return [c[0],c[1],c[2],235];},
-    stroked:true,getLineColor:[255,255,255,150],lineWidthUnits:"pixels",getLineWidth:0.6,
-    onClick:info=>{if(info&&info.object)selectQuake(info.object,false);},
-    updateTriggers:{}
+    id:"hypo",data:d,pickable:true,
+    getPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000],
+    getRadius:q=>Math.max(2.2,((q.mag!=null)?q.mag:2.5)*1.6),
+    radiusUnits:"pixels",radiusMinPixels:2.2,radiusMaxPixels:30,
+    getFillColor:q=>{const c=quakeColor(q);return q.intensity?[c[0],c[1],c[2],235]:[c[0],c[1],c[2],150];},
+    stroked:true,getLineColor:[255,255,255,140],lineWidthUnits:"pixels",getLineWidth:0.6,
+    onClick:info=>{if(info&&info.object)selectQuake(info.object,false);}
   });
-  const layers=[drop,pts];
-  const s=DATA.find(d=>d.id===selId);
-  if(s){
+  const layers=[drop,col,pts];
+  if(sel){
     layers.push(new deck.ScatterplotLayer({
-      id:"sel",data:[s],
-      getPosition:d=>[d.lng,d.lat,-(d.depth||10)*1000],
-      getRadius:d=>Math.max(2.4,((d.mag!=null)?d.mag:2.5)*1.7)+6,
-      radiusUnits:"pixels",radiusMinPixels:8,stroked:true,filled:false,
-      getLineColor:[255,255,255,235],lineWidthUnits:"pixels",getLineWidth:1.6
+      id:"sel",data:[sel],
+      getPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000],
+      getRadius:q=>Math.max(2.2,((q.mag!=null)?q.mag:2.5)*1.6)+6,
+      radiusUnits:"pixels",radiusMinPixels:9,stroked:true,filled:false,
+      getLineColor:[255,255,255,235],lineWidthUnits:"pixels",getLineWidth:1.7
     }));
   }
-  return layers;
+  return [...heatLayers(),...layers];
 }
+function selKey(){return sel?sel.id:"none";}
 function updateLayers(){ if(overlay)overlay.setProps({layers:quakeLayers()}); }
 
+/* ===== 選択・再生 ===== */
 function selectQuake(q,fly){
-  selId=q.id;updateLayers();
-  const c=depthRGB(q.depth||10);
-  $("iDh").style.background=depthCss(q.depth||10);
-  $("iPlace").textContent=q.place;
-  $("iInt").textContent=q.intensity?("震度"+q.intensity):"—";
-  $("iInt").style.color=q.intensity?SCOL[q.intensity]:"var(--text)";
-  $("iMag").textContent=(q.mag!=null)?q.mag.toFixed(1):"—";
-  $("iDep").textContent=(q.depth!=null)?q.depth+"km":"—";
-  $("iTime").textContent=fmtTime(q.t)+" 発生";
-  $("info").classList.add("on");
-  if(fly&&map)map.flyTo({center:[q.lng,q.lat],zoom:6.2,pitch:62,duration:1500,essential:true});
+  selByMode[mode]=q.id; sel=q; profile=buildProfile(q); tSim=0;
+  $("cDh").style.background=q.intensity?SCOL[q.intensity]:"#5a6675";
+  $("cPlace").textContent=q.place;
+  $("cInt").textContent=q.intensity?("震度"+q.intensity):"推定"+(shindoLabel(profile.maxI)||"1未満");
+  $("cInt").style.color=q.intensity?SCOL[q.intensity]:"var(--text)";
+  $("cMag").textContent=(q.mag!=null)?q.mag.toFixed(1):"—";
+  $("cDep").textContent=(q.depth!=null)?q.depth+"km":"—";
+  $("cTime").textContent=fmtTime(q.t);
+  $("card").classList.add("on");
+  updateLayers();
+  if(fly&&map)map.flyTo({center:[q.lng,q.lat],zoom:Math.max(map.getZoom(),6.2),pitch:60,duration:1600,essential:true});
+  setPlaying(true);
 }
-function closeInfo(){selId=null;updateLayers();$("info").classList.remove("on");}
+function closeCard(){sel=null;setPlaying(false);$("card").classList.remove("on");updateLayers();}
+
+function tick(ts){
+  if(!playing)return;
+  if(!lastTs)lastTs=ts;
+  const dt=(ts-lastTs)/1000;lastTs=ts;tSim+=dt*speed;
+  const D=profile.D,dS=Math.min(VS*tSim>D?Math.sqrt((VS*tSim)**2-D*D):0,profile.Rmax);
+  const dP=Math.min(VP*tSim>D?Math.sqrt((VP*tSim)**2-D*D):0,profile.Rmax);
+  $("rT").textContent=tSim.toFixed(1)+"s";$("rR").textContent=Math.round(dS)+"km";$("rP").textContent=Math.round(dP)+"km";
+  $("tl").value=Math.round(clamp(tSim/profile.tEnd,0,1)*1000);
+  updateLayers();
+  if(tSim>=profile.tEnd){setPlaying(false);return;}
+  raf=requestAnimationFrame(tick);
+}
+function setPlaying(p){playing=p;$("playBtn").textContent=p?"❚❚":"▶";cancelAnimationFrame(raf);if(p){if(!profile)return;if(tSim>=profile.tEnd)tSim=0;lastTs=0;raf=requestAnimationFrame(tick);}}
+function togglePlay(){if(profile)setPlaying(!playing);}
+function cycleSpeed(){const s=[1,2,4,8];speed=s[(s.indexOf(speed)+1)%s.length];$("spdBtn").textContent="×"+speed;}
+
+/* ===== タブ ===== */
+function switchTab(m){
+  if(mode===m)return; mode=m;
+  $("tabRecent").classList.toggle("on",m==="recent");
+  $("tabMajor").classList.toggle("on",m==="major");
+  $("btnRefresh").style.display=(m==="recent")?"flex":"none";
+  $("vlab").textContent=(m==="recent")?"最近の地震":"過去の巨大地震";
+  if(m==="recent"){
+    $("cnt").textContent=recentData.length;$("src").textContent=recentData.length?"JMA":"–";
+  }else{
+    $("cnt").textContent=MAJOR_QUAKES.length;$("src").textContent="気象庁(代表値)";
+  }
+  renderList();
+  const prevSel=selByMode[m];
+  if(prevSel){const q=DATA().find(x=>x.id===prevSel);if(q){sel=q;profile=buildProfile(q);updateLayers();$("card").classList.add("on");renderCardOnly(q);return;}}
+  if(m==="major"){selectQuake(MAJOR_QUAKES[0],true);}
+  else{sel=null;$("card").classList.remove("on");updateLayers();}
+}
+function renderCardOnly(q){
+  $("cDh").style.background=q.intensity?SCOL[q.intensity]:"#5a6675";
+  $("cPlace").textContent=q.place;
+  $("cInt").textContent=q.intensity?("震度"+q.intensity):"推定"+(shindoLabel(profile.maxI)||"1未満");
+  $("cMag").textContent=(q.mag!=null)?q.mag.toFixed(1):"—";
+  $("cDep").textContent=(q.depth!=null)?q.depth+"km":"—";
+  $("cTime").textContent=fmtTime(q.t);
+}
 
 /* ===== シート ===== */
 function openSheet(){$("sheet").classList.add("on");$("bg").classList.add("on");}
@@ -275,16 +460,24 @@ function closeSheet(){$("sheet").classList.remove("on");$("bg").classList.remove
 
 /* ===== 起動 ===== */
 function bind(){
+  $("tabRecent").addEventListener("click",()=>switchTab("recent"));
+  $("tabMajor").addEventListener("click",()=>switchTab("major"));
   $("btnRefresh").addEventListener("click",()=>loadData(false));
   $("btnList").addEventListener("click",openSheet);
   $("bg").addEventListener("click",closeSheet);
-  $("infoX").addEventListener("click",closeInfo);
-  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&Date.now()-lastFetch>REFRESH_AFTER_MS)loadData(true);});
+  $("cX").addEventListener("click",closeCard);
+  $("playBtn").addEventListener("click",togglePlay);
+  $("spdBtn").addEventListener("click",cycleSpeed);
+  $("spdBtn").textContent="×"+speed;
+  $("tl").addEventListener("input",e=>{if(!profile)return;setPlaying(false);tSim=e.target.value/1000*profile.tEnd;updateLayers();
+    const D=profile.D,dS=Math.min(VS*tSim>D?Math.sqrt((VS*tSim)**2-D*D):0,profile.Rmax),dP=Math.min(VP*tSim>D?Math.sqrt((VP*tSim)**2-D*D):0,profile.Rmax);
+    $("rT").textContent=tSim.toFixed(1)+"s";$("rR").textContent=Math.round(dS)+"km";$("rP").textContent=Math.round(dP)+"km";});
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&Date.now()-lastFetch>REFRESH_AFTER_MS&&mode==="recent")loadData(true);});
 }
 window.addEventListener("load",()=>{
-  bind();initMap();
+  bind();initMap();$("vlab").textContent="最近の地震";
   const c=loadCache();
-  if(c){DATA=c.data;lastFetch=c.savedAt||0;$("src").textContent="CACHE";afterData();}
+  if(c){recentData=c.data;lastFetch=c.savedAt||0;$("src").textContent="CACHE";afterData();}
   loadData(true);
 });
 </script>
