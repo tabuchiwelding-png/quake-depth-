@@ -2,118 +2,97 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,height=device-height,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <title>EQ 地震リプレイ</title>
-<meta name="description" content="1つ1つの地震の揺れの広がりを時間再生。震源の深さ・P波S波・震度の到達範囲を物理で再現するサーモグラフ。気象庁(P2P)/USGSデータ。">
+<meta name="description" content="1つ1つの地震の揺れの広がりを全画面で時間再生。震源の深さ・P波S波・震度の到達範囲を物理で再現。気象庁(P2P)/USGS。">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-/* ===== CSS変数 ===== */
+/* ===== 変数 ===== */
 :root{
-  --bg:#0a0e14; --panel:#121821; --panel2:#0f141c; --line:#1e2733;
-  --text:#e6edf3; --muted:#8b97a6; --accent:#ff5a3c; --ok:#39d98a; --warn:#ffb03a;
-  --s1:#8b97a6; --s2:#1f9d6b; --s3:#3aa0ff; --s4:#ffd23a; --s5w:#ff9e3d;
+  --bg:#0a0e14; --panel:#121821; --line:#222c39; --text:#eef3f8; --muted:#909bab;
+  --accent:#ff5a3c;
+  --s1:#9aa6b2; --s2:#1f9d6b; --s3:#3aa0ff; --s4:#ffd23a; --s5w:#ff9e3d;
   --s5s:#ff7a2e; --s6w:#ff4d3a; --s6s:#e02d1f; --s7:#a01bd0;
-  --r:12px; --tap:46px; --fz-s:11px; --fz-m:13px; --fz-l:16px;
-  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --fz-s:11px; --fz-m:13px; --fz-l:15px;
+  --st:env(safe-area-inset-top,0px); --sb:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN",sans-serif;-webkit-text-size-adjust:100%;}
-body{display:flex;flex-direction:column;}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;}
 
-header{flex:0 0 auto;padding:calc(8px + var(--safe-t)) 12px 8px;background:var(--panel);border-bottom:1px solid var(--line);}
-.hrow{display:flex;align-items:center;gap:8px;}
-.logo{font-size:var(--fz-l);font-weight:800;}.logo b{color:var(--accent);}
-.ver{font-size:var(--fz-s);color:var(--muted);}
-.spacer{flex:1;}
-.refresh{min-width:var(--tap);height:36px;padding:0 12px;border-radius:9px;border:1px solid var(--line);
-  background:var(--panel2);color:var(--text);font-size:var(--fz-m);font-weight:700;display:flex;align-items:center;gap:6px;}
-.refresh:disabled{opacity:.5;}
-.dot{width:12px;height:12px;border:2px solid var(--muted);border-top-color:var(--accent);border-radius:50%;display:none;}
-.loading .dot{display:inline-block;animation:spin .8s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-.sub{display:flex;gap:10px;margin-top:6px;font-size:var(--fz-s);color:var(--muted);}
-.sub b{color:var(--text);font-weight:700;}
-
-.tabs{flex:0 0 auto;display:flex;gap:6px;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);}
-.tab{flex:1;height:var(--tap);border-radius:10px;border:1px solid var(--line);background:var(--panel2);
-  color:var(--muted);font-size:var(--fz-m);font-weight:700;}
-.tab.on{background:var(--accent);border-color:var(--accent);color:#0a0e14;}
-
-main{flex:1 1 auto;position:relative;min-height:0;}
-.view{position:absolute;inset:0;display:none;}
-.view.on{display:block;}
-
-/* ===== リプレイ ===== */
-#map{position:absolute;inset:0;background:#0a0e14;}
-#anim{position:absolute;inset:0;pointer-events:none;z-index:400;}
+/* ===== 全画面マップ ===== */
+#map{position:fixed;inset:0;background:#0a0e14;z-index:0;}
 .leaflet-container{background:#0a0e14;font-family:inherit;}
-.leaflet-control-zoom a{background:var(--panel)!important;color:var(--text)!important;border-color:var(--line)!important;}
-.leaflet-bar{border:1px solid var(--line)!important;}
-.leaflet-control-attribution{background:rgba(10,14,20,.7)!important;color:var(--muted)!important;font-size:9px!important;}
+.leaflet-control-attribution{background:rgba(10,14,20,.55)!important;color:var(--muted)!important;font-size:9px!important;}
 .leaflet-control-attribution a{color:#5a83b0!important;}
 
-/* 上：選択中の地震情報 */
-.qinfo{position:absolute;left:10px;right:10px;top:10px;z-index:600;background:rgba(18,24,33,.96);
-  border:1px solid var(--line);border-radius:12px;padding:9px 11px;}
-.qinfo .l1{display:flex;align-items:center;gap:8px;}
-.qinfo .ib{flex:0 0 auto;min-width:34px;height:34px;padding:0 6px;border-radius:8px;display:flex;flex-direction:column;
+/* ===== 上：地震情報カード ===== */
+.top{position:fixed;left:10px;right:10px;top:calc(8px + var(--st));z-index:20;}
+.card{background:rgba(16,21,29,.93);border:1px solid var(--line);border-radius:14px;
+  backdrop-filter:blur(10px);box-shadow:0 6px 22px rgba(0,0,0,.35);overflow:hidden;}
+.crow{display:flex;align-items:center;gap:9px;padding:9px 10px;}
+.ib{flex:0 0 auto;min-width:38px;height:38px;padding:0 6px;border-radius:9px;display:flex;flex-direction:column;
   align-items:center;justify-content:center;line-height:1;color:#0a0e14;font-weight:800;}
-.qinfo .ib small{font-size:8px;}.qinfo .ib b{font-size:16px;}
-.qinfo .pl{font-size:var(--fz-m);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
-.qinfo .pick{font-size:var(--fz-s);color:var(--accent);font-weight:700;flex:0 0 auto;}
-.qinfo .l2{display:flex;gap:12px;margin-top:6px;font-size:var(--fz-s);color:var(--muted);flex-wrap:wrap;}
-.qinfo .l2 b{color:var(--text);}
-
-/* 下：再生コントロール */
-.ctrl{position:absolute;left:10px;right:10px;bottom:calc(12px + var(--safe-b));z-index:600;
-  background:rgba(18,24,33,.96);border:1px solid var(--line);border-radius:14px;padding:10px 12px;}
-.ctrl .row1{display:flex;align-items:center;gap:10px;}
-.play{flex:0 0 auto;width:52px;height:52px;border-radius:50%;border:0;background:var(--accent);color:#0a0e14;font-size:22px;font-weight:800;}
-.readouts{flex:1;display:flex;gap:14px;flex-wrap:wrap;font-size:var(--fz-s);color:var(--muted);}
-.readouts b{color:var(--text);font-size:var(--fz-m);}
-.readouts .big{color:var(--accent);font-size:var(--fz-l);font-weight:800;}
-.spd{flex:0 0 auto;height:34px;padding:0 10px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:var(--fz-s);font-weight:700;}
-.tl{margin-top:9px;width:100%;-webkit-appearance:none;height:6px;border-radius:3px;background:#26303d;}
-.tl::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);border:2px solid #0a0e14;}
-
-/* 観測震度（折りたたみ） */
-.obs{position:absolute;left:10px;right:10px;top:64px;z-index:550;}
-.obs details{background:rgba(18,24,33,.96);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
-.obs summary{list-style:none;padding:9px 11px;font-size:var(--fz-s);font-weight:700;color:var(--text);}
+.ib small{font-size:8px;}.ib b{font-size:17px;}
+.place{flex:1;min-width:0;font-size:var(--fz-l);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.iconbtn{flex:0 0 auto;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);color:var(--text);font-size:18px;display:flex;align-items:center;justify-content:center;}
+.cmeta{display:flex;gap:13px;padding:0 11px 9px;font-size:var(--fz-s);color:var(--muted);flex-wrap:wrap;}
+.cmeta b{color:var(--text);font-weight:700;}
+.obs{border-top:1px solid var(--line);}
+.obs summary{list-style:none;padding:8px 11px;font-size:var(--fz-s);color:var(--muted);font-weight:700;display:flex;justify-content:space-between;}
 .obs summary::-webkit-details-marker{display:none;}
-.obs .body{padding:0 11px 10px;max-height:34vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.obs .body{padding:2px 11px 10px;max-height:30vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .rgrp{display:flex;gap:8px;align-items:flex-start;margin-top:5px;}
-.rbadge{flex:0 0 auto;width:44px;text-align:center;border-radius:6px;color:#0a0e14;font-weight:800;font-size:var(--fz-s);padding:3px 0;}
-.rlist{flex:1;font-size:var(--fz-s);color:var(--text);line-height:1.6;padding-top:2px;}
-.rnote{color:var(--muted);font-size:var(--fz-s);padding:4px 0;}
+.rbadge{flex:0 0 auto;width:42px;text-align:center;border-radius:6px;color:#0a0e14;font-weight:800;font-size:var(--fz-s);padding:3px 0;}
+.rlist{flex:1;font-size:var(--fz-s);line-height:1.55;padding-top:2px;}
+.rnote{color:var(--muted);font-size:var(--fz-s);padding:3px 0;}
 
-.legend{position:absolute;right:10px;bottom:calc(118px + var(--safe-b));z-index:500;background:rgba(15,20,28,.9);
-  border:1px solid var(--line);border-radius:10px;padding:7px 9px;font-size:10px;backdrop-filter:blur(6px);}
-.legend .ttl{color:var(--muted);margin-bottom:5px;}
-.lrow{display:flex;flex-direction:column;gap:2px;}
-.lchip{display:flex;align-items:center;gap:4px;color:var(--text);}
-.lchip i{width:12px;height:12px;border-radius:3px;}
+/* ===== 下：再生バー ===== */
+.bottom{position:fixed;left:10px;right:10px;bottom:calc(8px + var(--sb));z-index:20;
+  background:rgba(16,21,29,.93);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(10px);
+  box-shadow:0 6px 22px rgba(0,0,0,.35);padding:9px 12px 11px;}
+.lstrip{display:flex;gap:0;height:7px;border-radius:4px;overflow:hidden;margin-bottom:9px;}
+.lstrip i{flex:1;position:relative;}
+.lstrip i::after{content:attr(data-l);position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:8px;color:var(--muted);}
+.lstrip.lbl{margin-bottom:19px;}
+.brow{display:flex;align-items:center;gap:11px;}
+.play{flex:0 0 auto;width:50px;height:50px;border-radius:50%;border:0;background:var(--accent);color:#0a0e14;font-size:21px;font-weight:800;}
+.ro{flex:1;display:flex;gap:13px;flex-wrap:wrap;font-size:var(--fz-s);color:var(--muted);line-height:1.25;}
+.ro b{color:var(--text);font-size:var(--fz-m);}
+.ro .big{color:var(--accent);font-size:var(--fz-l);font-weight:800;}
+.spd{flex:0 0 auto;height:34px;min-width:46px;padding:0 10px;border-radius:9px;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);color:var(--text);font-size:var(--fz-s);font-weight:800;}
+.tl{margin-top:10px;width:100%;-webkit-appearance:none;height:6px;border-radius:3px;background:#26303d;}
+.tl::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--accent);border:3px solid #0a0e14;}
 
-.empty{position:absolute;inset:0;z-index:450;display:none;align-items:center;justify-content:center;color:var(--muted);
-  font-size:var(--fz-m);padding:24px;text-align:center;background:rgba(10,14,20,.6);}
-.empty.on{display:flex;}
+/* ===== シート（一覧／そなえ） ===== */
+.sheetBg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40;opacity:0;pointer-events:none;transition:opacity .25s;}
+.sheetBg.on{opacity:1;pointer-events:auto;}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;height:82%;background:var(--bg);
+  border-top-left-radius:18px;border-top-right-radius:18px;border-top:1px solid var(--line);
+  transform:translateY(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;}
+.sheet.on{transform:translateY(0);}
+.shandle{width:40px;height:4px;border-radius:2px;background:#39465a;margin:9px auto 4px;}
+.smeta{text-align:center;font-size:var(--fz-s);color:var(--muted);padding-bottom:6px;}
+.smeta b{color:var(--text);}
+.seg{display:flex;gap:6px;padding:0 12px 8px;}
+.seg button{flex:1;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:var(--fz-m);font-weight:700;}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:#0a0e14;}
+.spane{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 12px calc(16px + var(--sb));display:none;}
+.spane.on{display:block;}
 
-/* ===== リスト ===== */
-.list{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 10px calc(16px + var(--safe-b));}
-.card{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 11px;margin-bottom:8px;}
-.card:active{background:var(--panel2);}
+.card2{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 11px;margin-bottom:8px;}
+.card2:active{background:#0f141c;}
 .badge{flex:0 0 auto;width:46px;height:46px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;line-height:1;}
 .badge small{font-size:9px;font-weight:700;opacity:.85;margin-bottom:1px;}.badge b{font-size:18px;}
 .cmain{flex:1;min-width:0;}
 .cplace{font-size:var(--fz-m);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cmeta{display:flex;gap:10px;margin-top:3px;font-size:var(--fz-s);color:var(--muted);flex-wrap:wrap;}.cmeta b{color:var(--text);}
+.cm2{display:flex;gap:10px;margin-top:3px;font-size:var(--fz-s);color:var(--muted);flex-wrap:wrap;}.cm2 b{color:var(--text);}
 .cright{flex:0 0 auto;text-align:right;font-size:var(--fz-s);color:var(--muted);}
 
-/* ===== 防災 ===== */
-.bosai{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 12px calc(20px + var(--safe-b));}
 .bsec{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;}
 .bsec summary{list-style:none;padding:13px 14px;font-size:var(--fz-l);font-weight:800;display:flex;align-items:center;gap:9px;}
 .bsec summary::-webkit-details-marker{display:none;}
@@ -124,144 +103,114 @@ main{flex:1 1 auto;position:relative;min-height:0;}
 .bsec .body .note{color:var(--muted);font-size:var(--fz-s);margin-top:8px;}
 .tel{color:var(--accent);font-weight:800;}
 
-.toast{position:absolute;left:50%;bottom:calc(120px + var(--safe-b));transform:translateX(-50%);z-index:700;
+.toast{position:fixed;left:50%;bottom:calc(112px + var(--sb));transform:translateX(-50%);z-index:60;
   background:rgba(18,24,33,.96);border:1px solid var(--line);color:var(--text);padding:10px 16px;border-radius:999px;
   font-size:var(--fz-m);opacity:0;pointer-events:none;transition:opacity .25s;max-width:88%;text-align:center;}
 .toast.on{opacity:1;}
+.dot{display:inline-block;width:12px;height:12px;border:2px solid var(--muted);border-top-color:var(--accent);border-radius:50%;vertical-align:-2px;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="hrow">
-    <div class="logo"><b>EQ</b> 地震リプレイ</div>
-    <div class="ver mono" id="ver"></div>
-    <div class="spacer"></div>
-    <button class="refresh" id="btnRefresh"><span class="dot" id="dot"></span><span id="rlab">更新</span></button>
-  </div>
-  <div class="sub">
-    <div>件数 <b id="cnt">–</b></div>
-    <div>最終更新 <b id="updated" class="mono">–</b></div>
-    <div>出典 <b id="srcLab">–</b></div>
-  </div>
-</header>
+<div id="map"></div>
 
-<div class="tabs">
-  <button class="tab on" data-v="replay">リプレイ</button>
-  <button class="tab" data-v="list">地震を選ぶ</button>
-  <button class="tab" data-v="bosai">そなえ</button>
+<!-- 上：地震情報 -->
+<div class="top">
+  <div class="card">
+    <div class="crow">
+      <span class="ib" id="qIb" style="display:none"></span>
+      <div class="place" id="qPlace">読み込み中…</div>
+      <button class="iconbtn" id="btnRefresh" title="更新">⟳</button>
+      <button class="iconbtn" id="btnMenu" title="一覧">☰</button>
+    </div>
+    <div class="cmeta">
+      <div>M<b class="mono" id="qMag">–</b></div>
+      <div>深さ<b class="mono" id="qDep">–</b></div>
+      <div>推定最大<b id="qMaxI">–</b></div>
+      <div class="mono" id="qTime">–</div>
+    </div>
+    <details class="obs" id="obsWrap">
+      <summary><span id="obsSum">観測された震度（地域別）</span><span>▾</span></summary>
+      <div class="body" id="obsBody"></div>
+    </details>
+  </div>
 </div>
 
-<main>
-  <!-- ===== リプレイ ===== -->
-  <section class="view on" id="v-replay">
-    <div id="map"></div>
-    <canvas id="anim"></canvas>
-
-    <div class="qinfo" id="qinfo">
-      <div class="l1">
-        <span class="ib" id="qIb" style="display:none"></span>
-        <span class="pl" id="qPlace">地震を読み込み中…</span>
-        <span class="pick" id="qPickBtn">一覧 ›</span>
-      </div>
-      <div class="l2">
-        <div>M<b class="mono" id="qMag">–</b></div>
-        <div>深さ<b class="mono" id="qDep">–</b></div>
-        <div>推定最大<b id="qMaxI">–</b></div>
-        <div class="mono" id="qTime">–</div>
-      </div>
+<!-- 下：再生コントロール -->
+<div class="bottom">
+  <div class="lstrip lbl">
+    <i data-l="1" style="background:var(--s1)"></i><i data-l="2" style="background:var(--s2)"></i>
+    <i data-l="3" style="background:var(--s3)"></i><i data-l="4" style="background:var(--s4)"></i>
+    <i data-l="5弱" style="background:var(--s5w)"></i><i data-l="5強" style="background:var(--s5s)"></i>
+    <i data-l="6弱" style="background:var(--s6w)"></i><i data-l="6強" style="background:var(--s6s)"></i>
+    <i data-l="7" style="background:var(--s7)"></i>
+  </div>
+  <div class="brow">
+    <button class="play" id="playBtn">▶</button>
+    <div class="ro">
+      <div>経過<br><b class="big mono" id="rT">0.0s</b></div>
+      <div>S波到達<br><b class="mono" id="rR">0km</b></div>
+      <div>P波到達<br><b class="mono" id="rP">0km</b></div>
     </div>
+    <button class="spd" id="spdBtn">×2</button>
+  </div>
+  <input class="tl" id="tl" type="range" min="0" max="1000" value="0">
+</div>
 
-    <div class="obs">
-      <details id="obsWrap">
-        <summary id="obsSum">観測された震度（地域別）</summary>
-        <div class="body" id="obsBody"></div>
-      </details>
-    </div>
+<!-- シート -->
+<div class="sheetBg" id="sheetBg"></div>
+<div class="sheet" id="sheet">
+  <div class="shandle"></div>
+  <div class="smeta">EQ 地震リプレイ <span id="ver" class="mono"></span> ・ <b id="cnt">–</b>件 ・ 最終更新 <b id="updated" class="mono">–</b> ・ <b id="srcLab">–</b></div>
+  <div class="seg">
+    <button class="on" data-s="list">最近の地震</button>
+    <button data-s="bosai">そなえ</button>
+  </div>
+  <div class="spane on" id="pane-list"></div>
+  <div class="spane" id="pane-bosai">
+    <details class="bsec" open>
+      <summary><span class="ic" style="background:var(--accent)"></span>揺れている間（今すぐ）</summary>
+      <div class="body"><ol>
+        <li>まず<b>頭と体を守る</b>。丈夫な机の下に入り、脚をつかむ。</li>
+        <li>あわてて<b>外へ飛び出さない</b>。落下物・転倒物から離れる。</li>
+        <li>火はこの時点では<b>無理に消しに行かない</b>。揺れが収まってから。</li>
+        <li>その場で<b>揺れが収まるのを待つ</b>。</li>
+      </ol><div class="note">海岸・川の近くで強い揺れを感じたら、警報を待たず高い場所へ。</div></div>
+    </details>
+    <details class="bsec">
+      <summary><span class="ic" style="background:#ffb03a"></span>揺れが収まったら</summary>
+      <div class="body"><ul>
+        <li><b>火の元・ガス</b>を確認。使用中なら止める。</li>
+        <li><b>靴を履く</b>。割れたガラスでのケガを防ぐ。</li>
+        <li><b>出口を確保</b>（ドア・窓を開ける）。</li>
+        <li><b>家族の安否</b>を確認し、無理な移動はしない。</li>
+        <li>テレビ・ラジオ・公式情報で<b>正しい情報</b>を得る。</li>
+        <li><b>余震</b>に備える。倒れそうな家具から離れる。</li>
+      </ul></div>
+    </details>
+    <details class="bsec">
+      <summary><span class="ic" style="background:#39d98a"></span>ふだんの備え</summary>
+      <div class="body"><ul>
+        <li><b>持ち出し袋</b>：水・食料（3日〜1週間）、常備薬、懐中電灯、モバイルバッテリー、現金。</li>
+        <li><b>家具を固定</b>。寝室・出口に倒れる物を置かない。</li>
+        <li><b>避難場所と経路</b>を家族で確認しておく。</li>
+        <li><b>連絡方法</b>を決める。災害用伝言ダイヤル <span class="tel mono">171</span>。</li>
+      </ul><div class="note">情報の正確さは各自治体・気象庁の発表を優先してください。</div></div>
+    </details>
+  </div>
+</div>
 
-    <div class="legend">
-      <div class="ttl">震度</div>
-      <div class="lrow">
-        <div class="lchip"><i style="background:var(--s7)"></i>7</div>
-        <div class="lchip"><i style="background:var(--s6s)"></i>6強</div>
-        <div class="lchip"><i style="background:var(--s6w)"></i>6弱</div>
-        <div class="lchip"><i style="background:var(--s5s)"></i>5強</div>
-        <div class="lchip"><i style="background:var(--s5w)"></i>5弱</div>
-        <div class="lchip"><i style="background:var(--s4)"></i>4</div>
-        <div class="lchip"><i style="background:var(--s3)"></i>3</div>
-        <div class="lchip"><i style="background:var(--s2)"></i>2</div>
-        <div class="lchip"><i style="background:var(--s1)"></i>1</div>
-      </div>
-    </div>
-
-    <div class="ctrl" id="ctrl">
-      <div class="row1">
-        <button class="play" id="playBtn">▶</button>
-        <div class="readouts">
-          <div>経過<br><b class="big mono" id="rT">0.0s</b></div>
-          <div>S波到達<br><b class="mono" id="rR">0km</b></div>
-          <div>P波到達<br><b class="mono" id="rP">0km</b></div>
-        </div>
-        <button class="spd" id="spdBtn">×2</button>
-      </div>
-      <input class="tl" id="tl" type="range" min="0" max="1000" value="0">
-    </div>
-
-    <div class="empty" id="empMap">地震データを読み込み中…<br>出ない場合は「更新」か通信を確認してください。</div>
-  </section>
-
-  <!-- ===== リスト ===== -->
-  <section class="view" id="v-list">
-    <div class="list" id="list"></div>
-  </section>
-
-  <!-- ===== 防災 ===== -->
-  <section class="view" id="v-bosai">
-    <div class="bosai">
-      <details class="bsec" open>
-        <summary><span class="ic" style="background:var(--accent)"></span>揺れている間（今すぐ）</summary>
-        <div class="body"><ol>
-          <li>まず<b>頭と体を守る</b>。丈夫な机の下に入り、脚をつかむ。</li>
-          <li>あわてて<b>外へ飛び出さない</b>。落下物・転倒物から離れる。</li>
-          <li>火はこの時点では<b>無理に消しに行かない</b>。揺れが収まってから。</li>
-          <li>その場で<b>揺れが収まるのを待つ</b>。</li>
-        </ol><div class="note">海岸・川の近くで強い揺れを感じたら、警報を待たず高い場所へ。</div></div>
-      </details>
-      <details class="bsec">
-        <summary><span class="ic" style="background:var(--warn)"></span>揺れが収まったら</summary>
-        <div class="body"><ul>
-          <li><b>火の元・ガス</b>を確認。使用中なら止める。</li>
-          <li><b>靴を履く</b>。割れたガラスでのケガを防ぐ。</li>
-          <li><b>出口を確保</b>（ドア・窓を開ける）。</li>
-          <li><b>家族の安否</b>を確認し、無理な移動はしない。</li>
-          <li>テレビ・ラジオ・公式情報で<b>正しい情報</b>を得る。</li>
-          <li><b>余震</b>に備える。倒れそうな家具から離れる。</li>
-        </ul></div>
-      </details>
-      <details class="bsec">
-        <summary><span class="ic" style="background:var(--ok)"></span>ふだんの備え</summary>
-        <div class="body"><ul>
-          <li><b>持ち出し袋</b>：水・食料（3日〜1週間）、常備薬、懐中電灯、モバイルバッテリー、現金。</li>
-          <li><b>家具を固定</b>。寝室・出口に倒れる物を置かない。</li>
-          <li><b>避難場所と経路</b>を家族で確認しておく。</li>
-          <li><b>連絡方法</b>を決める。災害用伝言ダイヤル <span class="tel mono">171</span>。</li>
-        </ul><div class="note">情報の正確さは各自治体・気象庁の発表を優先してください。</div></div>
-      </details>
-    </div>
-  </section>
-
-  <div class="toast" id="toast"></div>
-</main>
+<div class="toast" id="toast"></div>
 
 <script>
 /* ===== 設定 ===== */
-const APP_VERSION="v4.0";
+const APP_VERSION="v5.0";
 const LS_KEY="jeq_cache_v2";
-const MAX_RECORDS=120;
-const FETCH_TIMEOUT=8000;
-const REFRESH_AFTER_MS=5*60*1000;
+const MAX_RECORDS=120, FETCH_TIMEOUT=8000, REFRESH_AFTER_MS=5*60*1000;
 const BBOX={latMin:24,latMax:46,lngMin:122,lngMax:154};
-const VP=6.5, VS=3.7; /* 地震波速度 km/s（地殻代表値） */
+const VP=6.5, VS=3.7;
+const BANDS=[["7",6.5],["6強",6.0],["6弱",5.5],["5強",5.0],["5弱",4.5],["4",3.5],["3",2.5],["2",1.5],["1",0.5]];
 
 /* ===== ユーティリティ ===== */
 const $=id=>document.getElementById(id);
@@ -269,39 +218,28 @@ const pad=n=>String(n).padStart(2,"0");
 const fmtTime=ms=>{const d=new Date(ms);return `${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function scaleLabel(s){const m={10:"1",20:"2",30:"3",40:"4",45:"5弱",50:"5強",55:"6弱",60:"6強",70:"7"};return m[s]||null;}
-function intColor(label){const m={"1":"#8b97a6","2":"#1f9d6b","3":"#3aa0ff","4":"#ffd23a","5弱":"#ff9e3d","5強":"#ff7a2e","6弱":"#ff4d3a","6強":"#e02d1f","7":"#a01bd0"};return m[label]||"#5a6675";}
+function intColor(l){const m={"1":"#9aa6b2","2":"#1f9d6b","3":"#3aa0ff","4":"#ffd23a","5弱":"#ff9e3d","5強":"#ff7a2e","6弱":"#ff4d3a","6強":"#e02d1f","7":"#a01bd0"};return m[l]||"#5a6675";}
 function shindoLabel(I){if(I<0.5)return null;if(I<1.5)return"1";if(I<2.5)return"2";if(I<3.5)return"3";if(I<4.5)return"4";if(I<5.0)return"5弱";if(I<5.5)return"5強";if(I<6.0)return"6弱";if(I<6.5)return"6強";return"7";}
-function hexToRgba(hex,a){const n=parseInt(hex.slice(1),16);return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;}
+function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 
-/* ===== 物理：距離減衰（司・翠川1999 + 童・山崎1996） ===== */
-function pgv(M,D,Xkm){ /* cm/s（地表・平均地盤増幅込み） */
-  const logv=0.58*M+0.0038*D-1.29-Math.log10(Xkm+0.0028*Math.pow(10,0.5*M))-0.002*Xkm;
-  return Math.pow(10,logv)*1.4;
-}
-function shindoAt(M,D,delta){ /* delta=震央距離km, D=深さkm */
-  const X=Math.sqrt(delta*delta+D*D);
-  const v=pgv(M,D,X);
-  if(v<=0)return 0;
-  return 2.68+1.72*Math.log10(v); /* 計測震度の推定 */
-}
+/* ===== 物理（司・翠川1999 + 童・山崎1996） ===== */
+function pgv(M,D,X){const logv=0.58*M+0.0038*D-1.29-Math.log10(X+0.0028*Math.pow(10,0.5*M))-0.002*X;return Math.pow(10,logv)*1.4;}
+function shindoAt(M,D,delta){const X=Math.sqrt(delta*delta+D*D);const v=pgv(M,D,X);if(v<=0)return 0;return 2.68+1.72*Math.log10(v);}
 function buildProfile(q){
-  const M=(q.mag!=null)?q.mag:4.5;
-  const D=(q.depth!=null)?q.depth:10;
-  let Rmax=40;
-  for(let d=10;d<=1200;d+=10){ if(shindoAt(M,D,d)<0.5)break; Rmax=d; }
-  Rmax=clamp(Rmax,40,1100);
-  const stops=[],N=26;
-  for(let i=0;i<=N;i++){
-    const delta=Rmax*i/N, I=clamp(shindoAt(M,D,delta),0,7.2), lab=shindoLabel(I);
-    const col=lab?hexToRgba(intColor(lab),clamp(0.22+I*0.085,0.22,0.8)):"rgba(0,0,0,0)";
-    stops.push({f:i/N,col});
+  const M=(q.mag!=null)?q.mag:4.5, D=(q.depth!=null)?q.depth:10;
+  const bands=[];
+  for(const [lab,lb] of BANDS){
+    let r=0;
+    for(let d=2;d<=1200;d+=2){ if(shindoAt(M,D,d)>=lb)r=d; else break; }
+    if(r>0)bands.push({label:lab,r});
   }
+  const Rmax=bands.length?bands[bands.length-1].r:40;
   const maxI=shindoAt(M,D,0);
   const tEnd=Math.sqrt(Rmax*Rmax+D*D)/VS+3;
-  return {M,D,Rmax,stops,maxI,tEnd};
+  return {M,D,bands,Rmax,maxI,tEnd};
 }
 
-/* ===== データ取得 ===== */
+/* ===== データ ===== */
 let DATA=[],lastFetch=0,loading=false;
 function withTimeout(){if(AbortSignal.timeout)return{signal:AbortSignal.timeout(FETCH_TIMEOUT)};const c=new AbortController();setTimeout(()=>c.abort(),FETCH_TIMEOUT);return{signal:c.signal};}
 async function fetchP2P(){
@@ -326,106 +264,90 @@ async function fetchP2P(){
 async function fetchUSGS(){
   const start=new Date(Date.now()-30*864e5).toISOString();
   const url="https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime="+start
-    +"&minlatitude="+BBOX.latMin+"&maxlatitude="+BBOX.latMax
-    +"&minlongitude="+BBOX.lngMin+"&maxlongitude="+BBOX.lngMax
+    +"&minlatitude="+BBOX.latMin+"&maxlatitude="+BBOX.latMax+"&minlongitude="+BBOX.lngMin+"&maxlongitude="+BBOX.lngMax
     +"&minmagnitude=3.0&orderby=time&limit=100";
-  const r=await fetch(url,withTimeout());
-  if(!r.ok)throw new Error("usgs "+r.status);
+  const r=await fetch(url,withTimeout());if(!r.ok)throw new Error("usgs "+r.status);
   const j=await r.json();
   return (j.features||[]).map(f=>{const c=f.geometry.coordinates;
-    return{id:f.id,t:f.properties.time,lat:c[1],lng:c[0],
-      depth:(c[2]!=null)?c[2]:null,mag:f.properties.mag,maxScale:-1,intensity:null,
-      place:f.properties.place||"震源不明",points:[],src:"USGS"};});
+    return{id:f.id,t:f.properties.time,lat:c[1],lng:c[0],depth:(c[2]!=null)?c[2]:null,
+      mag:f.properties.mag,maxScale:-1,intensity:null,place:f.properties.place||"震源不明",points:[],src:"USGS"};});
 }
 function saveCache(){try{localStorage.setItem(LS_KEY,JSON.stringify({savedAt:Date.now(),data:DATA.slice(0,MAX_RECORDS)}));}catch(e){}}
 function loadCache(){try{const o=JSON.parse(localStorage.getItem(LS_KEY)||"null");if(o&&Array.isArray(o.data))return o;}catch(e){}return null;}
-
 async function loadData(silent){
   if(loading)return;loading=true;setLoading(true);
   let ok=false,src="";
   try{DATA=await fetchP2P();src="JMA(P2P)";ok=true;}
   catch(e1){try{DATA=await fetchUSGS();src="USGS";ok=true;if(!silent)toast("気象庁取得失敗→USGSに切替");}catch(e2){ok=false;}}
-  if(ok){
-    DATA.sort((a,b)=>b.t-a.t);DATA=DATA.slice(0,MAX_RECORDS);
-    lastFetch=Date.now();saveCache();$("srcLab").textContent=src;afterData();
-    if(!silent)toast("更新しました（"+DATA.length+"件）");
-  }else{
-    const c=loadCache();
-    if(c){DATA=c.data;$("srcLab").textContent="キャッシュ";afterData();toast("通信失敗：保存データを表示");}
-    else{DATA=[];$("empMap").classList.add("on");toast("データを取得できませんでした");}
-  }
+  if(ok){DATA.sort((a,b)=>b.t-a.t);DATA=DATA.slice(0,MAX_RECORDS);lastFetch=Date.now();saveCache();$("srcLab").textContent=src;afterData();if(!silent)toast("更新しました（"+DATA.length+"件）");}
+  else{const c=loadCache();if(c){DATA=c.data;$("srcLab").textContent="キャッシュ";afterData();toast("通信失敗：保存データを表示");}else{DATA=[];toast("データを取得できませんでした");}}
   loading=false;setLoading(false);
 }
-function setLoading(b){$("btnRefresh").disabled=b;document.body.classList.toggle("loading",b);$("rlab").textContent=b?"取得中":"更新";}
+function setLoading(b){$("btnRefresh").innerHTML=b?'<span class="dot"></span>':"⟳";}
 let toastTimer=null;
-function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("on");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("on"),3500);}
-
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("on"),3500);}
 function afterData(){
-  $("cnt").textContent=DATA.length;
-  $("updated").textContent=lastFetch?fmtTime(lastFetch):"–";
+  $("cnt").textContent=DATA.length;$("updated").textContent=lastFetch?fmtTime(lastFetch):"–";
   renderList();
-  $("empMap").classList.toggle("on",DATA.length===0);
-  if(DATA.length){
-    /* 既に選択中ならそのまま、なければ最新の有感地震を自動選択 */
-    if(!sel){ const first=DATA.find(d=>d.mag!=null)||DATA[0]; loadReplay(first,false); }
-  }
+  if(DATA.length&&!sel){const f=DATA.find(d=>d.mag!=null)||DATA[0];loadReplay(f,false);}
 }
-function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function renderList(){
-  const wrap=$("list");wrap.innerHTML="";
+  const wrap=$("pane-list");wrap.innerHTML="";
   for(const q of DATA){
-    const card=document.createElement("div");card.className="card";
+    const card=document.createElement("div");card.className="card2";
     const lab=q.intensity,bg=lab?intColor(lab):"#2a3340";
     const magTxt=(q.mag!=null)?"M"+q.mag.toFixed(1):"M–";
     const depTxt=(q.depth!=null)?q.depth+"km":"深さ不明";
     const reg=(q.points&&q.points.length)?`<span class="mono">${q.points.length}地域</span>`:"";
-    card.innerHTML=
-      `<div class="badge" style="background:${bg};color:${lab?'#0a0e14':'#8b97a6'}"><small>${lab?'震度':''}</small><b>${lab||'–'}</b></div>
-       <div class="cmain"><div class="cplace">${escapeHtml(q.place)}</div>
-         <div class="cmeta"><span class="mono"><b>${magTxt}</b></span><span class="mono">${depTxt}</span>${reg}</div></div>
-       <div class="cright mono">${fmtTime(q.t)}</div>`;
-    card.addEventListener("click",()=>{switchView("replay");loadReplay(q,true);});
+    card.innerHTML=`<div class="badge" style="background:${bg};color:${lab?'#0a0e14':'#8b97a6'}"><small>${lab?'震度':''}</small><b>${lab||'–'}</b></div>
+      <div class="cmain"><div class="cplace">${escapeHtml(q.place)}</div>
+      <div class="cm2"><span class="mono"><b>${magTxt}</b></span><span class="mono">${depTxt}</span>${reg}</div></div>
+      <div class="cright mono">${fmtTime(q.t)}</div>`;
+    card.addEventListener("click",()=>{closeSheet();loadReplay(q,true);});
     wrap.appendChild(card);
   }
 }
 
-/* ===== 地図・アニメ ===== */
-let map=null,canvas=null,ctx=null,sel=null,profile=null;
+/* ===== 地図（全レイヤーをLeafletで＝地図に固定） ===== */
+let map=null,sel=null,profile=null,layerGroup=null;
+let bandCircles=[],sCircle=null,pCircle=null,epi=null;
 let tSim=0,playing=false,speed=2,raf=null,lastTs=0;
 
 function initMap(){
-  if(typeof L==="undefined"){$("empMap").classList.add("on");$("empMap").innerHTML="地図エンジンを読み込めませんでした。<br>通信を確認してください。";return;}
-  map=L.map("map",{center:[37.5,137.8],zoom:5,minZoom:4,maxZoom:12,zoomControl:true,attributionControl:true});
+  if(typeof L==="undefined"){toast("地図エンジンを読み込めませんでした");return;}
+  map=L.map("map",{center:[37.5,137.8],zoom:5,minZoom:4,maxZoom:12,zoomControl:false,zoomSnap:0.5});
   L.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png",{maxZoom:18,attribution:"地理院タイル"}).addTo(map);
-  canvas=$("anim");ctx=canvas.getContext("2d");
-  resizeCanvas();
-  map.on("move zoom",drawFrame);
-  map.on("resize",()=>{resizeCanvas();drawFrame();});
-  window.addEventListener("resize",()=>{resizeCanvas();drawFrame();});
+  layerGroup=L.layerGroup().addTo(map);
   $("playBtn").addEventListener("click",togglePlay);
   $("spdBtn").addEventListener("click",cycleSpeed);
-  $("qPickBtn").addEventListener("click",()=>switchView("list"));
-  $("tl").addEventListener("input",e=>{ if(!profile)return; setPlaying(false); tSim=e.target.value/1000*profile.tEnd; drawFrame(); });
-}
-function resizeCanvas(){
-  if(!canvas)return;
-  const w=canvas.clientWidth||window.innerWidth, h=canvas.clientHeight||window.innerHeight;
-  const dpr=Math.min(window.devicePixelRatio||1,2);
-  canvas.width=w*dpr;canvas.height=h*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
+  $("btnRefresh").addEventListener("click",()=>loadData(false));
+  $("btnMenu").addEventListener("click",openSheet);
+  $("tl").addEventListener("input",e=>{if(!profile)return;setPlaying(false);tSim=e.target.value/1000*profile.tEnd;drawFrame();});
 }
 
 function loadReplay(q,autoplay){
-  sel=q; profile=buildProfile(q);
-  const z=q.depth&&profile.Rmax>500?4:profile.Rmax>250?5:profile.Rmax>120?6:profile.Rmax>60?7:8;
+  sel=q;profile=buildProfile(q);
+  const z=profile.Rmax>500?4:profile.Rmax>250?5:profile.Rmax>120?6:profile.Rmax>60?7:8;
   map.setView([q.lat,q.lng],z,{animate:false});
-  tSim=0; updateInfo(); renderObserved(q); resizeCanvas(); drawFrame();
-  if(autoplay) setPlaying(true); else setPlaying(false);
+  buildLayers();
+  tSim=0;updateInfo();renderObserved(q);drawFrame();
+  setPlaying(!!autoplay);
+}
+function buildLayers(){
+  layerGroup.clearLayers();bandCircles=[];
+  const lat=sel.lat,lng=sel.lng;
+  /* 弱い(大きい)→強い(小さい)の順で重ねる */
+  for(let i=profile.bands.length-1;i>=0;i--){
+    const b=profile.bands[i];
+    const c=L.circle([lat,lng],{radius:0,stroke:false,fillColor:intColor(b.label),fillOpacity:0.45,interactive:false});
+    c.addTo(layerGroup);bandCircles.push({c,rM:b.r*1000});
+  }
+  pCircle=L.circle([lat,lng],{radius:0,fill:false,color:"#ffffff",weight:1.5,opacity:0.5,dashArray:"4 5",interactive:false}).addTo(layerGroup);
+  sCircle=L.circle([lat,lng],{radius:0,fill:false,color:"#ff5a3c",weight:3,opacity:0.95,interactive:false}).addTo(layerGroup);
+  epi=L.circleMarker([lat,lng],{radius:5,color:"#ffffff",weight:2,fillColor:"#0a0e14",fillOpacity:1,interactive:false}).addTo(layerGroup);
 }
 function updateInfo(){
-  const q=sel;
-  const lab=q.intensity;
-  const ib=$("qIb");
+  const q=sel,lab=q.intensity,ib=$("qIb");
   if(lab){ib.style.display="flex";ib.style.background=intColor(lab);ib.innerHTML=`<small>震度</small><b>${lab}</b>`;}
   else ib.style.display="none";
   $("qPlace").textContent=q.place;
@@ -435,96 +357,59 @@ function updateInfo(){
   $("qTime").textContent=fmtTime(q.t);
 }
 function renderObserved(q){
-  const body=$("obsBody"),sum=$("obsSum");
-  body.innerHTML="";
+  const body=$("obsBody"),sum=$("obsSum");body.innerHTML="";
   if(q.points&&q.points.length){
     sum.textContent=`観測された震度（${q.points.length}地域）`;
-    const groups={};for(const p of q.points){const l=scaleLabel(p.scale)||"–";(groups[l]=groups[l]||[]).push(p.addr);}
+    const g={};for(const p of q.points){const l=scaleLabel(p.scale)||"–";(g[l]=g[l]||[]).push(p.addr);}
     for(const l of ["7","6強","6弱","5強","5弱","4","3","2","1"]){
-      if(!groups[l])continue;
+      if(!g[l])continue;
       const row=document.createElement("div");row.className="rgrp";
-      row.innerHTML=`<div class="rbadge" style="background:${intColor(l)}">震度${l}</div><div class="rlist">${groups[l].map(escapeHtml).join("、")}</div>`;
+      row.innerHTML=`<div class="rbadge" style="background:${intColor(l)}">震度${l}</div><div class="rlist">${g[l].map(escapeHtml).join("、")}</div>`;
       body.appendChild(row);
     }
-  }else{
-    sum.textContent="観測された震度";
-    body.innerHTML=`<div class="rnote">地域別の観測データはありません（${q.src}）。マップは推定の広がりです。</div>`;
-  }
-}
-
-function kmToPx(km,lat,lng){
-  const p0=map.latLngToContainerPoint([lat,lng]);
-  const dLng=1/(111.32*Math.cos(lat*Math.PI/180));
-  const p1=map.latLngToContainerPoint([lat,lng+dLng]);
-  return Math.hypot(p1.x-p0.x,p1.y-p0.y)*km;
+  }else{sum.textContent="観測された震度";body.innerHTML=`<div class="rnote">地域別の観測データはありません（${q.src}）。表示は推定です。</div>`;}
 }
 function drawFrame(){
-  if(!ctx||!sel||!profile)return;
-  const w=canvas.clientWidth,h=canvas.clientHeight;
-  ctx.clearRect(0,0,w,h);
-  const lat=sel.lat,lng=sel.lng,D=profile.D;
-  const p0=map.latLngToContainerPoint([lat,lng]);
-  const VsT=VS*tSim, VpT=VP*tSim;
-  const dS=VsT>D?Math.sqrt(VsT*VsT-D*D):0;
-  const dP=VpT>D?Math.sqrt(VpT*VpT-D*D):0;
-  const dSc=Math.min(dS,profile.Rmax), dPc=Math.min(dP,profile.Rmax);
-  const RmaxPx=kmToPx(profile.Rmax,lat,lng);
-  const dSpx=kmToPx(dSc,lat,lng), dPpx=kmToPx(dPc,lat,lng);
-
-  /* 震度の広がり（地表に到達した範囲だけ塗る） */
-  if(dSpx>0.5 && RmaxPx>1){
-    const g=ctx.createRadialGradient(p0.x,p0.y,0,p0.x,p0.y,RmaxPx);
-    for(const s of profile.stops)g.addColorStop(clamp(s.f,0,1),s.col);
-    ctx.beginPath();ctx.arc(p0.x,p0.y,dSpx,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
-  }
-  /* P波フロント（最初の小さな揺れ・速い） */
-  if(dPpx>1){ctx.beginPath();ctx.arc(p0.x,p0.y,dPpx,0,Math.PI*2);ctx.lineWidth=1.5;ctx.strokeStyle="rgba(255,255,255,0.45)";ctx.stroke();}
-  /* S波フロント（強い揺れの先端） */
-  if(dSpx>1){ctx.beginPath();ctx.arc(p0.x,p0.y,dSpx,0,Math.PI*2);ctx.lineWidth=3;ctx.strokeStyle="rgba(255,90,60,0.95)";ctx.stroke();}
-  /* 震源（震央）マーカー */
-  ctx.beginPath();ctx.arc(p0.x,p0.y,4,0,Math.PI*2);ctx.fillStyle="#fff";ctx.fill();
-  ctx.lineWidth=2;ctx.strokeStyle="#0a0e14";ctx.stroke();
-
+  if(!profile||!sel)return;
+  const D=profile.D, VsT=VS*tSim, VpT=VP*tSim;
+  const dS=VsT>D?Math.sqrt(VsT*VsT-D*D):0, dP=VpT>D?Math.sqrt(VpT*VpT-D*D):0;
+  const sM=Math.min(dS,profile.Rmax)*1000, pM=Math.min(dP,profile.Rmax)*1000;
+  for(const bc of bandCircles)bc.c.setRadius(Math.min(bc.rM,sM));
+  if(sCircle)sCircle.setRadius(sM);
+  if(pCircle)pCircle.setRadius(pM);
   $("rT").textContent=tSim.toFixed(1)+"s";
-  $("rR").textContent=Math.round(dSc)+"km";
-  $("rP").textContent=Math.round(dPc)+"km";
+  $("rR").textContent=Math.round(Math.min(dS,profile.Rmax))+"km";
+  $("rP").textContent=Math.round(Math.min(dP,profile.Rmax))+"km";
   if(playing)$("tl").value=Math.round(tSim/profile.tEnd*1000);
 }
-
 function tick(ts){
   if(!playing)return;
   if(!lastTs)lastTs=ts;
-  const dt=(ts-lastTs)/1000;lastTs=ts;
-  tSim+=dt*speed;
+  const dt=(ts-lastTs)/1000;lastTs=ts;tSim+=dt*speed;
   if(tSim>=profile.tEnd){tSim=profile.tEnd;drawFrame();setPlaying(false);return;}
-  drawFrame();
-  raf=requestAnimationFrame(tick);
+  drawFrame();raf=requestAnimationFrame(tick);
 }
 function setPlaying(p){
   playing=p;$("playBtn").textContent=p?"⏸":"▶";
-  if(p){ if(tSim>=profile.tEnd)tSim=0; lastTs=0; cancelAnimationFrame(raf); raf=requestAnimationFrame(tick); }
-  else cancelAnimationFrame(raf);
+  cancelAnimationFrame(raf);
+  if(p){if(tSim>=profile.tEnd)tSim=0;lastTs=0;raf=requestAnimationFrame(tick);}
 }
-function togglePlay(){ if(!profile)return; setPlaying(!playing); }
-function cycleSpeed(){
-  const seq=[1,2,4,8]; speed=seq[(seq.indexOf(speed)+1)%seq.length];
-  $("spdBtn").textContent="×"+speed;
-}
+function togglePlay(){if(profile)setPlaying(!playing);}
+function cycleSpeed(){const s=[1,2,4,8];speed=s[(s.indexOf(speed)+1)%s.length];$("spdBtn").textContent="×"+speed;}
 
-/* ===== タブ ===== */
-function switchView(name){
-  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.v===name));
-  $("v-replay").classList.toggle("on",name==="replay");
-  $("v-list").classList.toggle("on",name==="list");
-  $("v-bosai").classList.toggle("on",name==="bosai");
-  if(name==="replay"&&map)setTimeout(()=>{map.invalidateSize();resizeCanvas();drawFrame();},60);
-}
-document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>switchView(t.dataset.v)));
+/* ===== シート ===== */
+function openSheet(){$("sheet").classList.add("on");$("sheetBg").classList.add("on");}
+function closeSheet(){$("sheet").classList.remove("on");$("sheetBg").classList.remove("on");}
+document.querySelectorAll(".seg button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".seg button").forEach(x=>x.classList.toggle("on",x===b));
+  $("pane-list").classList.toggle("on",b.dataset.s==="list");
+  $("pane-bosai").classList.toggle("on",b.dataset.s==="bosai");
+}));
 
 /* ===== 起動 ===== */
 $("ver").textContent=APP_VERSION;
-$("btnRefresh").addEventListener("click",()=>loadData(false));
 $("spdBtn").textContent="×"+speed;
+$("sheetBg").addEventListener("click",closeSheet);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&Date.now()-lastFetch>REFRESH_AFTER_MS)loadData(true);});
 window.addEventListener("load",()=>{
   initMap();
