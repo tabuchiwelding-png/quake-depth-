@@ -102,7 +102,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 
 <div class="top">
   <div class="brand">震源<b>3D</b></div>
-  <div class="ver" id="ver">v9.0</div>
+  <div class="ver" id="ver">v9.1</div>
   <div class="spacer"></div>
   <div class="tools">
     <button class="tbtn" id="btnRefresh" title="更新">⟳</button>
@@ -159,7 +159,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 
 <script>
 /* ===== 設定 ===== */
-const APP_VERSION="v9.0";
+const APP_VERSION="v9.1";
 const LS_KEY="jeq_cache_v3";
 const LS_ST="jeq_stations_v1";
 const MAX_RECORDS=120, FETCH_TIMEOUT=9000, REFRESH_AFTER_MS=5*60*1000;
@@ -178,6 +178,14 @@ function colNum(I){ // 連続震度→色（観測点バケットの色付けに
   if(I>=6.5)return hex2rgb("#9b1fb0"); if(I>=6.0)return hex2rgb("#c01f1a"); if(I>=5.5)return hex2rgb("#e0432f");
   if(I>=5.0)return hex2rgb("#ed7424"); if(I>=4.5)return hex2rgb("#f0972e"); if(I>=3.5)return hex2rgb("#e6c528");
   if(I>=2.5)return hex2rgb("#2f7fd0"); if(I>=1.5)return hex2rgb("#2f9e6a"); return hex2rgb("#9aa6b2");
+}
+/* 連続カラーランプ（補間面用・なめらか） */
+function rampColor(I){
+  const R=[[0.5,[120,134,148]],[1.5,[154,166,178]],[2.5,[47,158,106]],[3.5,[47,127,208]],[4.5,[230,197,40]],[5.0,[240,151,46]],[5.5,[224,67,47]],[6.0,[192,31,26]],[6.5,[155,31,176]],[7,[170,40,190]]];
+  if(I<=R[0][0])return R[0][1];
+  for(let i=0;i<R.length-1;i++){const a=R[i][0],ca=R[i][1],b=R[i+1][0],cb=R[i+1][1];
+    if(I>=a&&I<=b){const t=(b-a)?(I-a)/(b-a):0;return[ca[0]+(cb[0]-ca[0])*t,ca[1]+(cb[1]-ca[1])*t,ca[2]+(cb[2]-ca[2])*t];}}
+  return R[R.length-1][1];
 }
 
 /* ===== 観測点座標（初回のみ取得→localStorage） ===== */
@@ -275,6 +283,43 @@ function initMap(){
 
 /* ===== 選択・実測再生 ===== */
 let sel=null,obs=[],tEnd=10,tSim=0,playing=false,speed=2,raf=null,lastTs=0;
+let fieldImg=null,fieldBounds=null,lastReached=-1;
+function reachedPts(){const reveal=playing||tSim>0;return reveal?obs.filter(o=>tSim>=o.tS):obs;}
+function rebuildField(){
+  if(!sel||!obs.length){fieldImg=null;return;}
+  const pts=reachedPts();
+  if(!pts.length){fieldImg=null;return;}
+  let minLa=sel.lat,maxLa=sel.lat,minLo=sel.lng,maxLo=sel.lng;
+  for(const o of obs){minLa=Math.min(minLa,o.lat);maxLa=Math.max(maxLa,o.lat);minLo=Math.min(minLo,o.lng);maxLo=Math.max(maxLo,o.lng);}
+  const mLa=(maxLa-minLa)*0.15+0.25,mLo=(maxLo-minLo)*0.15+0.25;
+  minLa-=mLa;maxLa+=mLa;minLo-=mLo;maxLo+=mLo;
+  const W=140,H=140,cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  const ctx=cv.getContext("2d"),img=ctx.createImageData(W,H),d=img.data;
+  const D=(sel.depth!=null)?sel.depth:10;
+  const dS=(VS*tSim>D)?Math.sqrt((VS*tSim)**2-D*D):1e9;
+  const reveal=playing||tSim>0;
+  const cl=Math.cos(sel.lat*Math.PI/180);
+  for(let y=0;y<H;y++){
+    const lat=maxLa-(maxLa-minLa)*(y/(H-1));
+    for(let x=0;x<W;x++){
+      const lng=minLo+(maxLo-minLo)*(x/(W-1));
+      const idx=(y*W+x)*4;
+      const de=Math.sqrt((lat-sel.lat)**2+((lng-sel.lng)*cl)**2)*111;
+      if(reveal&&de>dS+10){d[idx+3]=0;continue;}
+      let num=0,den=0,near=999;
+      for(const o of pts){
+        const dd=Math.sqrt((lat-o.lat)**2+((lng-o.lng)*cl)**2)*111;
+        if(dd<near)near=dd;
+        const w=1/Math.pow(dd+1.5,2.2);num+=w*o.I;den+=w;
+      }
+      if(den<=0||near>65){d[idx+3]=0;continue;}
+      const I=num/den,c=rampColor(I),a=clamp((I-0.4)/6,0,1);
+      d[idx]=c[0]|0;d[idx+1]=c[1]|0;d[idx+2]=c[2]|0;d[idx+3]=Math.round(55+a*155);
+    }
+  }
+  ctx.putImageData(img,0,0);
+  fieldImg=cv;fieldBounds=[minLo,minLa,maxLo,maxLa];
+}
 function buildObs(q){
   const arr=[];
   if(!q.points||q.lat==null||q.lng==null)return arr;
@@ -315,7 +360,11 @@ function obsLayers(){
     stroked:true,getLineColor:[10,16,23,200],lineWidthUnits:"pixels",getLineWidth:.5,
     updateTriggers:{getFillColor:[1]}
   });
-  const layers=[dots];
+  const layers=[];
+  if(fieldImg&&fieldBounds){
+    layers.push(new deck.BitmapLayer({id:"field",image:fieldImg,bounds:fieldBounds,opacity:0.72,parameters:{depthTest:false}}));
+  }
+  layers.push(dots);
   // 実S波フロント（本物の半径・1本の細いリング）
   if(reveal){
     const D=(sel.depth!=null)?sel.depth:10;
@@ -354,6 +403,7 @@ function updateLayers(){ if(overlay)overlay.setProps({layers: sel?obsLayers():ov
 function selectQuake(q,fly){
   sel=q; obs=buildObs(q); tSim=0;
   obs.sort((a,b)=>a.tS-b.tS);
+  fieldImg=null;lastReached=-1;
   tEnd=obs.length?obs[obs.length-1].tS+3:10;
   $("cDh").style.background=q.intensity?SCOL[q.intensity]:"#5a6675";
   $("cPlace").textContent=q.place;
@@ -368,14 +418,16 @@ function selectQuake(q,fly){
   if(fly&&map)map.flyTo({center:[q.lng,q.lat],zoom:Math.max(map.getZoom(),6),pitch:60,duration:1500,essential:true});
   if(obs.length)setPlaying(true);else{$("rT").textContent="0s";$("rR").textContent="0/0";}
 }
-function closeCard(){sel=null;obs=[];setPlaying(false);$("card").classList.remove("on");updateLayers();}
+function closeCard(){sel=null;obs=[];fieldImg=null;setPlaying(false);$("card").classList.remove("on");updateLayers();}
 
 function reached(){return obs.filter(o=>tSim>=o.tS).length;}
 function tick(ts){
   if(!playing)return;
   if(!lastTs)lastTs=ts;
   const dt=(ts-lastTs)/1000;lastTs=ts;tSim+=dt*speed;
-  $("rT").textContent=tSim.toFixed(1)+"s";$("rR").textContent=reached()+"/"+obs.length;
+  const rc=reached();
+  if(rc!==lastReached){lastReached=rc;rebuildField();}
+  $("rT").textContent=tSim.toFixed(1)+"s";$("rR").textContent=rc+"/"+obs.length;
   $("tl").value=Math.round(clamp(tSim/tEnd,0,1)*1000);
   updateLayers();
   if(tSim>=tEnd){setPlaying(false);return;}
@@ -397,6 +449,7 @@ function bind(){
   $("spdBtn").addEventListener("click",cycleSpeed);
   $("spdBtn").textContent="×"+speed;
   $("tl").addEventListener("input",e=>{if(!sel)return;setPlaying(false);tSim=e.target.value/1000*tEnd;
+    lastReached=reached();rebuildField();
     $("rT").textContent=tSim.toFixed(1)+"s";$("rR").textContent=reached()+"/"+obs.length;updateLayers();});
   document.addEventListener("visibilitychange",()=>{if(!document.hidden&&Date.now()-lastFetch>REFRESH_AFTER_MS)loadData(true);});
 }
