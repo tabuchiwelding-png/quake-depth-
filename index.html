@@ -121,7 +121,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 
 <div class="top">
   <div class="brand">震源<b>3D</b></div>
-  <div class="ver" id="ver">v9.4</div>
+  <div class="ver" id="ver">v9.5</div>
   <div class="spacer"></div>
   <div class="tools">
     <button class="tbtn" id="btnRefresh" title="更新">⟳</button>
@@ -196,7 +196,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 
 <script>
 /* ===== 設定 ===== */
-const APP_VERSION="v9.4";
+const APP_VERSION="v9.5";
 const LS_KEY="jeq_cache_v3";
 const LS_ST="jeq_stations_v1";
 const MAX_RECORDS=120, FETCH_TIMEOUT=9000, REFRESH_AFTER_MS=5*60*1000;
@@ -211,6 +211,9 @@ function scaleLabel(s){const m={10:"1",20:"2",30:"3",40:"4",45:"5弱",46:"5弱",
 function scaleNum(s){const m={10:1,20:2,30:3,40:4,45:4.75,46:4.75,50:5.25,55:5.75,60:6.25,70:7};return m[s]||0;}
 function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function hex2rgb(h){const n=parseInt(h.slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255];}
+/* 理論減衰式（司・翠川1999）: 震央距離deltaと深さDから理論震度を計算。分析タブの比較曲線に使用 */
+function pgv(M,D,X){const lv=0.58*M+0.0038*D-1.29-Math.log10(X+0.0028*Math.pow(10,0.5*M))-0.002*X;return Math.pow(10,lv)*1.4;}
+function shindoAt(M,D,delta){const X=Math.sqrt(delta*delta+D*D);const v=pgv(M,D,X);if(v<=0)return 0;return 2.68+1.72*Math.log10(v);}
 function colNum(I){ // 連続震度→色（観測点バケットの色付けに使用）
   if(I>=6.5)return hex2rgb("#9b1fb0"); if(I>=6.0)return hex2rgb("#c01f1a"); if(I>=5.5)return hex2rgb("#e0432f");
   if(I>=5.0)return hex2rgb("#ed7424"); if(I>=4.5)return hex2rgb("#f0972e"); if(I>=3.5)return hex2rgb("#e6c528");
@@ -447,10 +450,13 @@ function drawChart(){
   ctx.fillStyle="#8794a4";ctx.fillText("震度",6,padT+4);ctx.fillText("震央距離 km →",w-86,h-7);
 }
 
+let cachedShown=null,cachedShownN=-2;
 function obsLayers(){
   if(!sel)return [];
   const reveal=playing||tSim>0;
-  const shown=reveal?obs.filter(o=>tSim>=o.tS):obs;
+  const rc=reveal?reached():-1;
+  if(rc!==cachedShownN){cachedShownN=rc;cachedShown=reveal?obs.filter(o=>tSim>=o.tS):obs;}
+  const shown=cachedShown;
   const dots=new deck.ScatterplotLayer({
     id:"obs",data:shown,
     getPosition:o=>[o.lng,o.lat,0],
@@ -464,19 +470,6 @@ function obsLayers(){
     layers.push(new deck.BitmapLayer({id:"field",image:fieldImg,bounds:fieldBounds,opacity:0.72,parameters:{depthTest:false}}));
   }
   layers.push(dots);
-  // 実S波フロント（本物の半径・1本の細いリング）
-  if(reveal){
-    const D=(sel.depth!=null)?sel.depth:10;
-    const dS=VS*tSim>D?Math.sqrt((VS*tSim)**2-D*D):0;
-    if(dS>1){
-      layers.push(new deck.ScatterplotLayer({
-        id:"sfront",data:[{r:dS}],getPosition:()=>[sel.lng,sel.lat,0],
-        getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,
-        getLineColor:[255,90,74,210],lineWidthUnits:"pixels",getLineWidth:2,
-        parameters:{depthTest:false}
-      }));
-    }
-  }
   // 震源（地中）＋震央
   layers.push(new deck.ScatterplotLayer({
     id:"hypo",data:[sel],getPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000],
@@ -502,7 +495,7 @@ function updateLayers(){ if(overlay)overlay.setProps({layers: sel?obsLayers():ov
 function selectQuake(q,fly){
   sel=q; obs=buildObs(q); tSim=0;
   obs.sort((a,b)=>a.tS-b.tS);
-  fieldImg=null;lastReached=-1;
+  fieldImg=null;lastReached=-1;cachedShown=null;cachedShownN=-2;
   tEnd=obs.length?obs[obs.length-1].tS+3:10;
   $("cInt").textContent=q.intensity?("震度"+q.intensity):"—";
   $("cInt").style.color=q.intensity?SCOL[q.intensity]:"var(--text)";
@@ -526,6 +519,7 @@ function selectQuake(q,fly){
 }
 function closeCard(){sel=null;obs=[];fieldImg=null;setPlaying(false);$("minibar").classList.remove("on");$("legend").style.display="";closeSheets();updateLayers();}
 
+let lastLayerTs=0;
 function reached(){return obs.filter(o=>tSim>=o.tS).length;}
 function tick(ts){
   if(!playing)return;
@@ -535,8 +529,8 @@ function tick(ts){
   if(rc!==lastReached){lastReached=rc;rebuildField();}
   updateMiniSub();
   $("tl").value=Math.round(clamp(tSim/tEnd,0,1)*1000);
-  updateLayers();
-  if(tSim>=tEnd){setPlaying(false);return;}
+  if(ts-lastLayerTs>32){lastLayerTs=ts;updateLayers();}
+  if(tSim>=tEnd){updateLayers();setPlaying(false);return;}
   raf=requestAnimationFrame(tick);
 }
 function setPlaying(p){playing=p;$("playBtn").textContent=p?"❚❚":"▶";cancelAnimationFrame(raf);if(p){if(tSim>=tEnd)tSim=0;lastTs=0;raf=requestAnimationFrame(tick);}}
