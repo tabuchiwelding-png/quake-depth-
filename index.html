@@ -43,7 +43,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 /* 浮きパネル（左上・半透明・地図を透かす） */
 .bgt{position:fixed;inset:0;z-index:14;background:transparent;pointer-events:none;}
 .bgt.on{pointer-events:auto;}
-.flypanel{position:fixed;left:12px;top:calc(58px + var(--st));z-index:16;width:min(340px,82vw);max-height:56vh;
+.flypanel{position:fixed;left:12px;top:calc(58px + var(--st));z-index:16;width:min(340px,82vw);max-height:calc(100vh - 210px);
   background:rgba(9,14,20,.66);border:1px solid rgba(255,255,255,.09);border-radius:16px;
   backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%);
   box-shadow:0 16px 44px rgba(0,0,0,.45);display:flex;flex-direction:column;overflow:hidden;
@@ -71,16 +71,25 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 .mb-tl::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#ff5b4a;border:0;}
 .mb-link{flex:0 0 auto;height:27px;padding:0 11px;border-radius:7px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:11px;font-weight:700;font-family:var(--sans);}
 
-.gg{display:flex;flex-wrap:wrap;gap:12px 16px;padding:10px 14px;font-size:12px;}
+.gg{display:flex;flex-wrap:wrap;gap:12px 16px;padding:12px 14px 8px;font-size:12px;}
 .gg div{display:flex;flex-direction:column;gap:1px;}
 .gg .k{font-size:9px;color:var(--dim);font-family:var(--mono);}
-.gg .v{font-family:var(--mono);font-weight:600;font-size:14px;}
+.gg .v{font-family:var(--mono);font-weight:600;font-size:13px;}
 
-.plist{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 14px 14px;font-family:var(--mono);font-size:12px;border-top:1px solid rgba(255,255,255,.06);}
-.anpad{padding:10px 14px 14px;overflow-y:auto;}
-.chart{width:100%;height:220px;display:block;}
-.annote{font-family:var(--mono);font-size:10px;color:var(--dim);line-height:1.6;padding-top:10px;}
-.plh{font-size:9px;color:var(--dim);letter-spacing:.05em;padding:8px 0 6px;}
+.infobody{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:14px;}
+.sec{font-family:var(--mono);font-size:10px;color:#39e0c6;letter-spacing:.06em;padding:14px 14px 6px;border-top:1px solid rgba(255,255,255,.06);margin-top:2px;}
+.plist{padding:0 14px;font-family:var(--mono);font-size:12px;}
+.stattext{padding:2px 14px 8px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.7;}
+.bars{padding:0 14px 4px;}
+.barrow{display:flex;align-items:center;gap:8px;margin:3px 0;font-family:var(--mono);font-size:10px;}
+.barrow .bl{flex:0 0 30px;color:var(--muted);text-align:right;}
+.barrow .bt{flex:1;height:9px;background:#131c26;border-radius:3px;overflow:hidden;}
+.barrow .bt i{display:block;height:100%;border-radius:3px;}
+.barrow .bn{flex:0 0 22px;color:var(--dim);}
+.chart{width:100%;height:200px;display:block;margin-top:2px;}
+.annote{font-family:var(--mono);font-size:10px;color:var(--dim);line-height:1.6;padding:8px 14px 0;}
+.stationnote{font-family:var(--mono);font-size:11px;color:#eef3f8;padding:8px 14px 2px;min-height:1px;}
+.plh{font-size:9px;color:var(--dim);letter-spacing:.05em;padding:2px 0 6px;}
 .prow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #151f2a;}
 .prow:last-child{border:none;}
 .pn{color:var(--muted);}
@@ -121,7 +130,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 
 <div class="top">
   <div class="brand">震源<b>3D</b></div>
-  <div class="ver" id="ver">v9.5</div>
+  <div class="ver" id="ver">v9.6</div>
   <div class="spacer"></div>
   <div class="tools">
     <button class="tbtn" id="btnRefresh" title="更新">⟳</button>
@@ -158,30 +167,31 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
   <div class="mb-bot">
     <input class="mb-tl" id="tl" type="range" min="0" max="1000" value="0">
     <button class="mb-link" id="btnDetail">詳細</button>
-    <button class="mb-link" id="btnAnalysis">分析</button>
   </div>
 </div>
 
-<!-- 詳細パネル（浮き・半透明・左上） -->
-<div class="bgt" id="detbg"></div>
-<div class="flypanel" id="detsheet">
-  <div class="fp-head"><div class="fp-title">概要</div><button class="fp-x" id="detX">×</button></div>
-  <div class="gg">
-    <div><span class="k">最大震度</span><span class="v" id="cInt">–</span></div>
-    <div><span class="k">M</span><span class="v" id="cMag">–</span></div>
-    <div><span class="k">深さ</span><span class="v" id="cDep">–</span></div>
-    <div><span class="k">観測点</span><span class="v" id="cPts">–</span></div>
-  </div>
-  <div class="plist" id="plist"></div>
-</div>
-
-<!-- 分析パネル（浮き・半透明・左上） -->
-<div class="bgt" id="anbg"></div>
-<div class="flypanel fp-wide" id="ansheet">
-  <div class="fp-head"><div class="fp-title">分析 · <span id="anTitle">–</span></div><button class="fp-x" id="anX">×</button></div>
-  <div class="anpad">
+<!-- 情報パネル（浮き・半透明・左上／タブ切替なし・全部テキストで通し表示） -->
+<div class="bgt" id="infobg"></div>
+<div class="flypanel fp-wide" id="infopanel">
+  <div class="fp-head"><div class="fp-title" id="infoTitle">–</div><button class="fp-x" id="infoX">×</button></div>
+  <div class="infobody" id="infobody">
+    <div class="gg">
+      <div><span class="k">最大震度</span><span class="v" id="cInt">–</span></div>
+      <div><span class="k">M</span><span class="v" id="cMag">–</span></div>
+      <div><span class="k">深さ</span><span class="v" id="cDep">–</span></div>
+      <div><span class="k">観測点</span><span class="v" id="cPts">–</span></div>
+      <div><span class="k">発生</span><span class="v" id="cTime">–</span></div>
+      <div><span class="k">震源位置</span><span class="v" id="cLoc">–</span></div>
+    </div>
+    <div class="sec" id="secPref">県別の実測最大震度</div>
+    <div class="plist" id="plist"></div>
+    <div class="sec">観測点の統計</div>
+    <div class="stattext" id="stattext">–</div>
+    <div class="bars" id="bars"></div>
+    <div class="sec">震央距離 × 実測震度（分析）</div>
     <canvas id="chart" class="chart"></canvas>
-    <div class="annote">シアン＝理論減衰（司・翠川1999）／点＝各観測点の実測震度。点が曲線より上＝地盤などで増幅、下＝減衰。</div>
+    <div class="annote" id="annote">シアン＝理論減衰（司・翠川1999）／点＝各観測点の実測震度。点が曲線より上＝地盤などで増幅、下＝減衰。</div>
+    <div class="stationnote" id="stationnote"></div>
   </div>
 </div>
 
@@ -196,7 +206,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 
 <script>
 /* ===== 設定 ===== */
-const APP_VERSION="v9.5";
+const APP_VERSION="v9.6";
 const LS_KEY="jeq_cache_v3";
 const LS_ST="jeq_stations_v1";
 const MAX_RECORDS=120, FETCH_TIMEOUT=9000, REFRESH_AFTER_MS=5*60*1000;
@@ -333,7 +343,7 @@ function rebuildField(){
   for(const o of obs){minLa=Math.min(minLa,o.lat);maxLa=Math.max(maxLa,o.lat);minLo=Math.min(minLo,o.lng);maxLo=Math.max(maxLo,o.lng);}
   const mLa=(maxLa-minLa)*0.15+0.25,mLo=(maxLo-minLo)*0.15+0.25;
   minLa-=mLa;maxLa+=mLa;minLo-=mLo;maxLo+=mLo;
-  const W=200,H=200,cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  const W=224,H=224,cv=document.createElement("canvas");cv.width=W;cv.height=H;
   const ctx=cv.getContext("2d"),img=ctx.createImageData(W,H),d=img.data;
   const grid=new Float64Array(W*H);grid.fill(NaN);
   const D=(sel.depth!=null)?sel.depth:10;
@@ -346,17 +356,20 @@ function rebuildField(){
       const lng=minLo+(maxLo-minLo)*(x/(W-1));
       const idx=(y*W+x)*4;
       const de=Math.sqrt((lat-sel.lat)**2+((lng-sel.lng)*cl)**2)*111;
-      if(reveal&&de>dS+10){d[idx+3]=0;continue;}
+      if(reveal&&de>dS+28){d[idx+3]=0;continue;}
+      const edgeFeather=reveal?clamp((dS+28-de)/28,0,1):1;
       let num=0,den=0,near=999;
       for(const o of pts){
         const dd=Math.sqrt((lat-o.lat)**2+((lng-o.lng)*cl)**2)*111;
         if(dd<near)near=dd;
-        const w=1/Math.pow(dd+1.5,2.2);num+=w*o.I;den+=w;
+        const w=1/Math.pow(dd+1.5,2.15);num+=w*o.I;den+=w;
       }
-      if(den<=0||near>65){d[idx+3]=0;continue;}
-      const I=num/den,c=rampColor(I),a=clamp((I-0.4)/6,0,1);
+      if(den<=0||near>85){d[idx+3]=0;continue;}
+      const nearFeather=clamp((85-near)/22,0,1);
+      const I=num/den,c=rampColor(I),a=clamp((I-0.3)/6.3,0,1);
       grid[y*W+x]=I;
-      d[idx]=c[0]|0;d[idx+1]=c[1]|0;d[idx+2]=c[2]|0;d[idx+3]=Math.round(55+a*155);
+      d[idx]=c[0]|0;d[idx+1]=c[1]|0;d[idx+2]=c[2]|0;
+      d[idx+3]=Math.round((60+a*195)*edgeFeather*nearFeather);
     }
   }
   ctx.putImageData(img,0,0);
@@ -390,7 +403,7 @@ function buildObs(q){
     if(!c)continue;
     const delta=Math.sqrt((c[0]-q.lat)**2+((c[1]-q.lng)*Math.cos(q.lat*Math.PI/180))**2)*111;
     const slant=Math.sqrt(delta*delta+D*D);
-    arr.push({lat:c[0],lng:c[1],scale:p.scale,I:scaleNum(p.scale),tS:slant/VS,delta});
+    arr.push({lat:c[0],lng:c[1],scale:p.scale,I:scaleNum(p.scale),tS:slant/VS,delta,name:p.addr||"観測点",pref:p.pref||""});
   }
   return arr;
 }
@@ -408,7 +421,44 @@ function renderPref(q){
   wrap.innerHTML=html;
 }
 
-/* ===== 分析タブ：震央距離×実測震度 散布図＋理論減衰曲線 ===== */
+/* ===== 観測点の統計（実測データから計算・テキストで説明） ===== */
+function stationStats(){
+  if(!obs.length)return null;
+  const vals=obs.map(o=>o.I);
+  const n=vals.length;
+  const mean=vals.reduce((a,b)=>a+b,0)/n;
+  const max=Math.max(...vals),min=Math.min(...vals);
+  const sd=Math.sqrt(vals.reduce((a,b)=>a+(b-mean)**2,0)/n);
+  const M=(sel.mag!=null)?sel.mag:4.5,D=(sel.depth!=null)?sel.depth:10;
+  let sumRes=0;for(const o of obs)sumRes+=(o.I-shindoAt(M,D,o.delta));
+  const meanRes=sumRes/n;
+  return {n,mean,max,min,sd,meanRes};
+}
+function renderStats(){
+  const s=stationStats();
+  if(!s){$("stattext").textContent="観測点データなし";$("bars").innerHTML="";return;}
+  let resTxt;
+  if(Math.abs(s.meanRes)<0.15)resTxt="実測は理論減衰とほぼ一致しています。";
+  else if(s.meanRes>=0.15)resTxt="実測は理論より平均+"+s.meanRes.toFixed(2)+"大きい傾向（地盤や地形の影響が考えられます）。";
+  else resTxt="実測は理論より平均"+s.meanRes.toFixed(2)+"小さい傾向です。";
+  $("stattext").innerHTML=
+    "観測点 "+s.n+"件　平均震度 "+s.mean.toFixed(2)+"　最大 "+s.max.toFixed(1)+"　最小 "+s.min.toFixed(1)+"　標準偏差 "+s.sd.toFixed(2)+"<br>"+resTxt;
+  const order=["7","6強","6弱","5強","5弱","4","3","2","1"];
+  const counts={};for(const k of order)counts[k]=0;
+  for(const o of obs){const lab=scaleLabel(o.scale);if(lab&&counts[lab]!=null)counts[lab]++;}
+  const maxC=Math.max(1,...order.map(k=>counts[k]));
+  let html="";
+  for(const k of order){const c=counts[k];if(!c)continue;
+    const pct=Math.round((c/maxC)*100);
+    html+=`<div class="barrow"><span class="bl">${k}</span><div class="bt"><i style="width:${pct}%;background:${SCOL[k]}"></i></div><span class="bn">${c}</span></div>`;}
+  $("bars").innerHTML=html||'<div class="plh">内訳なし</div>';
+}
+function showStationDetail(o){
+  const lab=scaleLabel(o.scale)||"—";
+  const msg=(o.name||"観測点")+" ・ 震度"+lab+" ・ 震央から"+Math.round(o.delta)+"km";
+  if($("infopanel").classList.contains("on")){$("stationnote").textContent="タップした観測点: "+msg;}
+  else toast(msg);
+}
 function updateMiniSub(){
   if(!sel)return;
   if(playing||tSim>0){
@@ -458,16 +508,17 @@ function obsLayers(){
   if(rc!==cachedShownN){cachedShownN=rc;cachedShown=reveal?obs.filter(o=>tSim>=o.tS):obs;}
   const shown=cachedShown;
   const dots=new deck.ScatterplotLayer({
-    id:"obs",data:shown,
+    id:"obs",data:shown,pickable:true,
     getPosition:o=>[o.lng,o.lat,0],
     getRadius:o=>3+o.I*1.1,radiusUnits:"pixels",radiusMinPixels:2.5,
     getFillColor:o=>{const c=colNum(o.I);return [c[0],c[1],c[2],235];},
     stroked:true,getLineColor:[10,16,23,200],lineWidthUnits:"pixels",getLineWidth:.5,
+    onClick:info=>{if(info&&info.object)showStationDetail(info.object);},
     updateTriggers:{getFillColor:[1]}
   });
   const layers=[];
   if(fieldImg&&fieldBounds){
-    layers.push(new deck.BitmapLayer({id:"field",image:fieldImg,bounds:fieldBounds,opacity:0.72,parameters:{depthTest:false}}));
+    layers.push(new deck.BitmapLayer({id:"field",image:fieldImg,bounds:fieldBounds,opacity:0.84,parameters:{depthTest:false}}));
   }
   layers.push(dots);
   // 震源（地中）＋震央
@@ -502,13 +553,17 @@ function selectQuake(q,fly){
   $("cMag").textContent=(q.mag!=null)?q.mag.toFixed(1):"—";
   $("cDep").textContent=(q.depth!=null)?q.depth+"km":"—";
   $("cPts").textContent=obs.length?obs.length:"—";
+  $("cTime").textContent=fmtTime(q.t);
+  $("cLoc").textContent=(q.lat!=null&&q.lng!=null)?(q.lat.toFixed(2)+"N "+q.lng.toFixed(2)+"E"):"—";
   renderPref(q);
+  renderStats();
+  $("stationnote").textContent="";
   // 最小バー
   $("mbChip").textContent=q.intensity?("震度"+q.intensity):"震度?";
   $("mbChip").style.background=q.intensity?SCOL[q.intensity]:"#26303c";
   $("mbChip").style.color=q.intensity?"#05080d":"#8794a4";
   $("mbPlace").textContent=q.place;
-  $("anTitle").textContent=q.place;
+  $("infoTitle").textContent=q.place;
   $("minibar").classList.add("on");
   $("legend").style.display="none";
   closeSheets();
@@ -516,6 +571,7 @@ function selectQuake(q,fly){
   updateLayers();
   if(fly&&map)map.flyTo({center:[q.lng,q.lat],zoom:Math.max(map.getZoom(),6),pitch:60,duration:1500,essential:true});
   if(obs.length)setPlaying(true);
+  setTimeout(drawChart,60);
 }
 function closeCard(){sel=null;obs=[];fieldImg=null;setPlaying(false);$("minibar").classList.remove("on");$("legend").style.display="";closeSheets();updateLayers();}
 
@@ -538,25 +594,21 @@ function togglePlay(){if(sel&&obs.length)setPlaying(!playing);}
 function cycleSpeed(){const s=[1,2,4,8];speed=s[(s.indexOf(speed)+1)%s.length];$("spdBtn").textContent="×"+speed;}
 
 function closeSheets(){
-  ["sheet","detsheet","ansheet"].forEach(id=>$(id).classList.remove("on"));
-  $("bg").classList.remove("on");$("detbg").classList.remove("on");$("anbg").classList.remove("on");
+  ["sheet","infopanel"].forEach(id=>$(id).classList.remove("on"));
+  $("bg").classList.remove("on");$("infobg").classList.remove("on");
 }
 function openSheet(){closeSheets();$("sheet").classList.add("on");$("bg").classList.add("on");}
-function openDetail(){if(!sel)return;closeSheets();$("detsheet").classList.add("on");$("detbg").classList.add("on");}
-function openAnalysis(){if(!sel)return;closeSheets();$("ansheet").classList.add("on");$("anbg").classList.add("on");setTimeout(drawChart,60);}
+function openInfo(){if(!sel)return;closeSheets();$("infopanel").classList.add("on");$("infobg").classList.add("on");setTimeout(drawChart,60);}
 function closeSheet(){closeSheets();}
 
 function bind(){
   $("btnRefresh").addEventListener("click",()=>loadData(false));
   $("btnList").addEventListener("click",openSheet);
   $("bg").addEventListener("click",closeSheet);
-  $("detbg").addEventListener("click",closeSheet);
-  $("anbg").addEventListener("click",closeSheet);
-  $("detX").addEventListener("click",closeSheet);
-  $("anX").addEventListener("click",closeSheet);
+  $("infobg").addEventListener("click",closeSheet);
+  $("infoX").addEventListener("click",closeSheet);
   $("cX").addEventListener("click",closeCard);
-  $("btnDetail").addEventListener("click",openDetail);
-  $("btnAnalysis").addEventListener("click",openAnalysis);
+  $("btnDetail").addEventListener("click",openInfo);
   $("playBtn").addEventListener("click",togglePlay);
   $("spdBtn").addEventListener("click",cycleSpeed);
   $("spdBtn").textContent="×"+speed;
