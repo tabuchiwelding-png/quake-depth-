@@ -4,195 +4,158 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <title>震源 3D</title>
-<meta name="description" content="日本の地震を衛星写真の3Dで再現。各観測点の実測震度を正確な位置に配置し、波の到達タイミングで点灯。県別震度は実測の最大値。データ: P2P地震情報(気象庁)＋気象庁震度観測点座標。">
+<meta name="description" content="日本の地震を衛星写真の3Dで再現。各観測点の実測震度を正確な位置に配置し、波の到達で震度分布が広がる。データ: P2P地震情報(気象庁)＋気象庁震度観測点座標。">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/deck.gl@8.9.35/dist.min.js"></script>
 <style>
-:root{--ink:#05080d;--text:#eef3f8;--muted:#8794a4;--dim:#54616f;--line:#1b2733;
+/* ===== CSS変数（原則③：最初に全定義） ===== */
+:root{
+  --ink:#05080d; --text:#eef3f8; --muted:#8794a4; --dim:#54616f; --line:#1b2733;
+  --cyan:#3ae2c8; --cyan-dim:#1f8f7f; --accent:#ff5b4a;
   --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
   --sans:system-ui,-apple-system,"Hiragino Kaku Gothic ProN",sans-serif;
   --s1:#9aa6b2;--s2:#2f9e6a;--s3:#2f7fd0;--s4:#e6c528;--s5w:#f0972e;
   --s5s:#ed7424;--s6w:#e0432f;--s6s:#c01f1a;--s7:#9b1fb0;
-  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);}
+  --st:env(safe-area-inset-top,0px); --sb:env(safe-area-inset-bottom,0px);
+  --shadow:0 1px 2px rgba(0,0,0,.95), 0 2px 10px rgba(0,0,0,.65);
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(--text);font-family:var(--sans);-webkit-text-size-adjust:100%;}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
 #map{position:fixed;inset:0;}
-.topfade{position:fixed;left:0;right:0;top:0;height:150px;z-index:5;pointer-events:none;
-  background:linear-gradient(to bottom,rgba(4,7,11,.65),rgba(4,7,11,0));}
-.maplibregl-ctrl-attrib{font-size:9px!important;background:rgba(5,8,13,.55)!important;}
+.maplibregl-ctrl-attrib{font-size:9px!important;background:rgba(5,8,13,.5)!important;}
 .maplibregl-ctrl-attrib a{color:#5a83b0!important;}
 .maplibregl-ctrl-bottom-right{margin-bottom:calc(2px + var(--sb));}
 
-.top{position:fixed;left:12px;right:12px;top:calc(10px + var(--st));z-index:10;display:flex;align-items:center;gap:10px;}
-.brand{font-size:16px;font-weight:700;white-space:nowrap;letter-spacing:.01em;text-shadow:0 1px 6px rgba(0,0,0,.6);}
-.brand b{color:#ff5b4a;}
-.ver{font-family:var(--mono);font-size:11px;color:#ff8f82;background:rgba(8,13,19,.75);border:1px solid var(--line);border-radius:7px;padding:3px 7px;backdrop-filter:blur(10px);}
+/* ===== 上：ブランド＋操作（待機時のみ⟳☰／選択時は×） ===== */
+.top{position:fixed;left:14px;right:12px;top:calc(12px + var(--st));z-index:20;display:flex;align-items:center;gap:9px;pointer-events:none;}
+.brand{font-size:16px;font-weight:700;white-space:nowrap;letter-spacing:.01em;text-shadow:var(--shadow);}
+.brand b{color:var(--accent);}
+.ver{font-family:var(--mono);font-size:10px;color:#ff9d92;text-shadow:var(--shadow);}
 .spacer{flex:1;}
-.tbtn{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:rgba(8,13,19,.75);color:var(--text);
-  font-size:15px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px);}
-.tools{display:flex;gap:7px;}
+.tools{display:flex;gap:8px;pointer-events:auto;}
+.tbtn{width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(8,13,19,.55);color:var(--text);
+  font-size:15px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.tbtn.hidden{display:none;}
+#btnClose{color:#ffb3ab;font-size:17px;}
 
-.legend{position:fixed;left:12px;bottom:calc(14px + var(--sb));z-index:9;font-family:var(--mono);font-size:10px;color:var(--muted);
-  background:rgba(8,13,19,.62);border:1px solid var(--line);border-radius:10px;padding:8px 10px;backdrop-filter:blur(8px);}
-.lr{display:flex;align-items:center;gap:6px;margin:2px 0;}
-.lr i{width:10px;height:10px;border-radius:3px;}
+/* ===== 初回ヒント ===== */
+.hint{position:fixed;left:50%;bottom:calc(56px + var(--sb));transform:translateX(-50%);z-index:8;font-family:var(--mono);
+  font-size:11px;color:var(--muted);pointer-events:none;transition:opacity .6s;text-align:center;text-shadow:var(--shadow);}
 
-/* 浮きパネル（左上・半透明・地図を透かす） */
-.bgt{position:fixed;inset:0;z-index:14;background:transparent;pointer-events:none;}
-.bgt.on{pointer-events:auto;}
-.flypanel{position:fixed;left:12px;top:calc(58px + var(--st));z-index:16;width:min(340px,82vw);max-height:calc(100vh - 210px);
-  background:rgba(9,14,20,.66);border:1px solid rgba(255,255,255,.09);border-radius:16px;
-  backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%);
-  box-shadow:0 16px 44px rgba(0,0,0,.45);display:flex;flex-direction:column;overflow:hidden;
-  transform:translateX(-120%) scale(.97);opacity:0;transition:transform .28s cubic-bezier(.2,.85,.25,1),opacity .22s;}
-.flypanel.on{transform:translateX(0) scale(1);opacity:1;}
-.flypanel.fp-wide{width:min(380px,86vw);}
-.fp-head{display:flex;align-items:center;gap:8px;padding:12px 12px 8px;border-bottom:1px solid rgba(255,255,255,.06);}
-.fp-title{flex:1;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.fp-x{flex:0 0 26px;height:26px;border:0;background:transparent;color:var(--muted);font-size:16px;}
+/* ===== HUD（再生中だけ・地図に直接透過／背景なし・影のみ） ===== */
+.hud{position:fixed;inset:0;z-index:9;pointer-events:none;opacity:0;transition:opacity .4s;}
+.hud.on{opacity:1;}
+.hud-top{position:absolute;left:14px;right:60px;top:calc(52px + var(--st));}
+.hud-place{font-size:16px;font-weight:700;color:#fff;text-shadow:var(--shadow);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hud-meta{margin-top:3px;font-family:var(--mono);font-size:11.5px;color:var(--cyan);text-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;}
+.hud-meta .k{color:var(--cyan-dim);font-size:9.5px;margin-right:3px;}
+.hud-meta .int{font-weight:600;}
+.hud-meta .t{color:#9feadd;font-size:10.5px;}
+/* 左下：散布図＋統計＋震度別バー（地図に直接・パネル無し） */
+.hud-left{position:absolute;left:10px;bottom:calc(16px + var(--sb));width:218px;display:flex;flex-direction:column;gap:7px;}
+#scat{width:218px;height:116px;display:block;}
+.hud-stats{font-family:var(--mono);font-size:9.5px;line-height:1.55;color:var(--cyan);text-shadow:var(--shadow);}
+.hud-bars{display:flex;flex-direction:column;gap:2px;}
+.hb{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9.5px;text-shadow:var(--shadow);}
+.hb .l{flex:0 0 26px;color:var(--muted);text-align:right;}
+.hb .t{flex:1;height:7px;border-radius:2px;background:rgba(0,0,0,.28);overflow:hidden;}
+.hb .t i{display:block;height:100%;border-radius:2px;box-shadow:0 0 6px rgba(0,0,0,.5) inset;}
+.hb .n{flex:0 0 24px;color:var(--cyan);}
+/* 右下：県別の実測最大震度（透過・小さく） */
+.hud-pref{position:absolute;right:12px;bottom:calc(18px + var(--sb));width:128px;text-align:left;}
+.hud-pref .ph{font-family:var(--mono);font-size:9px;color:var(--cyan-dim);letter-spacing:.05em;margin-bottom:4px;text-shadow:var(--shadow);}
+.hp{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;line-height:1.7;text-shadow:var(--shadow);}
+.hp .n{color:#c8d4de;}
+.hp .v{font-weight:600;}
 
-.minibar{position:fixed;left:10px;right:10px;bottom:calc(10px + var(--sb));z-index:12;background:rgba(8,13,19,.92);
-  border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(12px);box-shadow:0 8px 30px rgba(0,0,0,.5);
-  padding:8px 10px;transform:translateY(170%);transition:transform .3s cubic-bezier(.2,.85,.25,1);}
-.minibar.on{transform:translateY(0);}
-.mb-top{display:flex;align-items:center;gap:9px;}
-.mb-chip{flex:0 0 auto;min-width:42px;height:34px;padding:0 8px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px;color:#05080d;background:#26303c;}
-.mb-main{flex:1;min-width:0;}
-.mb-place{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.mb-sub{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
-.mb-play{flex:0 0 36px;height:36px;border-radius:9px;border:0;background:#ff5b4a;color:#05080d;font-size:14px;font-weight:600;}
-.mb-spd{flex:0 0 auto;height:36px;min-width:40px;border-radius:9px;border:1px solid var(--line);background:#0d141c;color:var(--text);font-family:var(--mono);font-weight:600;font-size:11px;}
-.mb-x{flex:0 0 28px;height:30px;border:0;background:transparent;color:var(--muted);font-size:17px;}
-.mb-bot{display:flex;align-items:center;gap:9px;margin-top:7px;}
-.mb-tl{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:#1c2935;}
-.mb-tl::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#ff5b4a;border:0;}
-.mb-link{flex:0 0 auto;height:27px;padding:0 11px;border-radius:7px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:11px;font-weight:700;font-family:var(--sans);}
+/* ===== トランスポート（選択直後＆タップで一瞬戻る） ===== */
+.tr{position:fixed;left:12px;right:12px;bottom:calc(12px + var(--sb));z-index:22;display:flex;align-items:center;gap:11px;
+  padding:9px 11px;border-radius:14px;background:rgba(8,13,19,.62);border:1px solid rgba(255,255,255,.10);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 8px 30px rgba(0,0,0,.45);
+  transform:translateY(150%);opacity:0;transition:transform .3s cubic-bezier(.2,.85,.25,1),opacity .25s;}
+.tr.on{transform:translateY(0);opacity:1;}
+.tr-play{flex:0 0 46px;height:46px;border-radius:12px;border:0;background:var(--accent);color:#05080d;font-size:17px;font-weight:600;}
+.tr-tl{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:#22303d;}
+.tr-tl::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:0;}
+.tr-spd{flex:0 0 auto;height:44px;min-width:46px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:rgba(13,20,28,.8);color:var(--text);font-family:var(--mono);font-weight:600;font-size:12px;}
 
-.gg{display:flex;flex-wrap:wrap;gap:12px 16px;padding:12px 14px 8px;font-size:12px;}
-.gg div{display:flex;flex-direction:column;gap:1px;}
-.gg .k{font-size:9px;color:var(--dim);font-family:var(--mono);}
-.gg .v{font-family:var(--mono);font-weight:600;font-size:13px;}
-
-.infobody{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:14px;}
-.sec{font-family:var(--mono);font-size:10px;color:#39e0c6;letter-spacing:.06em;padding:14px 14px 6px;border-top:1px solid rgba(255,255,255,.06);margin-top:2px;}
-.plist{padding:0 14px;font-family:var(--mono);font-size:12px;}
-.stattext{padding:2px 14px 8px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.7;}
-.bars{padding:0 14px 4px;}
-.barrow{display:flex;align-items:center;gap:8px;margin:3px 0;font-family:var(--mono);font-size:10px;}
-.barrow .bl{flex:0 0 30px;color:var(--muted);text-align:right;}
-.barrow .bt{flex:1;height:9px;background:#131c26;border-radius:3px;overflow:hidden;}
-.barrow .bt i{display:block;height:100%;border-radius:3px;}
-.barrow .bn{flex:0 0 22px;color:var(--dim);}
-.chart{width:100%;height:200px;display:block;margin-top:2px;}
-.annote{font-family:var(--mono);font-size:10px;color:var(--dim);line-height:1.6;padding:8px 14px 0;}
-.stationnote{font-family:var(--mono);font-size:11px;color:#eef3f8;padding:8px 14px 2px;min-height:1px;}
-.plh{font-size:9px;color:var(--dim);letter-spacing:.05em;padding:2px 0 6px;}
-.prow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #151f2a;}
-.prow:last-child{border:none;}
-.pn{color:var(--muted);}
-.pv{font-weight:600;}
-
-.bg{position:fixed;inset:0;background:rgba(2,4,7,.55);z-index:20;opacity:0;pointer-events:none;transition:opacity .25s;}
+/* ===== 一覧シート ===== */
+.bg{position:fixed;inset:0;background:rgba(2,4,7,.55);z-index:30;opacity:0;pointer-events:none;transition:opacity .25s;}
 .bg.on{opacity:1;pointer-events:auto;}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:30;height:78%;background:var(--ink);border-top:1px solid var(--line);
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;height:78%;background:var(--ink);border-top:1px solid var(--line);
   border-radius:18px 18px 0 0;transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.85,.25,1);display:flex;flex-direction:column;}
 .sheet.on{transform:translateY(0);}
 .hd{width:38px;height:4px;border-radius:2px;background:#283643;margin:10px auto 4px;}
 .stt{text-align:center;font-family:var(--mono);font-size:10px;color:var(--dim);padding-bottom:8px;}
 .stt b{color:var(--muted);}
 .list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 12px calc(18px + var(--sb));}
-.row{display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid #101a24;}
+.row{display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid #101a24;min-height:44px;}
 .row:active{background:#0a121a;}
 .rb{flex:0 0 auto;width:42px;height:42px;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;color:#05080d;}
 .rb.dim{background:#26303c;color:#8794a4;}
-.rb .k{font-family:var(--mono);font-size:8px;font-weight:600;}.rb .v{font-family:var(--mono);font-weight:600;font-size:17px;}
+.rb .k{font-family:var(--mono);font-size:8px;font-weight:600;}
+.rb .v{font-family:var(--mono);font-weight:600;font-size:16px;}
 .rm{flex:1;min-width:0;}
 .rp{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .rs{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px;}
 .rt{flex:0 0 auto;font-family:var(--mono);font-size:11px;color:var(--dim);}
 
-.toast{position:fixed;left:50%;bottom:calc(20px + var(--sb));transform:translateX(-50%);z-index:40;background:#0c151e;
+/* ===== トースト・スピナー（原則⑨） ===== */
+.toast{position:fixed;left:50%;bottom:calc(80px + var(--sb));transform:translateX(-50%);z-index:40;background:#0c151e;
   border:1px solid var(--line);color:var(--text);padding:9px 15px;border-radius:8px;font-family:var(--mono);font-size:12px;
   opacity:0;pointer-events:none;transition:opacity .25s;max-width:88%;text-align:center;}
 .toast.on{opacity:1;}
-.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--dim);border-top-color:#ff5b4a;border-radius:50%;vertical-align:-2px;animation:sp .8s linear infinite;}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--dim);border-top-color:var(--accent);border-radius:50%;vertical-align:-2px;animation:sp .8s linear infinite;}
 @keyframes sp{to{transform:rotate(360deg);}}
-.hint{position:fixed;left:50%;bottom:calc(70px + var(--sb));transform:translateX(-50%);z-index:8;font-family:var(--mono);
-  font-size:11px;color:var(--dim);pointer-events:none;transition:opacity .6s;text-align:center;background:rgba(5,8,13,.5);padding:5px 10px;border-radius:6px;}
 </style>
 </head>
 <body>
 <div id="map"></div>
-<div class="topfade"></div>
 
 <div class="top">
   <div class="brand">震源<b>3D</b></div>
-  <div class="ver" id="ver">v9.6</div>
+  <div class="ver" id="ver">v10.0</div>
   <div class="spacer"></div>
   <div class="tools">
     <button class="tbtn" id="btnRefresh" title="更新">⟳</button>
     <button class="tbtn" id="btnList" title="一覧">☰</button>
+    <button class="tbtn hidden" id="btnClose" title="閉じる">×</button>
   </div>
 </div>
 
-<div class="legend" id="legend">
-  <div class="lr"><i style="background:var(--s7)"></i>7</div>
-  <div class="lr"><i style="background:var(--s6s)"></i>6強</div>
-  <div class="lr"><i style="background:var(--s6w)"></i>6弱</div>
-  <div class="lr"><i style="background:var(--s5s)"></i>5強</div>
-  <div class="lr"><i style="background:var(--s5w)"></i>5弱</div>
-  <div class="lr"><i style="background:var(--s4)"></i>4</div>
-  <div class="lr"><i style="background:var(--s3)"></i>3</div>
-  <div class="lr"><i style="background:var(--s2)"></i>2</div>
-  <div class="lr"><i style="background:var(--s1)"></i>1</div>
-</div>
+<div class="hint" id="hint">☰ から地震を選ぶ ／ 2本指で傾ける・回す</div>
 
-<div class="hint" id="hint">2本指で傾ける・回す / 震源をタップ</div>
-
-<!-- 最小バー（選択中だけ・地図を主役に） -->
-<div class="minibar" id="minibar">
-  <div class="mb-top">
-    <div class="mb-chip" id="mbChip">–</div>
-    <div class="mb-main">
-      <div class="mb-place" id="mbPlace">–</div>
-      <div class="mb-sub" id="mbSub">–</div>
+<!-- ===== HUD：再生中だけ地図に透過表示（Q3-7,12-18） ===== -->
+<div class="hud" id="hud">
+  <div class="hud-top">
+    <div class="hud-place" id="hudPlace">–</div>
+    <div class="hud-meta">
+      <span><span class="k">M</span><span id="hudM">–</span></span>
+      <span><span class="k">深さ</span><span id="hudD">–</span></span>
+      <span><span class="k">最大</span><span class="int" id="hudInt">–</span></span>
+      <span><span class="k">到達</span><span id="hudR">–</span></span>
+      <span class="t" id="hudT">0.0s</span>
     </div>
-    <button class="mb-play" id="playBtn">▶</button>
-    <button class="mb-spd" id="spdBtn">×2</button>
-    <button class="mb-x" id="cX">×</button>
   </div>
-  <div class="mb-bot">
-    <input class="mb-tl" id="tl" type="range" min="0" max="1000" value="0">
-    <button class="mb-link" id="btnDetail">詳細</button>
+  <div class="hud-left">
+    <canvas id="scat"></canvas>
+    <div class="hud-stats" id="hudStats"></div>
+    <div class="hud-bars" id="hudBars"></div>
+  </div>
+  <div class="hud-pref">
+    <div class="ph">県別実測最大</div>
+    <div id="hudPref"></div>
   </div>
 </div>
 
-<!-- 情報パネル（浮き・半透明・左上／タブ切替なし・全部テキストで通し表示） -->
-<div class="bgt" id="infobg"></div>
-<div class="flypanel fp-wide" id="infopanel">
-  <div class="fp-head"><div class="fp-title" id="infoTitle">–</div><button class="fp-x" id="infoX">×</button></div>
-  <div class="infobody" id="infobody">
-    <div class="gg">
-      <div><span class="k">最大震度</span><span class="v" id="cInt">–</span></div>
-      <div><span class="k">M</span><span class="v" id="cMag">–</span></div>
-      <div><span class="k">深さ</span><span class="v" id="cDep">–</span></div>
-      <div><span class="k">観測点</span><span class="v" id="cPts">–</span></div>
-      <div><span class="k">発生</span><span class="v" id="cTime">–</span></div>
-      <div><span class="k">震源位置</span><span class="v" id="cLoc">–</span></div>
-    </div>
-    <div class="sec" id="secPref">県別の実測最大震度</div>
-    <div class="plist" id="plist"></div>
-    <div class="sec">観測点の統計</div>
-    <div class="stattext" id="stattext">–</div>
-    <div class="bars" id="bars"></div>
-    <div class="sec">震央距離 × 実測震度（分析）</div>
-    <canvas id="chart" class="chart"></canvas>
-    <div class="annote" id="annote">シアン＝理論減衰（司・翠川1999）／点＝各観測点の実測震度。点が曲線より上＝地盤などで増幅、下＝減衰。</div>
-    <div class="stationnote" id="stationnote"></div>
-  </div>
+<!-- ===== トランスポート（Q8-10：普段は消え、タップで一瞬戻る） ===== -->
+<div class="tr" id="tr">
+  <button class="tr-play" id="playBtn">▶</button>
+  <input class="tr-tl" id="tl" type="range" min="0" max="1000" value="0">
+  <button class="tr-spd" id="spdBtn">×2</button>
 </div>
 
 <div class="bg" id="bg"></div>
@@ -205,14 +168,24 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 <div class="toast" id="toast"></div>
 
 <script>
-/* ===== 設定 ===== */
-const APP_VERSION="v9.6";
-const LS_KEY="jeq_cache_v3";
+/* ============================================================
+   震源3D v10.0
+   仕様（20問で確定）:
+   - 待機中は地図のみ（ピン無し） / 選択は一覧☰から / 手動▶で再生
+   - 再生中はHUDだけを地図に直接透過（帯・散布図・件数バー・県別・統計）
+   - タップで操作バーが一瞬戻る / 終了で地図だけに戻る / ×は常時右上
+   ============================================================ */
+
+/* ===== 設定・定数 ===== */
+const APP_VERSION="v10.0";
+const LS_KEY="jeq_cache_v3";          // 原則④ キーにバージョン
 const LS_ST="jeq_stations_v1";
-const MAX_RECORDS=120, FETCH_TIMEOUT=9000, REFRESH_AFTER_MS=5*60*1000;
-const BBOX={latMin:24,latMax:46,lngMin:122,lngMax:154};
-const VP=6.9, VS=3.9;  // km/s 代表値
+const MAX_RECORDS=120, FETCH_TIMEOUT=9000, REFRESH_AFTER_MS=5*60*1000;  // 原則⑤ 上限明記
+const VP=6.9, VS=3.9;                  // km/s 代表値
 const SCOL={"1":"#9aa6b2","2":"#2f9e6a","3":"#2f7fd0","4":"#e6c528","5弱":"#f0972e","5強":"#ed7424","6弱":"#e0432f","6強":"#c01f1a","7":"#9b1fb0"};
+const FIELD_MS=170, HUD_MS=150;        // 再構築スロットル（繊細さと負荷の両立）
+
+/* ===== ユーティリティ ===== */
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
 const fmtTime=ms=>{const d=new Date(ms);return `${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
@@ -221,15 +194,11 @@ function scaleLabel(s){const m={10:"1",20:"2",30:"3",40:"4",45:"5弱",46:"5弱",
 function scaleNum(s){const m={10:1,20:2,30:3,40:4,45:4.75,46:4.75,50:5.25,55:5.75,60:6.25,70:7};return m[s]||0;}
 function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function hex2rgb(h){const n=parseInt(h.slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255];}
-/* 理論減衰式（司・翠川1999）: 震央距離deltaと深さDから理論震度を計算。分析タブの比較曲線に使用 */
-function pgv(M,D,X){const lv=0.58*M+0.0038*D-1.29-Math.log10(X+0.0028*Math.pow(10,0.5*M))-0.002*X;return Math.pow(10,lv)*1.4;}
-function shindoAt(M,D,delta){const X=Math.sqrt(delta*delta+D*D);const v=pgv(M,D,X);if(v<=0)return 0;return 2.68+1.72*Math.log10(v);}
-function colNum(I){ // 連続震度→色（観測点バケットの色付けに使用）
+function colNum(I){
   if(I>=6.5)return hex2rgb("#9b1fb0"); if(I>=6.0)return hex2rgb("#c01f1a"); if(I>=5.5)return hex2rgb("#e0432f");
   if(I>=5.0)return hex2rgb("#ed7424"); if(I>=4.5)return hex2rgb("#f0972e"); if(I>=3.5)return hex2rgb("#e6c528");
   if(I>=2.5)return hex2rgb("#2f7fd0"); if(I>=1.5)return hex2rgb("#2f9e6a"); return hex2rgb("#9aa6b2");
 }
-/* 連続カラーランプ（補間面用・なめらか） */
 function rampColor(I){
   const R=[[0.5,[120,134,148]],[1.5,[154,166,178]],[2.5,[47,158,106]],[3.5,[47,127,208]],[4.5,[230,197,40]],[5.0,[240,151,46]],[5.5,[224,67,47]],[6.0,[192,31,26]],[6.5,[155,31,176]],[7,[170,40,190]]];
   if(I<=R[0][0])return R[0][1];
@@ -237,32 +206,19 @@ function rampColor(I){
     if(I>=a&&I<=b){const t=(b-a)?(I-a)/(b-a):0;return[ca[0]+(cb[0]-ca[0])*t,ca[1]+(cb[1]-ca[1])*t,ca[2]+(cb[2]-ca[2])*t];}}
   return R[R.length-1][1];
 }
+/* 理論減衰（司・翠川1999 + 童・山崎1996）— 分析の比較曲線・残差に使用 */
+function pgv(M,D,X){const lv=0.58*M+0.0038*D-1.29-Math.log10(X+0.0028*Math.pow(10,0.5*M))-0.002*X;return Math.pow(10,lv)*1.4;}
+function shindoAt(M,D,delta){const X=Math.sqrt(delta*delta+D*D);const v=pgv(M,D,X);if(v<=0)return 0;return 2.68+1.72*Math.log10(v);}
 
-/* ===== 観測点座標（初回のみ取得→localStorage） ===== */
-let STATIONS=null;
-async function loadStations(){
-  try{const s=localStorage.getItem(LS_ST);if(s){STATIONS=JSON.parse(s);return;}}catch(e){}
-  const urls=[
-    "https://gist.githubusercontent.com/iku55/79005d1896631ad6117bbe327b8162c1/raw/stations.json",
-    "https://raw.githubusercontent.com/iku55/jma_int_stations/main/stations.json",
-    "https://raw.githubusercontent.com/iku55/jma_int_stations/master/stations.json",
-    "https://raw.githubusercontent.com/iku55/jma_int_stations/main/data/stations.json"
-  ];
-  for(const u of urls){
-    try{
-      const r=await fetch(u,withTimeout());if(!r.ok)continue;
-      const j=await r.json();
-      const map={};
-      const arr=Array.isArray(j)?j:(j.stations||[]);
-      for(const o of arr){if(o&&o.name&&o.lat!=null&&o.lon!=null){const la=parseFloat(o.lat),lo=parseFloat(o.lon);if(!isNaN(la)&&!isNaN(lo))map[o.name]=[la,lo];}}
-      if(Object.keys(map).length>500){STATIONS=map;try{localStorage.setItem(LS_ST,JSON.stringify(map));}catch(e){}return;}
-    }catch(e){}
-  }
-  STATIONS=null;
-}
+/* ===== 状態 ===== */
+let DATA=[],STATIONS=null,lastFetch=0,loading=false;
+let map=null,overlay=null;
+let sel=null,obs=[],tSim=0,tEnd=10,playing=false,speed=2,raf=null,lastTs=0;
+let fieldImg=null,fieldBounds=null,lastReached=-1,lastFieldTs=0,lastHudTs=0,lastLayerTs=0;
+let cachedShown=null,cachedShownN=-2;
+let trTimer=null,lastDotTap=0;
 
-/* ===== データ取得 ===== */
-let DATA=[],lastFetch=0,loading=false;
+/* ===== データ取得（原則⑥：タイムアウト＋フォールバック） ===== */
 function withTimeout(){if(AbortSignal.timeout)return{signal:AbortSignal.timeout(FETCH_TIMEOUT)};const c=new AbortController();setTimeout(()=>c.abort(),FETCH_TIMEOUT);return{signal:c.signal};}
 async function fetchP2P(){
   const r=await fetch("https://api.p2pquake.net/v2/history?codes=551&limit=100",withTimeout());
@@ -273,71 +229,112 @@ async function fetchP2P(){
     const h=eq.hypocenter,lat=h.latitude,lng=h.longitude;
     const t=eq.time?new Date(eq.time.replace(/-/g,"/")).getTime():Date.parse(e.time);
     if(isNaN(t))continue;
-    const pts=Array.isArray(e.points)?e.points:[];
     out.push({id:e.id||(t+"_"+lat+"_"+lng),t,
       lat:(lat!=null&&lat>-90)?lat:null,lng:(lng!=null&&lng>-180)?lng:null,
       depth:(h.depth!=null&&h.depth>=0)?h.depth:10,
-      mag:(h.magnitude!=null&&h.magnitude>=0)?h.magnitude:null,intensity:scaleLabel(eq.maxScale),
-      place:h.name||"震源不明",points:pts,src:"JMA"});
+      mag:(h.magnitude!=null&&h.magnitude>=0)?h.magnitude:null,
+      intensity:scaleLabel(eq.maxScale),
+      place:h.name||"震源不明",points:Array.isArray(e.points)?e.points:[],src:"JMA"});
   }
   return out;
 }
+async function loadStations(){
+  try{const s=localStorage.getItem(LS_ST);if(s){STATIONS=JSON.parse(s);return;}}catch(e){}
+  const urls=[
+    "https://gist.githubusercontent.com/iku55/79005d1896631ad6117bbe327b8162c1/raw/stations.json",
+    "https://raw.githubusercontent.com/iku55/jma_int_stations/main/stations.json",
+    "https://raw.githubusercontent.com/iku55/jma_int_stations/master/stations.json"
+  ];
+  for(const u of urls){
+    try{
+      const r=await fetch(u,withTimeout());if(!r.ok)continue;
+      const j=await r.json();const mp={};
+      const arr=Array.isArray(j)?j:(j.stations||[]);
+      for(const o of arr){if(o&&o.name&&o.lat!=null&&o.lon!=null){const la=parseFloat(o.lat),lo=parseFloat(o.lon);if(!isNaN(la)&&!isNaN(lo))mp[o.name]=[la,lo];}}
+      if(Object.keys(mp).length>500){STATIONS=mp;try{localStorage.setItem(LS_ST,JSON.stringify(mp));}catch(e){}return;}
+    }catch(e){}
+  }
+  STATIONS=null;
+}
 function saveCache(){try{localStorage.setItem(LS_KEY,JSON.stringify({savedAt:Date.now(),data:DATA.slice(0,MAX_RECORDS)}));}catch(e){}}
-function loadCache(){try{const o=JSON.parse(localStorage.getItem(LS_KEY)||"null");if(o&&Array.isArray(o.data))return o;}catch(e){}return null;}
+function loadCacheLS(){try{const o=JSON.parse(localStorage.getItem(LS_KEY)||"null");if(o&&Array.isArray(o.data))return o;}catch(e){}return null;}
 async function loadData(silent){
-  if(loading)return;loading=true;$("btnRefresh").innerHTML='<span class="spin"></span>';
+  if(loading)return;loading=true;
+  const btn=$("btnRefresh");btn.disabled=true;btn.innerHTML='<span class="spin"></span>';   /* 原則⑨ */
   let ok=false;
   try{DATA=await fetchP2P();ok=true;}catch(e1){ok=false;}
   if(ok){DATA.sort((a,b)=>b.t-a.t);DATA=DATA.slice(0,MAX_RECORDS);lastFetch=Date.now();saveCache();afterData();if(!silent)toast("更新 "+DATA.length+"件");}
-  else{const c=loadCache();if(c){DATA=c.data;lastFetch=c.savedAt||0;afterData();toast("保存データを表示");}else{toast("取得できませんでした");}}
-  loading=false;$("btnRefresh").innerHTML="⟳";
+  else{const c=loadCacheLS();if(c){DATA=c.data;lastFetch=c.savedAt||0;afterData();toast("通信失敗：保存データを表示");}else{toast("取得できませんでした");}}
+  loading=false;btn.disabled=false;btn.innerHTML="⟳";
 }
 let toastTimer=null;
-function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("on"),3000);}
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("on"),3200);}
+
+/* ===== 一覧（Q20：全部出す） ===== */
 function afterData(){
   $("cnt").textContent=DATA.length;$("updated").textContent=lastFetch?fmtTime(lastFetch):"–";
-  renderList();updateLayers();
+  renderList();
 }
 function renderList(){
   const wrap=$("listEl");wrap.innerHTML="";
   for(const q of DATA){
     const row=document.createElement("div");row.className="row";
-    const lab=q.intensity,rbcls=lab?"":" dim",bg=lab?SCOL[lab]:"";
+    const lab=q.intensity,rbcls=lab?"":" dim",bgc=lab?SCOL[lab]:"";
     const magTxt=(q.mag!=null)?"M"+q.mag.toFixed(1):"M–";
-    row.innerHTML=`<div class="rb${rbcls}" style="${bg?'background:'+bg+';color:#05080d':''}"><span class="k">震度</span><span class="v">${lab||'–'}</span></div>
+    row.innerHTML=`<div class="rb${rbcls}" style="${bgc?'background:'+bgc+';color:#05080d':''}"><span class="k">震度</span><span class="v">${lab||'–'}</span></div>
       <div class="rm"><div class="rp">${escapeHtml(q.place)}</div><div class="rs">${magTxt} · ${q.depth}km · ${q.points?q.points.length:0}観測点</div></div>
       <div class="rt">${fmtTime(q.t)}</div>`;
-    row.addEventListener("click",()=>{closeSheet();selectQuake(q,true);});
+    row.addEventListener("click",()=>{closeSheet();selectQuake(q);});
     wrap.appendChild(row);
   }
 }
+function openSheet(){$("sheet").classList.add("on");$("bg").classList.add("on");}
+function closeSheet(){$("sheet").classList.remove("on");$("bg").classList.remove("on");}
 
-/* ===== 地図 ===== */
-let map=null,overlay=null;
+/* ===== 地図（MapLibre + deck.gl interleaved） ===== */
 function initMap(){
   if(typeof maplibregl==="undefined"||typeof deck==="undefined"){toast("地図エンジン読込失敗");return;}
   map=new maplibregl.Map({
     container:"map",
     style:{version:8,
       sources:{sat:{type:"raster",tiles:["https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg"],tileSize:256,attribution:"地理院タイル",maxzoom:18}},
-      layers:[{id:"bgc",type:"background",paint:{"background-color":"#0a1622"}},{id:"sat",type:"raster",source:"sat"}]
-    },
-    center:[138,37.2],zoom:4.3,pitch:55,bearing:0,maxPitch:80,minZoom:3,maxZoom:13,attributionControl:true
+      layers:[{id:"bgc",type:"background",paint:{"background-color":"#0a1622"}},{id:"sat",type:"raster",source:"sat"}]},
+    center:[137.8,37.5],zoom:4.5,pitch:52,bearing:0,maxPitch:80,minZoom:3,maxZoom:13,attributionControl:true
   });
   map.touchZoomRotate.enable();map.dragRotate.enable();
   overlay=new deck.MapboxOverlay({interleaved:true,layers:[]});
   map.addControl(overlay);
   map.on("load",()=>updateLayers());
-  setTimeout(()=>{const h=$("hint");if(h)h.style.opacity="0";},6000);
+  map.on("click",()=>{  /* Q10: 再生中タップで操作バーが一瞬戻る */
+    if(Date.now()-lastDotTap<200)return;
+    if(!sel)return;
+    if(playing)showTransport(3000);else showTransport(0);
+  });
+  setTimeout(()=>{const h=$("hint");if(h)h.style.opacity="0";},7000);
 }
 
-/* ===== 選択・実測再生 ===== */
-let sel=null,obs=[],tEnd=10,tSim=0,playing=false,speed=2,raf=null,lastTs=0;
-let fieldImg=null,fieldBounds=null,lastReached=-1;
-function reachedPts(){const reveal=playing||tSim>0;return reveal?obs.filter(o=>tSim>=o.tS):obs;}
+/* ===== 観測点データの構築 ===== */
+function buildObs(q){
+  const arr=[];
+  if(!q.points||q.lat==null||q.lng==null)return arr;
+  const D=(q.depth!=null)?q.depth:10;
+  for(const p of q.points){
+    if(p.isArea)continue;
+    const c=STATIONS?STATIONS[p.addr]:null;
+    if(!c)continue;
+    const delta=Math.sqrt((c[0]-q.lat)**2+((c[1]-q.lng)*Math.cos(q.lat*Math.PI/180))**2)*111;
+    const slant=Math.sqrt(delta*delta+D*D);
+    arr.push({lat:c[0],lng:c[1],scale:p.scale,I:scaleNum(p.scale),tS:slant/VS,delta,name:p.addr||"観測点",pref:p.pref||""});
+  }
+  return arr;
+}
+function reached(){let n=0;for(const o of obs)if(tSim>=o.tS)n++;return n;}
+function reachedArr(){return obs.filter(o=>tSim>=o.tS);}
+
+/* ===== 震度フィールド（IDW補間＋等値線・主役） ===== */
 function rebuildField(){
   if(!sel||!obs.length){fieldImg=null;return;}
-  const pts=reachedPts();
+  const pts=(playing||tSim>0)?reachedArr():obs;
   if(!pts.length){fieldImg=null;return;}
   let minLa=sel.lat,maxLa=sel.lat,minLo=sel.lng,maxLo=sel.lng;
   for(const o of obs){minLa=Math.min(minLa,o.lat);maxLa=Math.max(maxLa,o.lat);minLo=Math.min(minLo,o.lng);maxLo=Math.max(maxLo,o.lng);}
@@ -357,7 +354,7 @@ function rebuildField(){
       const idx=(y*W+x)*4;
       const de=Math.sqrt((lat-sel.lat)**2+((lng-sel.lng)*cl)**2)*111;
       if(reveal&&de>dS+28){d[idx+3]=0;continue;}
-      const edgeFeather=reveal?clamp((dS+28-de)/28,0,1):1;
+      const edgeF=reveal?clamp((dS+28-de)/28,0,1):1;
       let num=0,den=0,near=999;
       for(const o of pts){
         const dd=Math.sqrt((lat-o.lat)**2+((lng-o.lng)*cl)**2)*111;
@@ -365,18 +362,18 @@ function rebuildField(){
         const w=1/Math.pow(dd+1.5,2.15);num+=w*o.I;den+=w;
       }
       if(den<=0||near>85){d[idx+3]=0;continue;}
-      const nearFeather=clamp((85-near)/22,0,1);
+      const nearF=clamp((85-near)/22,0,1);
       const I=num/den,c=rampColor(I),a=clamp((I-0.3)/6.3,0,1);
       grid[y*W+x]=I;
       d[idx]=c[0]|0;d[idx+1]=c[1]|0;d[idx+2]=c[2]|0;
-      d[idx+3]=Math.round((60+a*195)*edgeFeather*nearFeather);
+      d[idx+3]=Math.round((60+a*195)*edgeF*nearF);
     }
   }
   ctx.putImageData(img,0,0);
-  // 等値線（マーチングスクエア・0.5刻み）
+  /* 等値線 0.5刻み（整数は濃く） */
   for(let L=1.0;L<=6.5;L+=0.5){
     const major=Math.abs(L-Math.round(L))<0.01;
-    ctx.strokeStyle=major?"rgba(255,255,255,0.6)":"rgba(255,255,255,0.26)";
+    ctx.strokeStyle=major?"rgba(255,255,255,0.55)":"rgba(255,255,255,0.22)";
     ctx.lineWidth=major?0.9:0.6;ctx.beginPath();
     for(let y=0;y<H-1;y++)for(let x=0;x<W-1;x++){
       const v0=grid[y*W+x],v1=grid[y*W+x+1],v2=grid[(y+1)*W+x+1],v3=grid[(y+1)*W+x];
@@ -393,235 +390,235 @@ function rebuildField(){
   }
   fieldImg=cv;fieldBounds=[minLo,minLa,maxLo,maxLa];
 }
-function buildObs(q){
-  const arr=[];
-  if(!q.points||q.lat==null||q.lng==null)return arr;
-  const D=(q.depth!=null)?q.depth:10;
-  for(const p of q.points){
-    if(p.isArea)continue;
-    const c=STATIONS?STATIONS[p.addr]:null;
-    if(!c)continue;
-    const delta=Math.sqrt((c[0]-q.lat)**2+((c[1]-q.lng)*Math.cos(q.lat*Math.PI/180))**2)*111;
-    const slant=Math.sqrt(delta*delta+D*D);
-    arr.push({lat:c[0],lng:c[1],scale:p.scale,I:scaleNum(p.scale),tS:slant/VS,delta,name:p.addr||"観測点",pref:p.pref||""});
-  }
-  return arr;
-}
-function prefMax(q){
-  const m={};
-  for(const p of (q.points||[])){if(!p.pref)continue;if(m[p.pref]==null||p.scale>m[p.pref])m[p.pref]=p.scale;}
-  return Object.entries(m).map(([pref,scale])=>({pref,scale})).sort((a,b)=>b.scale-a.scale);
-}
-function renderPref(q){
-  const ps=prefMax(q);const wrap=$("plist");
-  if(!ps.length){wrap.innerHTML='<div class="plh">この地震の観測点別データはありません</div>';return;}
-  let html='<div class="plh">県別の実測最大震度（'+ps.length+'県）</div>';
-  for(const r of ps){const lab=scaleLabel(r.scale)||"–";const col=SCOL[lab]||"#8794a4";
-    html+=`<div class="prow"><span class="pn">${escapeHtml(r.pref)}</span><span class="pv" style="color:${col}">震度${lab}</span></div>`;}
-  wrap.innerHTML=html;
-}
 
-/* ===== 観測点の統計（実測データから計算・テキストで説明） ===== */
-function stationStats(){
-  if(!obs.length)return null;
-  const vals=obs.map(o=>o.I);
-  const n=vals.length;
-  const mean=vals.reduce((a,b)=>a+b,0)/n;
-  const max=Math.max(...vals),min=Math.min(...vals);
-  const sd=Math.sqrt(vals.reduce((a,b)=>a+(b-mean)**2,0)/n);
-  const M=(sel.mag!=null)?sel.mag:4.5,D=(sel.depth!=null)?sel.depth:10;
-  let sumRes=0;for(const o of obs)sumRes+=(o.I-shindoAt(M,D,o.delta));
-  const meanRes=sumRes/n;
-  return {n,mean,max,min,sd,meanRes};
+/* ===== deck レイヤー（Q1: 待機中は何も出さない） ===== */
+function selLayers(){
+  if(!sel||sel.lat==null||sel.lng==null)return [];
+  const layers=[];
+  const reveal=playing||tSim>0;
+  if(fieldImg&&fieldBounds){
+    layers.push(new deck.BitmapLayer({id:"field",image:fieldImg,bounds:fieldBounds,opacity:0.86,parameters:{depthTest:false}}));
+  }
+  if(reveal){
+    const rc=reached();
+    if(rc!==cachedShownN){cachedShownN=rc;cachedShown=reachedArr();}
+    layers.push(new deck.ScatterplotLayer({   /* Q13: 白い小さな点（控えめ） */
+      id:"obs",data:cachedShown,pickable:true,
+      getPosition:o=>[o.lng,o.lat,0],
+      getRadius:2.1,radiusUnits:"pixels",radiusMinPixels:1.8,radiusMaxPixels:3.2,
+      getFillColor:[255,255,255,150],stroked:false,
+      onClick:info=>{if(info&&info.object){lastDotTap=Date.now();const o=info.object;
+        toast((o.name||"観測点")+" ・ 震度"+(scaleLabel(o.scale)||"—")+" ・ 震央から"+Math.round(o.delta)+"km");}}
+    }));
+  }
+  /* 震央リング＋震源（深さに沈む点）＋深さ数字（Q14） */
+  layers.push(new deck.ScatterplotLayer({
+    id:"epi",data:[sel],getPosition:q=>[q.lng,q.lat,0],
+    getRadius:7,radiusUnits:"pixels",filled:false,stroked:true,
+    getLineColor:[255,255,255,220],lineWidthUnits:"pixels",getLineWidth:1.6,parameters:{depthTest:false}
+  }));
+  layers.push(new deck.ScatterplotLayer({
+    id:"hypo",data:[sel],getPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000],
+    getRadius:6.5,radiusUnits:"pixels",stroked:true,getLineColor:[255,255,255,235],
+    getFillColor:[255,90,74,235],lineWidthUnits:"pixels",getLineWidth:1.3,parameters:{depthTest:false}
+  }));
+  layers.push(new deck.TextLayer({
+    id:"depthlabel",data:[sel],
+    getPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000],
+    getText:q=>((q.depth!=null)?q.depth:10)+"km",
+    getSize:13,getColor:[58,226,200,235],getPixelOffset:[26,0],
+    fontFamily:"IBM Plex Mono, monospace",fontSettings:{sdf:true},
+    outlineWidth:2,outlineColor:[5,8,13,235],
+    parameters:{depthTest:false}
+  }));
+  return layers;
 }
-function renderStats(){
-  const s=stationStats();
-  if(!s){$("stattext").textContent="観測点データなし";$("bars").innerHTML="";return;}
-  let resTxt;
-  if(Math.abs(s.meanRes)<0.15)resTxt="実測は理論減衰とほぼ一致しています。";
-  else if(s.meanRes>=0.15)resTxt="実測は理論より平均+"+s.meanRes.toFixed(2)+"大きい傾向（地盤や地形の影響が考えられます）。";
-  else resTxt="実測は理論より平均"+s.meanRes.toFixed(2)+"小さい傾向です。";
-  $("stattext").innerHTML=
-    "観測点 "+s.n+"件　平均震度 "+s.mean.toFixed(2)+"　最大 "+s.max.toFixed(1)+"　最小 "+s.min.toFixed(1)+"　標準偏差 "+s.sd.toFixed(2)+"<br>"+resTxt;
+function updateLayers(){ if(overlay)overlay.setProps({layers: sel?selLayers():[]}); }
+
+/* ===== HUD（再生中のみ・透過） ===== */
+function setHud(on){$("hud").classList.toggle("on",!!on);}
+function hudStatic(q){
+  $("hudPlace").textContent=q.place;
+  $("hudM").textContent=(q.mag!=null)?q.mag.toFixed(1):"–";
+  $("hudD").textContent=(q.depth!=null?q.depth:"–")+"km";
+  const lab=q.intensity;
+  $("hudInt").textContent=lab?("震度"+lab):"—";
+  $("hudInt").style.color=lab?SCOL[lab]:"var(--cyan)";
+}
+function hudDynamic(){
+  $("hudT").textContent=tSim.toFixed(1)+"s";
+  $("hudR").textContent=reached()+"/"+obs.length;
+}
+function renderHudPref(arr){
+  const m={};
+  for(const o of arr){if(!o.pref)continue;if(m[o.pref]==null||o.scale>m[o.pref])m[o.pref]=o.scale;}
+  const ps=Object.entries(m).map(([pref,scale])=>({pref,scale})).sort((a,b)=>b.scale-a.scale);
+  const top=ps.slice(0,8);
+  let html="";
+  for(const r of top){const lab=scaleLabel(r.scale)||"–";const col=SCOL[lab]||"#8794a4";
+    html+=`<div class="hp"><span class="n">${escapeHtml(r.pref.replace(/[都府県]$/,""))}</span><span class="v" style="color:${col}">${lab}</span></div>`;}
+  if(ps.length>8)html+=`<div class="hp"><span class="n" style="color:var(--dim)">他${ps.length-8}県</span><span class="v"></span></div>`;
+  $("hudPref").innerHTML=html||'<div class="hp"><span class="n" style="color:var(--dim)">–</span></div>';
+}
+function renderHudBars(arr){
   const order=["7","6強","6弱","5強","5弱","4","3","2","1"];
   const counts={};for(const k of order)counts[k]=0;
-  for(const o of obs){const lab=scaleLabel(o.scale);if(lab&&counts[lab]!=null)counts[lab]++;}
+  for(const o of arr){const lab=scaleLabel(o.scale);if(lab&&counts[lab]!=null)counts[lab]++;}
   const maxC=Math.max(1,...order.map(k=>counts[k]));
   let html="";
   for(const k of order){const c=counts[k];if(!c)continue;
     const pct=Math.round((c/maxC)*100);
-    html+=`<div class="barrow"><span class="bl">${k}</span><div class="bt"><i style="width:${pct}%;background:${SCOL[k]}"></i></div><span class="bn">${c}</span></div>`;}
-  $("bars").innerHTML=html||'<div class="plh">内訳なし</div>';
+    html+=`<div class="hb"><span class="l">${k}</span><div class="t"><i style="width:${pct}%;background:${SCOL[k]}"></i></div><span class="n">${c}</span></div>`;}
+  $("hudBars").innerHTML=html;
 }
-function showStationDetail(o){
-  const lab=scaleLabel(o.scale)||"—";
-  const msg=(o.name||"観測点")+" ・ 震度"+lab+" ・ 震央から"+Math.round(o.delta)+"km";
-  if($("infopanel").classList.contains("on")){$("stationnote").textContent="タップした観測点: "+msg;}
-  else toast(msg);
+function renderHudStats(arr){
+  if(!arr.length){$("hudStats").textContent="";return;}
+  const n=arr.length;
+  const mean=arr.reduce((a,o)=>a+o.I,0)/n;
+  const sd=Math.sqrt(arr.reduce((a,o)=>a+(o.I-mean)**2,0)/n);
+  const M=(sel.mag!=null)?sel.mag:4.5,D=(sel.depth!=null)?sel.depth:10;
+  let res=0;for(const o of arr)res+=(o.I-shindoAt(M,D,o.delta));res/=n;
+  const sign=res>=0?"+":"";
+  $("hudStats").textContent="平均"+mean.toFixed(2)+"  SD "+sd.toFixed(2)+"  理論比 "+sign+res.toFixed(2);
 }
-function updateMiniSub(){
-  if(!sel)return;
-  if(playing||tSim>0){
-    $("mbSub").textContent="経過 "+tSim.toFixed(1)+"s · 到達 "+reached()+"/"+obs.length;
-  }else{
-    const m=(sel.mag!=null)?"M"+sel.mag.toFixed(1):"M–";
-    $("mbSub").textContent=m+" · 深"+(sel.depth!=null?sel.depth:"–")+"km · "+obs.length+"観測点";
-  }
-}
-function drawChart(){
-  const cv=$("chart");if(!cv||!sel)return;
+function drawScatter(arr){
+  const cv=$("scat");if(!cv||!sel)return;
   const dpr=window.devicePixelRatio||1;
-  const w=cv.clientWidth||320,h=210;
+  const w=218,h=116;
   cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
   const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,w,h);
-  const padL=26,padB=22,padT=8,padR=8;
+  const padL=18,padB=13,padT=4,padR=4;
   const maxD=Math.max(60,...obs.map(o=>o.delta||0))*1.05;
   const X=dd=>padL+(w-padL-padR)*(dd/maxD);
   const Y=I=>padT+(h-padT-padB)*(1-clamp(I,0,7.2)/7.2);
-  ctx.font="9px ui-monospace,monospace";
-  // y軸グリッド（震度）
-  ctx.strokeStyle="#16222e";ctx.lineWidth=1;ctx.fillStyle="#54616f";
-  for(let I=0;I<=7;I++){const y=Y(I);ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR,y);ctx.stroke();ctx.fillText(I,6,y+3);}
-  // x軸目盛
-  const step=maxD>400?100:(maxD>150?50:20);
-  for(let dd=0;dd<=maxD;dd+=step){const x=X(dd);ctx.fillText(Math.round(dd),x-7,h-7);}
-  // 理論減衰曲線（司・翠川）
+  const halo=(fn)=>{ctx.save();ctx.strokeStyle="rgba(4,8,13,.9)";ctx.lineWidth=3;ctx.lineJoin="round";fn(true);ctx.restore();fn(false);};
+  ctx.font="9px 'IBM Plex Mono',monospace";
+  /* 罫線（ごく薄く） */
+  ctx.strokeStyle="rgba(255,255,255,.14)";ctx.lineWidth=.5;
+  for(let I=1;I<=7;I++){const y=Y(I);ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR,y);ctx.stroke();}
+  /* 軸数値（ハロー付き） */
+  halo(st=>{for(let I=1;I<=7;I++){const y=Y(I)+2.5;if(st)ctx.strokeText(I,4,y);else{ctx.fillStyle="rgba(160,235,222,.9)";ctx.fillText(I,4,y);}}});
+  const step=maxD>400?200:(maxD>150?100:50);
+  halo(st=>{for(let dd=step;dd<=maxD;dd+=step){const x=X(dd)-8;if(st)ctx.strokeText(dd+"",x,h-3);else{ctx.fillStyle="rgba(160,235,222,.75)";ctx.fillText(dd+"",x,h-3);}}});
+  /* 理論減衰曲線 */
   const M=(sel.mag!=null)?sel.mag:4.5,D=(sel.depth!=null)?sel.depth:10;
-  ctx.strokeStyle="#39e0c6";ctx.lineWidth=1.6;ctx.beginPath();
+  ctx.strokeStyle="rgba(58,226,200,.95)";ctx.lineWidth=1.4;ctx.beginPath();
   let started=false;
-  for(let dd=0;dd<=maxD;dd+=Math.max(1,maxD/240)){const I=shindoAt(M,D,dd);const x=X(dd),y=Y(I);if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);}
+  for(let dd=0;dd<=maxD;dd+=Math.max(1,maxD/180)){const I=shindoAt(M,D,dd);const x=X(dd),y=Y(I);
+    if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);}
   ctx.stroke();
-  // 実測点
-  for(const o of obs){const c=colNum(o.I);ctx.fillStyle=`rgb(${c[0]},${c[1]},${c[2]})`;
-    ctx.beginPath();ctx.arc(X(o.delta),Y(o.I),3.2,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle="rgba(5,8,13,.8)";ctx.lineWidth=.6;ctx.stroke();}
-  // 軸ラベル
-  ctx.fillStyle="#8794a4";ctx.fillText("震度",6,padT+4);ctx.fillText("震央距離 km →",w-86,h-7);
+  /* 実測点（到達分のみ・震度色） */
+  for(const o of arr){const c=colNum(o.I);
+    ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},.95)`;
+    ctx.beginPath();ctx.arc(X(o.delta),Y(o.I),2.1,0,Math.PI*2);ctx.fill();}
+}
+function updateHudAll(){
+  const arr=(playing||tSim>0)?reachedArr():[];
+  renderHudPref(arr);renderHudBars(arr);renderHudStats(arr);drawScatter(arr);
 }
 
-let cachedShown=null,cachedShownN=-2;
-function obsLayers(){
-  if(!sel)return [];
-  const reveal=playing||tSim>0;
-  const rc=reveal?reached():-1;
-  if(rc!==cachedShownN){cachedShownN=rc;cachedShown=reveal?obs.filter(o=>tSim>=o.tS):obs;}
-  const shown=cachedShown;
-  const dots=new deck.ScatterplotLayer({
-    id:"obs",data:shown,pickable:true,
-    getPosition:o=>[o.lng,o.lat,0],
-    getRadius:o=>3+o.I*1.1,radiusUnits:"pixels",radiusMinPixels:2.5,
-    getFillColor:o=>{const c=colNum(o.I);return [c[0],c[1],c[2],235];},
-    stroked:true,getLineColor:[10,16,23,200],lineWidthUnits:"pixels",getLineWidth:.5,
-    onClick:info=>{if(info&&info.object)showStationDetail(info.object);},
-    updateTriggers:{getFillColor:[1]}
-  });
-  const layers=[];
-  if(fieldImg&&fieldBounds){
-    layers.push(new deck.BitmapLayer({id:"field",image:fieldImg,bounds:fieldBounds,opacity:0.84,parameters:{depthTest:false}}));
-  }
-  layers.push(dots);
-  // 震源（地中）＋震央
-  layers.push(new deck.ScatterplotLayer({
-    id:"hypo",data:[sel],getPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000],
-    getRadius:9,radiusUnits:"pixels",stroked:true,getLineColor:[255,255,255,235],
-    getFillColor:[255,90,74,230],lineWidthUnits:"pixels",getLineWidth:1.4,parameters:{depthTest:false}
-  }));
-  return layers;
+/* ===== トランスポート表示制御（Q8-10） ===== */
+function showTransport(hideAfterMs){
+  $("tr").classList.add("on");clearTimeout(trTimer);
+  if(hideAfterMs>0)trTimer=setTimeout(()=>$("tr").classList.remove("on"),hideAfterMs);
 }
-function overviewLayer(){
-  const pts=new deck.ScatterplotLayer({
-    id:"all",data:DATA.filter(q=>q.lat!=null),pickable:true,
-    getPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000],
-    getRadius:q=>{const d=(q.depth!=null)?q.depth:10;return Math.max(2,Math.min(10,4+d/50));},
-    radiusUnits:"pixels",radiusMinPixels:2,radiusMaxPixels:14,
-    getFillColor:q=>{const c=q.intensity?hex2rgb(SCOL[q.intensity]):[120,134,148];return q.intensity?[c[0],c[1],c[2],220]:[c[0],c[1],c[2],130];},
-    stroked:true,getLineColor:[255,255,255,130],lineWidthUnits:"pixels",getLineWidth:.5,
-    onClick:info=>{if(info&&info.object)selectQuake(info.object,false);}
-  });
-  return [pts];
-}
-function updateLayers(){ if(overlay)overlay.setProps({layers: sel?obsLayers():overviewLayer()}); }
+function hideTransport(){clearTimeout(trTimer);$("tr").classList.remove("on");}
 
-function selectQuake(q,fly){
-  sel=q; obs=buildObs(q); tSim=0;
-  obs.sort((a,b)=>a.tS-b.tS);
-  fieldImg=null;lastReached=-1;cachedShown=null;cachedShownN=-2;
-  tEnd=obs.length?obs[obs.length-1].tS+3:10;
-  $("cInt").textContent=q.intensity?("震度"+q.intensity):"—";
-  $("cInt").style.color=q.intensity?SCOL[q.intensity]:"var(--text)";
-  $("cMag").textContent=(q.mag!=null)?q.mag.toFixed(1):"—";
-  $("cDep").textContent=(q.depth!=null)?q.depth+"km":"—";
-  $("cPts").textContent=obs.length?obs.length:"—";
-  $("cTime").textContent=fmtTime(q.t);
-  $("cLoc").textContent=(q.lat!=null&&q.lng!=null)?(q.lat.toFixed(2)+"N "+q.lng.toFixed(2)+"E"):"—";
-  renderPref(q);
-  renderStats();
-  $("stationnote").textContent="";
-  // 最小バー
-  $("mbChip").textContent=q.intensity?("震度"+q.intensity):"震度?";
-  $("mbChip").style.background=q.intensity?SCOL[q.intensity]:"#26303c";
-  $("mbChip").style.color=q.intensity?"#05080d":"#8794a4";
-  $("mbPlace").textContent=q.place;
-  $("infoTitle").textContent=q.place;
-  $("minibar").classList.add("on");
-  $("legend").style.display="none";
-  closeSheets();
-  updateMiniSub();
-  updateLayers();
-  if(fly&&map)map.flyTo({center:[q.lng,q.lat],zoom:Math.max(map.getZoom(),6),pitch:60,duration:1500,essential:true});
-  if(obs.length)setPlaying(true);
-  setTimeout(drawChart,60);
-}
-function closeCard(){sel=null;obs=[];fieldImg=null;setPlaying(false);$("minibar").classList.remove("on");$("legend").style.display="";closeSheets();updateLayers();}
-
-let lastLayerTs=0;
-function reached(){return obs.filter(o=>tSim>=o.tS).length;}
+/* ===== 再生ループ ===== */
 function tick(ts){
   if(!playing)return;
   if(!lastTs)lastTs=ts;
   const dt=(ts-lastTs)/1000;lastTs=ts;tSim+=dt*speed;
-  const rc=reached();
-  if(rc!==lastReached){lastReached=rc;rebuildField();}
-  updateMiniSub();
+  hudDynamic();
   $("tl").value=Math.round(clamp(tSim/tEnd,0,1)*1000);
-  if(ts-lastLayerTs>32){lastLayerTs=ts;updateLayers();}
-  if(tSim>=tEnd){updateLayers();setPlaying(false);return;}
+  const rc=reached();
+  const now=performance.now();
+  if(rc!==lastReached&&now-lastFieldTs>FIELD_MS){lastReached=rc;lastFieldTs=now;rebuildField();}
+  if(now-lastHudTs>HUD_MS){lastHudTs=now;updateHudAll();}
+  if(now-lastLayerTs>32){lastLayerTs=now;updateLayers();}
+  if(tSim>=tEnd){finishPlayback();return;}
   raf=requestAnimationFrame(tick);
 }
-function setPlaying(p){playing=p;$("playBtn").textContent=p?"❚❚":"▶";cancelAnimationFrame(raf);if(p){if(tSim>=tEnd)tSim=0;lastTs=0;raf=requestAnimationFrame(tick);}}
-function togglePlay(){if(sel&&obs.length)setPlaying(!playing);}
+function finishPlayback(){          /* Q11: 終了で地図だけに戻る */
+  playing=false;cancelAnimationFrame(raf);
+  $("playBtn").textContent="▶";
+  tSim=0;fieldImg=null;lastReached=-1;cachedShown=null;cachedShownN=-2;
+  setHud(false);updateLayers();
+  $("tl").value=0;
+  showTransport(3000);
+}
+function setPlaying(p){
+  playing=p;$("playBtn").textContent=p?"❚❚":"▶";
+  cancelAnimationFrame(raf);
+  if(p){
+    if(tSim>=tEnd)tSim=0;
+    lastTs=0;setHud(true);
+    lastReached=-1;lastFieldTs=0;lastHudTs=0;
+    showTransport(900);              /* すぐ地図だけに */
+    raf=requestAnimationFrame(tick);
+  }else{
+    showTransport(0);                /* 一時停止中はバー常駐 */
+  }
+}
+function togglePlay(){
+  if(!sel)return;
+  if(!obs.length){toast("この地震は観測点データがありません");return;}
+  setPlaying(!playing);
+}
 function cycleSpeed(){const s=[1,2,4,8];speed=s[(s.indexOf(speed)+1)%s.length];$("spdBtn").textContent="×"+speed;}
 
-function closeSheets(){
-  ["sheet","infopanel"].forEach(id=>$(id).classList.remove("on"));
-  $("bg").classList.remove("on");$("infobg").classList.remove("on");
+/* ===== 選択（Q2: 一覧から／Q9: 手動▶） ===== */
+function selectQuake(q){
+  sel=q;obs=buildObs(q);tSim=0;playing=false;cancelAnimationFrame(raf);
+  obs.sort((a,b)=>a.tS-b.tS);
+  tEnd=obs.length?obs[obs.length-1].tS+3:10;
+  fieldImg=null;lastReached=-1;cachedShown=null;cachedShownN=-2;
+  hudStatic(q);hudDynamic();updateHudAll();setHud(false);
+  $("playBtn").textContent="▶";$("tl").value=0;
+  $("btnRefresh").classList.add("hidden");$("btnList").classList.add("hidden");
+  $("btnClose").classList.remove("hidden");   /* Q19: ×常時 */
+  updateLayers();
+  if(map&&q.lat!=null&&q.lng!=null)map.flyTo({center:[q.lng,q.lat],zoom:Math.max(map.getZoom(),6),pitch:58,duration:1500,essential:true});
+  showTransport(0);                            /* 選択直後は▶を見せる */
+  if(!obs.length)toast("観測点データなし（再生不可・位置のみ表示）");
 }
-function openSheet(){closeSheets();$("sheet").classList.add("on");$("bg").classList.add("on");}
-function openInfo(){if(!sel)return;closeSheets();$("infopanel").classList.add("on");$("infobg").classList.add("on");setTimeout(drawChart,60);}
-function closeSheet(){closeSheets();}
+function deselect(){
+  sel=null;obs=[];playing=false;cancelAnimationFrame(raf);
+  tSim=0;fieldImg=null;cachedShown=null;cachedShownN=-2;
+  setHud(false);hideTransport();updateLayers();
+  $("btnRefresh").classList.remove("hidden");$("btnList").classList.remove("hidden");
+  $("btnClose").classList.add("hidden");
+}
 
+/* ===== バインド・起動（原則②：更新チェック） ===== */
 function bind(){
   $("btnRefresh").addEventListener("click",()=>loadData(false));
   $("btnList").addEventListener("click",openSheet);
+  $("btnClose").addEventListener("click",deselect);
   $("bg").addEventListener("click",closeSheet);
-  $("infobg").addEventListener("click",closeSheet);
-  $("infoX").addEventListener("click",closeSheet);
-  $("cX").addEventListener("click",closeCard);
-  $("btnDetail").addEventListener("click",openInfo);
   $("playBtn").addEventListener("click",togglePlay);
   $("spdBtn").addEventListener("click",cycleSpeed);
   $("spdBtn").textContent="×"+speed;
-  $("tl").addEventListener("input",e=>{if(!sel)return;setPlaying(false);tSim=e.target.value/1000*tEnd;
-    lastReached=reached();rebuildField();updateMiniSub();updateLayers();});
-  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&Date.now()-lastFetch>REFRESH_AFTER_MS)loadData(true);});
+  $("tl").addEventListener("input",e=>{
+    if(!sel||!obs.length)return;
+    playing=false;cancelAnimationFrame(raf);$("playBtn").textContent="▶";
+    tSim=e.target.value/1000*tEnd;
+    lastReached=reached();rebuildField();
+    hudDynamic();updateHudAll();
+    setHud(tSim>0);updateLayers();
+    showTransport(0);
+  });
+  document.addEventListener("visibilitychange",()=>{
+    if(!document.hidden&&!sel&&Date.now()-lastFetch>REFRESH_AFTER_MS)loadData(true);
+  });
 }
 window.addEventListener("load",async()=>{
   bind();initMap();
-  const c=loadCache();
+  const c=loadCacheLS();
   if(c){DATA=c.data;lastFetch=c.savedAt||0;afterData();}
   await loadStations();
-  if(!STATIONS)toast("観測点座標の取得に失敗（点の位置がずれる場合あり）");
+  if(!STATIONS)toast("観測点座標の取得に失敗（再生精度が落ちます）");
   loadData(true);
 });
 </script>
