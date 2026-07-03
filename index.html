@@ -49,7 +49,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 .dleg{position:fixed;left:14px;bottom:calc(14px + var(--sb));z-index:8;display:flex;align-items:center;gap:7px;
   font-family:var(--mono);font-size:9px;color:#9feadd;text-shadow:var(--shadow);pointer-events:none;}
 .dleg i{width:118px;height:7px;border-radius:3px;display:block;
-  background:linear-gradient(90deg,#ff4a3d,#ff9f2e,#ffe14d,#3fd66f,#2f7fd0,#7b4de0);
+  background:linear-gradient(90deg,#ff4a3d 0%,#ff9f2e 17%,#ffe14d 30%,#3fd66f 46%,#2f7fd0 62%,#7b4de0 100%);
   box-shadow:0 1px 6px rgba(0,0,0,.6);}
 
 /* ===== HUD（再生中だけ・地図に直接透過／背景なし・影のみ） ===== */
@@ -65,6 +65,23 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 .pv.md{font-size:15px;}
 .pv.sm{font-size:11.5px;color:#cfe0ea;}
 .prun{font-family:var(--mono);font-size:10.5px;color:var(--cyan);margin-top:11px;text-shadow:var(--shadow);opacity:0;transition:opacity .3s;}
+/* ===== 待機中ミニ統計（右上・透過） ===== */
+.istat{position:fixed;right:12px;top:calc(66px + var(--st));z-index:9;width:158px;text-align:right;pointer-events:none;}
+.ichips button{pointer-events:auto;}
+.ichips{display:flex;justify-content:flex-end;gap:4px;margin-bottom:7px;}
+.ichips button{height:30px;padding:0 8px;border-radius:8px;border:1px solid rgba(255,255,255,.14);
+  background:rgba(8,13,19,.55);color:var(--muted);font-family:var(--mono);font-size:10px;font-weight:600;backdrop-filter:blur(8px);}
+.ichips button.on{background:var(--accent);color:#05080d;border-color:var(--accent);}
+.irow{font-family:var(--mono);font-size:10.5px;line-height:1.6;color:#ffb3ab;text-shadow:var(--shadow);}
+.irow b{color:#fff;font-size:13px;}
+.ibars{margin-top:6px;display:flex;flex-direction:column;gap:2px;}
+.ib{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--muted);text-shadow:var(--shadow);}
+.ib .l{flex:0 0 26px;text-align:right;}
+.ib .t{flex:1;height:6px;border-radius:2px;background:rgba(0,0,0,.3);overflow:hidden;}
+.ib .t i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,#ff5b4a,#ff8a3d);}
+.ib .n{flex:0 0 26px;text-align:left;color:#ffb3ab;}
+.isrc{margin-top:6px;font-family:var(--mono);font-size:8.5px;color:var(--dim);text-shadow:var(--shadow);}
+
 /* 深さフィルタ（右端・縦） */
 .dfilter{position:fixed;right:4px;top:50%;transform:translateY(-50%);z-index:8;display:flex;flex-direction:column;align-items:center;gap:8px;}
 .dfl{font-family:var(--mono);font-size:9px;color:#9feadd;text-shadow:var(--shadow);}
@@ -136,7 +153,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 
 <div class="top">
   <div class="brand">震源<b>3D</b></div>
-  <div class="ver" id="ver">v11.0</div>
+  <div class="ver" id="ver">v11.1</div>
   <div class="spacer"></div>
   <div class="tools">
     <button class="tbtn" id="btnMap" title="地図切替">◐</button>
@@ -175,6 +192,16 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
   <span class="dfl" id="dfBot">500km</span>
 </div>
 
+<!-- ===== 待機中ミニ統計（右上・透過テキスト／再生で自動的に消える） ===== -->
+<div class="istat" id="istat" style="display:none">
+  <div class="ichips">
+    <button data-p="month" class="on">今月</button><button data-p="prev">先月</button><button data-p="year">1年</button><button data-p="all">全部</button>
+  </div>
+  <div class="irow" id="istatMeta">–</div>
+  <div class="ibars" id="istatBars"></div>
+  <div class="isrc">USGSカタログ M3.5+</div>
+</div>
+
 <!-- ===== HUD：再生中だけ地図に透過表示 ===== -->
 <div class="hud" id="hud">
   <div class="hud-left">
@@ -206,7 +233,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 
 <script>
 /* ============================================================
-   震源3D v11.0
+   震源3D v11.1
    仕様（20問で確定）:
    - 待機中は地図のみ（ピン無し） / 選択は一覧☰から / 手動▶で再生
    - 再生中はHUDだけを地図に直接透過（帯・散布図・件数バー・県別・統計）
@@ -214,7 +241,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
    ============================================================ */
 
 /* ===== 設定・定数 ===== */
-const APP_VERSION="v11.0";
+const APP_VERSION="v11.1";
 const LS_KEY="jeq_cache_v3";          // 原則④ キーにバージョン
 const LS_ST="jeq_stations_v1";
 const MAX_RECORDS=120, FETCH_TIMEOUT=9000, REFRESH_AFTER_MS=5*60*1000;  // 原則⑤ 上限明記
@@ -246,7 +273,7 @@ function rampColor(I){
 function hsl2rgb(h,s,l){s/=100;l/=100;const k=n=>(n+h/30)%12;const a=s*Math.min(l,1-l);
   const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
   return[Math.round(f(0)*255),Math.round(f(8)*255),Math.round(f(4)*255)];}
-function depthColor(d){const h=clamp(d,0,500)/500*250;return hsl2rgb(h,85,55);}   /* 浅い=赤 → 深い=青紫 */
+function depthColor(d){const t=Math.pow(clamp(d,0,500)/500,0.45);return hsl2rgb(t*250,85,55);}   /* 非線形: 浅発でも色差が出る */
 /* 理論減衰（司・翠川1999 + 童・山崎1996）— 分析の比較曲線・残差に使用 */
 function pgv(M,D,X){const lv=0.58*M+0.0038*D-1.29-Math.log10(X+0.0028*Math.pow(10,0.5*M))-0.002*X;return Math.pow(10,lv)*1.4;}
 function shindoAt(M,D,delta){const X=Math.sqrt(delta*delta+D*D);const v=pgv(M,D,X);if(v<=0)return 0;return 2.68+1.72*Math.log10(v);}
@@ -562,10 +589,39 @@ function selLayers(){
   }));
   return layers;
 }
-let HISTO_F=null,dMin=0,dMax=500,dfTimer=null;
+let HISTO_F=null,dMin=0,dMax=500,dfTimer=null,period="month";
+function ymNow(off){const d=new Date();d.setMonth(d.getMonth()+(off||0));return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
+function inPeriod(ym){
+  if(period==="all")return true;
+  if(period==="month")return ym===ymNow(0);
+  if(period==="prev")return ym===ymNow(-1);
+  if(period==="year")return ym>=ymNow(-11);
+  return true;
+}
+function syncChips(){document.querySelectorAll("#istat .ichips button").forEach(x=>x.classList.toggle("on",x.dataset.p===period));}
 function applyDepthFilter(){
-  if(!HISTO){HISTO_F=null;return;}
-  HISTO_F=(dMin<=0&&dMax>=500)?HISTO:HISTO.filter(h=>h[2]>=dMin&&h[2]<=dMax);
+  if(!HISTO){HISTO_F=null;renderIdleStats();return;}
+  const f=()=>HISTO.filter(h=>h[2]>=dMin&&h[2]<=dMax&&inPeriod(h[4]||""));
+  HISTO_F=f();
+  /* 今月がまだ少なければ自動で1年へ（初回のみ） */
+  if(period==="month"&&HISTO_F.length<5&&!applyDepthFilter._auto){applyDepthFilter._auto=1;period="year";syncChips();HISTO_F=f();}
+  renderIdleStats();
+}
+function renderIdleStats(){
+  const el=$("istat");if(!el)return;
+  if(!HISTO){el.style.display="none";return;}
+  const d=HISTO_F||HISTO;
+  const names={month:"今月",prev:"先月",year:"直近1年",all:"全期間 2000〜"};
+  let maxM=0,maxD=0;for(const h of d){if(h[3]>maxM)maxM=h[3];if(h[2]>maxD)maxD=h[2];}
+  $("istatMeta").innerHTML=names[period]+" ・ <b>"+d.length+"</b>件"+(d.length?("<br>最大 M"+maxM.toFixed(1)+" ・ 最深 "+Math.round(maxD)+"km"):"");
+  const bins=[["M7+",7,99],["M6",6,7],["M5",5,6],["M4",4,5],["3.5",0,4]];
+  const cnt=bins.map(b=>{let n=0;for(const h of d)if(h[3]>=b[1]&&h[3]<b[2])n++;return n;});
+  const mx=Math.max(1,...cnt);
+  $("istatBars").innerHTML=bins.map((b,i)=>{
+    const w=Math.round(cnt[i]/mx*100);
+    return '<div class="ib"><span class="l">'+b[0]+'</span><span class="t"><i style="width:'+w+'%"></i></span><span class="n">'+cnt[i]+'</span></div>';
+  }).join("");
+  el.style.display=sel?"none":"block";
 }
 function histoLayer(dimmed){
   const data=HISTO_F||HISTO;
@@ -737,7 +793,7 @@ function selectQuake(q){
   $("btnRefresh").classList.add("hidden");$("btnList").classList.add("hidden");
   $("btnClose").classList.remove("hidden");   /* Q19: ×常時 */
   updateLayers();
-  $("dleg").style.display="none";
+  $("dleg").style.display="none";$("istat").style.display="none";$("dfilter").style.display="none";
   $("dfilter").style.display="none";
   $("panel").classList.add("on");
   const dep=(q.depth!=null)?q.depth:10;
@@ -753,7 +809,7 @@ function deselect(){
   setHud(false);hideTransport();updateLayers();
   $("btnRefresh").classList.remove("hidden");$("btnList").classList.remove("hidden");
   $("btnClose").classList.add("hidden");
-  $("dleg").style.display=HISTO?"flex":"none";
+  $("dleg").style.display=HISTO?"flex":"none";$("dfilter").style.display=HISTO?"flex":"none";renderIdleStats();
   $("dfilter").style.display=HISTO?"flex":"none";
 }
 
@@ -777,6 +833,9 @@ function bind(){
   $("dfMin").addEventListener("input",onDepthFilter);
   $("dfMax").addEventListener("input",onDepthFilter);
   $("btnMap").addEventListener("click",toggleMap);
+  document.querySelectorAll("#istat .ichips button").forEach(b=>b.addEventListener("click",()=>{
+    period=b.dataset.p;syncChips();applyDepthFilter();updateLayers();
+  }));
   $("btnRefresh").addEventListener("click",()=>loadData(false));
   $("btnList").addEventListener("click",openSheet);
   $("btnClose").addEventListener("click",deselect);
