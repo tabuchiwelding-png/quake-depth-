@@ -163,7 +163,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
     <span class="bdot"></span>
     <div class="bt">
       <div class="b1">震源<b>3D</b></div>
-      <div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v11.3</em></div>
+      <div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v12.0</em></div>
     </div>
   </div>
   <div class="spacer"></div>
@@ -246,7 +246,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 
 <script>
 /* ============================================================
-   震源3D v11.3
+   震源3D v12.0
    仕様（20問で確定）:
    - 待機中は地図のみ（ピン無し） / 選択は一覧☰から / 手動▶で再生
    - 再生中はHUDだけを地図に直接透過（帯・散布図・件数バー・県別・統計）
@@ -254,7 +254,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
    ============================================================ */
 
 /* ===== 設定・定数 ===== */
-const APP_VERSION="v11.3";
+const APP_VERSION="v12.0";
 const LS_KEY="jeq_cache_v3";          // 原則④ キーにバージョン
 const LS_ST="jeq_stations_v1";
 const MAX_RECORDS=120, FETCH_TIMEOUT=9000, REFRESH_AFTER_MS=5*60*1000;  // 原則⑤ 上限明記
@@ -311,6 +311,25 @@ function refreshZSquash(){
   const b=Math.round(f*10)/10;
   if(b!==zSquash){zSquash=b;updateLayers();}
 }
+let introB=1,introStarted=false;   /* 起動演出: 点群が降って積もる（Q5） */
+function startIntro(){
+  if(introStarted||!HISTO)return;introStarted=true;introB=0;
+  const t0=performance.now();
+  function step(){
+    const t=(performance.now()-t0)/2000;
+    const b=Math.min(1,Math.round(t*25)/25);
+    if(b!==introB){introB=b;updateLayers();}
+    if(b<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+let pulseB=0,pulseRun=false;       /* 震源の脈動（Q6） */
+function pulseLoop(){
+  if(!sel){pulseRun=false;return;}
+  const b=Math.round(performance.now()/90);
+  if(b!==pulseB){pulseB=b;if(!playing)updateLayers();}
+  requestAnimationFrame(pulseLoop);
+}
 let HISTO=null,mapMode="dark";
 const LS_HISTO="jeq_histo_v2";   /* 原則④: 構造変更でキー更新 */
 
@@ -354,7 +373,7 @@ async function loadStations(){
 }
 function withTimeoutMs(ms){if(AbortSignal.timeout)return{signal:AbortSignal.timeout(ms)};const c=new AbortController();setTimeout(()=>c.abort(),ms);return{signal:c.signal};}
 async function loadHisto(){
-  try{const st=localStorage.getItem(LS_HISTO);if(st){HISTO=JSON.parse(st);applyDepthFilter();if(!sel){$("dleg").style.display="flex";$("dfilter").style.display="flex";}updateLayers();return;}}catch(e){}
+  try{const st=localStorage.getItem(LS_HISTO);if(st){HISTO=JSON.parse(st);applyDepthFilter();if(!sel){$("dleg").style.display="flex";$("dfilter").style.display="flex";}startIntro();updateLayers();return;}}catch(e){}
   try{
     toast("過去の震源データを読込中…（初回のみ）");
     const url="https://earthquake.usgs.gov/fdsnws/event/1/query?format=csv&starttime=2000-01-01"
@@ -371,7 +390,7 @@ async function loadHisto(){
       out.push([Math.round(la*1000)/1000,Math.round(lo*1000)/1000,Math.round(de*10)/10,Math.round(mg*10)/10,(c[0]||"").slice(0,7)]);
     }
     if(out.length>200){HISTO=out;try{localStorage.setItem(LS_HISTO,JSON.stringify(out));}catch(e){}
-      applyDepthFilter();toast("過去震源 "+out.length+"件を表示");if(!sel){$("dleg").style.display="flex";$("dfilter").style.display="flex";}updateLayers();}
+      startIntro();applyDepthFilter();toast("過去震源 "+out.length+"件を表示");if(!sel){$("dleg").style.display="flex";$("dfilter").style.display="flex";}updateLayers();}
   }catch(e){/* 取得失敗しても本体機能に影響なし */}
 }
 function saveCache(){try{localStorage.setItem(LS_KEY,JSON.stringify({savedAt:Date.now(),data:DATA.slice(0,MAX_RECORDS)}));}catch(e){}}
@@ -506,25 +525,30 @@ function rebuildField(){
     }
   }
   ctx.putImageData(img,0,0);
-  /* 等値線 0.5刻み（整数は濃く） */
-  for(let L=1.0;L<=6.5;L+=0.5){
-    const major=Math.abs(L-Math.round(L))<0.01;
-    ctx.strokeStyle=major?"rgba(255,255,255,0.55)":"rgba(255,255,255,0.22)";
-    ctx.lineWidth=major?0.9:0.6;ctx.beginPath();
+  /* 質感向上（Q10）: 2倍キャンバスへバイリニア拡大→等値線は高解像度側に描く */
+  const cv2=document.createElement("canvas");cv2.width=W*2;cv2.height=H*2;
+  const c2=cv2.getContext("2d");c2.imageSmoothingEnabled=true;
+  c2.drawImage(cv,0,0,W*2,H*2);
+  c2.save();c2.scale(2,2);
+  for(let L2=1.0;L2<=6.5;L2+=0.5){
+    const major=Math.abs(L2-Math.round(L2))<0.01;
+    c2.strokeStyle=major?"rgba(255,255,255,0.5)":"rgba(255,255,255,0.2)";
+    c2.lineWidth=major?0.55:0.35;c2.beginPath();
     for(let y=0;y<H-1;y++)for(let x=0;x<W-1;x++){
       const v0=grid[y*W+x],v1=grid[y*W+x+1],v2=grid[(y+1)*W+x+1],v3=grid[(y+1)*W+x];
       if(isNaN(v0)||isNaN(v1)||isNaN(v2)||isNaN(v3))continue;
       const p=[];
-      if((v0<L)!==(v1<L)){const t=(L-v0)/(v1-v0);p.push([x+t,y]);}
-      if((v1<L)!==(v2<L)){const t=(L-v1)/(v2-v1);p.push([x+1,y+t]);}
-      if((v2<L)!==(v3<L)){const t=(L-v2)/(v3-v2);p.push([x+1-t,y+1]);}
-      if((v3<L)!==(v0<L)){const t=(L-v3)/(v0-v3);p.push([x,y+1-t]);}
-      if(p.length>=2){ctx.moveTo(p[0][0],p[0][1]);ctx.lineTo(p[1][0],p[1][1]);}
-      if(p.length===4){ctx.moveTo(p[2][0],p[2][1]);ctx.lineTo(p[3][0],p[3][1]);}
+      if((v0<L2)!==(v1<L2)){const t=(L2-v0)/(v1-v0);p.push([x+t,y]);}
+      if((v1<L2)!==(v2<L2)){const t=(L2-v1)/(v2-v1);p.push([x+1,y+t]);}
+      if((v2<L2)!==(v3<L2)){const t=(L2-v2)/(v3-v2);p.push([x+1-t,y+1]);}
+      if((v3<L2)!==(v0<L2)){const t=(L2-v3)/(v0-v3);p.push([x,y+1-t]);}
+      if(p.length>=2){c2.moveTo(p[0][0],p[0][1]);c2.lineTo(p[1][0],p[1][1]);}
+      if(p.length===4){c2.moveTo(p[2][0],p[2][1]);c2.lineTo(p[3][0],p[3][1]);}
     }
-    ctx.stroke();
+    c2.stroke();
   }
-  fieldImg=cv;fieldBounds=[minLo,minLa,maxLo,maxLa];
+  c2.restore();
+  fieldImg=cv2;fieldBounds=[minLo,minLa,maxLo,maxLa];
 }
 
 /* バッジのポップ量（到達直後0.35秒でふわっと1.0へ） */
@@ -603,6 +627,15 @@ function selLayers(){
     getRadius:7,radiusUnits:"pixels",filled:false,stroked:true,
     getLineColor:[255,255,255,220],lineWidthUnits:"pixels",getLineWidth:1.6,parameters:{depthTest:false}
   }));
+  const ps=0.5+0.5*Math.sin(performance.now()/430);
+  layers.push(new deck.ScatterplotLayer({
+    id:"hypoglow",data:[sel],
+    getPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000*zSquash],
+    getRadius:11+6*ps,radiusUnits:"pixels",
+    getFillColor:[255,91,74,Math.round(38+55*ps)],stroked:false,
+    parameters:{depthTest:false},
+    updateTriggers:{getPosition:[zSquash],getRadius:[pulseB],getFillColor:[pulseB]}
+  }));
   layers.push(new deck.ScatterplotLayer({
     id:"hypo",data:[sel],getPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000*zSquash],
     updateTriggers:{getPosition:[zSquash]},
@@ -655,26 +688,68 @@ function renderIdleStats(){
   }).join("");
   el.style.display=sel?"none":"block";
 }
-function histoLayer(dimmed){
-  const data=HISTO_F||HISTO;
-  if(!data)return null;
-  return new deck.ScatterplotLayer({
-    id:"histo",data,
-    getPosition:h=>[h[1],h[0],-h[2]*1000*zSquash],
-    getRadius:h=>1+Math.pow(Math.max(0,h[3]-3.5),1.7)*0.55,   /* Q9: Mで巨大地震が目立つ */
-    radiusUnits:"pixels",radiusMinPixels:1,radiusMaxPixels:6.5,
-    getFillColor:h=>{const c=depthColor(h[2]);return[c[0],c[1],c[2],dimmed?42:100];},
+function histoLayers(dimmed){
+  const data=HISTO_F;
+  if(!data||!data.length)return [];
+  const zpos=h=>{
+    const zf=-h[2]*1000*zSquash;
+    if(introB>=1)return [h[1],h[0],zf];
+    const dl=((h[1]*7.13+h[0]*3.7)%1+1)%1;
+    const pp=clamp((introB-dl*0.35)/0.65,0,1);
+    const e=1-Math.pow(1-pp,3);
+    return [h[1],h[0],160000*(1-e)+zf*e];
+  };
+  const aS=h=>{
+    if(introB>=1)return 1;
+    const dl=((h[1]*7.13+h[0]*3.7)%1+1)%1;
+    const pp=clamp((introB-dl*0.35)/0.65,0,1);
+    return 0.12+0.88*(1-Math.pow(1-pp,3));
+  };
+  const trig={getPosition:[zSquash,introB],getFillColor:[dimmed,zSquash,introB]};
+  const L=[];
+  /* 発光ハロー（Q2: もやっと光る・重なると燃える） */
+  L.push(new deck.ScatterplotLayer({
+    id:"histoglow",data,getPosition:zpos,
+    getRadius:h=>(2300+Math.pow(Math.max(0,h[3]-3.5),1.6)*3600)*2.3,
+    radiusUnits:"meters",radiusMinPixels:2.6,radiusMaxPixels:64,
+    getFillColor:h=>{const c=depthColor(h[2]);const a=(dimmed?11:(20+(1-zSquash)*16))*aS(h);return[c[0],c[1],c[2],a];},
+    stroked:false,pickable:false,parameters:{depthTest:false},updateTriggers:trig
+  }));
+  /* コア（Q1: 光る玉級・実距離で寄るほど育つ） */
+  L.push(new deck.ScatterplotLayer({
+    id:"histo",data,getPosition:zpos,
+    getRadius:h=>2300+Math.pow(Math.max(0,h[3]-3.5),1.6)*3600,
+    radiusUnits:"meters",radiusMinPixels:1.3,radiusMaxPixels:38,
+    getFillColor:h=>{const c=depthColor(h[2]);const a=(dimmed?38:(100+(1-zSquash)*90))*aS(h);return[c[0],c[1],c[2],Math.min(255,a)];},
     stroked:false,pickable:!dimmed,
     onClick:info=>{if(info&&info.object){lastDotTap=Date.now();const h=info.object;
       const ym=(h[4]||"").split("-");const t=ym.length===2?(ym[0]+"年"+(+ym[1])+"月"):"";
       toast(t+" M"+h[3].toFixed(1)+" ・ 深さ"+Math.round(h[2])+"km");}},
-    parameters:{depthTest:false},
-    updateTriggers:{getFillColor:[dimmed],getPosition:[zSquash]}
-  });
+    parameters:{depthTest:false},updateTriggers:trig
+  }));
+  /* M7+ 常時リング＋年ラベル（Q8: 巨大地震が一目） */
+  const majors=data.filter(h=>h[3]>=7);
+  if(majors.length){
+    L.push(new deck.ScatterplotLayer({
+      id:"m7ring",data:majors,getPosition:zpos,
+      getRadius:14,radiusUnits:"pixels",filled:false,stroked:true,
+      getLineColor:[255,202,120,dimmed?70:160],lineWidthUnits:"pixels",getLineWidth:1.4,
+      parameters:{depthTest:false},updateTriggers:trig
+    }));
+    L.push(new deck.TextLayer({
+      id:"m7label",data:majors,getPosition:zpos,
+      getText:h=>String(h[4]||"").slice(0,4),
+      getSize:10,getColor:[255,210,140,dimmed?120:225],getPixelOffset:[0,-19],
+      fontFamily:"IBM Plex Mono, monospace",fontSettings:{sdf:true},
+      outlineWidth:2,outlineColor:[5,8,13,235],characterSet:"0123456789".split(""),
+      parameters:{depthTest:false},updateTriggers:trig
+    }));
+  }
+  return L;
 }
 function updateLayers(){
   if(!overlay)return;
-  const base=[];const hl=histoLayer(!!sel);if(hl)base.push(hl);
+  const base=histoLayers(!!sel);
   overlay.setProps({layers: sel?[...base,...selLayers()]:base});
 }
 
@@ -835,6 +910,7 @@ function selectQuake(q){
   $("btnClose").classList.remove("hidden");   /* Q19: ×常時 */
   updateLayers();
   $("dleg").style.display="none";$("istat").style.display="none";$("dfilter").style.display="none";
+  if(!pulseRun){pulseRun=true;requestAnimationFrame(pulseLoop);}
   $("dfilter").style.display="none";
   $("panel").classList.add("on");
   const dep=(q.depth!=null)?q.depth:10;
