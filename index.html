@@ -163,7 +163,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
     <span class="bdot"></span>
     <div class="bt">
       <div class="b1">震源<b>3D</b></div>
-      <div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v11.2</em></div>
+      <div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v11.3</em></div>
     </div>
   </div>
   <div class="spacer"></div>
@@ -246,7 +246,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 
 <script>
 /* ============================================================
-   震源3D v11.2
+   震源3D v11.3
    仕様（20問で確定）:
    - 待機中は地図のみ（ピン無し） / 選択は一覧☰から / 手動▶で再生
    - 再生中はHUDだけを地図に直接透過（帯・散布図・件数バー・県別・統計）
@@ -254,7 +254,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
    ============================================================ */
 
 /* ===== 設定・定数 ===== */
-const APP_VERSION="v11.2";
+const APP_VERSION="v11.3";
 const LS_KEY="jeq_cache_v3";          // 原則④ キーにバージョン
 const LS_ST="jeq_stations_v1";
 const MAX_RECORDS=120, FETCH_TIMEOUT=9000, REFRESH_AFTER_MS=5*60*1000;  // 原則⑤ 上限明記
@@ -304,6 +304,13 @@ let sel=null,obs=[],tSim=0,tEnd=10,playing=false,speed=2,raf=null,lastTs=0;
 let fieldImg=null,fieldBounds=null,lastReached=-1,lastFieldTs=0,lastHudTs=0,lastLayerTs=0;
 let cachedShown=null,cachedShownN=-2;
 let trTimer=null,lastDotTap=0;
+let zSquash=1;   /* 深さ表現の係数: zoom<=6で1(実寸3D) → zoom>=8.6で0(地表) */
+function refreshZSquash(){
+  if(!map)return;
+  const f=Math.max(0,Math.min(1,(8.6-map.getZoom())/2.6));
+  const b=Math.round(f*10)/10;
+  if(b!==zSquash){zSquash=b;updateLayers();}
+}
 let HISTO=null,mapMode="dark";
 const LS_HISTO="jeq_histo_v2";   /* 原則④: 構造変更でキー更新 */
 
@@ -422,6 +429,9 @@ function initMap(){
     center:[137.8,37.5],zoom:4.5,pitch:52,bearing:0,maxPitch:80,minZoom:3,maxZoom:13,attributionControl:true
   });
   map.touchZoomRotate.enable();map.dragRotate.enable();
+  let zsT=0;
+  map.on("move",()=>{const n=Date.now();if(n-zsT<120)return;zsT=n;refreshZSquash();});
+  map.on("moveend",refreshZSquash);
   overlay=new deck.MapboxOverlay({interleaved:true,layers:[]});
   map.addControl(overlay);
   map.on("load",()=>{
@@ -578,7 +588,8 @@ function selLayers(){
   layers.push(new deck.LineLayer({
     id:"plumb",data:[sel],
     getSourcePosition:q=>[q.lng,q.lat,0],
-    getTargetPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000],
+    getTargetPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000*zSquash],
+    updateTriggers:{getTargetPosition:[zSquash]},
     getColor:[235,245,255,150],getWidth:1.2,widthUnits:"pixels"
   }));
   layers.push(new deck.ScatterplotLayer({
@@ -593,13 +604,15 @@ function selLayers(){
     getLineColor:[255,255,255,220],lineWidthUnits:"pixels",getLineWidth:1.6,parameters:{depthTest:false}
   }));
   layers.push(new deck.ScatterplotLayer({
-    id:"hypo",data:[sel],getPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000],
+    id:"hypo",data:[sel],getPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000*zSquash],
+    updateTriggers:{getPosition:[zSquash]},
     getRadius:6.5,radiusUnits:"pixels",stroked:true,getLineColor:[255,255,255,235],
     getFillColor:[255,90,74,235],lineWidthUnits:"pixels",getLineWidth:1.3,parameters:{depthTest:false}
   }));
   layers.push(new deck.TextLayer({
     id:"depthlabel",data:[sel],
-    getPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000],
+    getPosition:q=>[q.lng,q.lat,-(q.depth||10)*1000*zSquash],
+    updateTriggers:{getPosition:[zSquash]},
     getText:q=>((q.depth!=null)?q.depth:10)+"km",
     getSize:13,getColor:[58,226,200,235],getPixelOffset:[26,0],
     fontFamily:"IBM Plex Mono, monospace",fontSettings:{sdf:true},
@@ -647,7 +660,7 @@ function histoLayer(dimmed){
   if(!data)return null;
   return new deck.ScatterplotLayer({
     id:"histo",data,
-    getPosition:h=>[h[1],h[0],-h[2]*1000],
+    getPosition:h=>[h[1],h[0],-h[2]*1000*zSquash],
     getRadius:h=>1+Math.pow(Math.max(0,h[3]-3.5),1.7)*0.55,   /* Q9: Mで巨大地震が目立つ */
     radiusUnits:"pixels",radiusMinPixels:1,radiusMaxPixels:6.5,
     getFillColor:h=>{const c=depthColor(h[2]);return[c[0],c[1],c[2],dimmed?42:100];},
@@ -656,7 +669,7 @@ function histoLayer(dimmed){
       const ym=(h[4]||"").split("-");const t=ym.length===2?(ym[0]+"年"+(+ym[1])+"月"):"";
       toast(t+" M"+h[3].toFixed(1)+" ・ 深さ"+Math.round(h[2])+"km");}},
     parameters:{depthTest:false},
-    updateTriggers:{getFillColor:[dimmed]}
+    updateTriggers:{getFillColor:[dimmed],getPosition:[zSquash]}
   });
 }
 function updateLayers(){
