@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <title>震源 3D</title>
 <meta name="description" content="日本の地震を衛星写真の3Dで再現。各観測点の実測震度を正確な位置に配置し、波の到達で震度分布が広がる。データ: P2P地震情報(気象庁)＋気象庁震度観測点座標。">
+<meta name="theme-color" content="#05080d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="震源3D">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
@@ -55,7 +59,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 .dcap{font-family:var(--mono);font-size:8.5px;color:var(--dim);letter-spacing:.06em;text-shadow:var(--shadow);}
 .dlr{display:flex;align-items:center;gap:7px;}
 .dleg i{width:118px;height:7px;border-radius:3px;display:block;
-  background:linear-gradient(90deg,#f79d4e 0%,#f2543c 6%,#ee3728 20%,#e2247a 50%,#8b34e8 100%);
+  background:linear-gradient(90deg,#ff5340 0%,#ff8a3d 8%,#c13ae0 20%,#3a6df0 36%,#35c96a 56%,#ffd23d 76%,#fff06e 100%);
   box-shadow:0 1px 6px rgba(0,0,0,.6);}
 
 /* ===== HUD（再生中だけ・地図に直接透過／背景なし・影のみ） ===== */
@@ -86,6 +90,11 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 .ib .t{flex:1;height:6px;border-radius:2px;background:rgba(0,0,0,.3);overflow:hidden;}
 .ib .t i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,#ff5b4a,#ff8a3d);}
 .ib .n{flex:0 0 26px;text-align:left;color:#ffb3ab;}
+.ilab{font-family:var(--mono);font-size:8.5px;color:var(--dim);letter-spacing:.06em;margin:7px 0 3px;text-shadow:var(--shadow);}
+.iyear{display:flex;align-items:flex-end;gap:1px;height:30px;}
+.iyear i{flex:1;background:linear-gradient(180deg,#ff8a3d,#ff5b4a);border-radius:1px 1px 0 0;min-height:1px;opacity:.85;}
+.iyear i.hl{background:linear-gradient(180deg,#ffe27a,#ffd23d);opacity:1;}
+.icap{margin-top:7px;margin-bottom:2px;font-family:var(--mono);font-size:8.5px;color:var(--dim);text-shadow:var(--shadow);}
 .isrc{margin-top:6px;font-family:var(--mono);font-size:8.5px;color:var(--dim);text-shadow:var(--shadow);}
 
 /* 深さフィルタ（右端・縦） */
@@ -134,6 +143,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 .hd{width:38px;height:4px;border-radius:2px;background:#283643;margin:10px auto 4px;}
 .stt{text-align:center;font-family:var(--mono);font-size:10px;color:var(--dim);padding-bottom:8px;}
 .stt b{color:var(--muted);}
+.about{padding:2px 16px 10px;font-size:10.5px;line-height:1.75;color:var(--muted);border-bottom:1px solid #101a24;}
+.about b{color:var(--cyan);font-family:var(--mono);font-size:9px;margin-right:6px;}
 .list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 12px calc(18px + var(--sb));}
 .row{display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid #101a24;min-height:44px;}
 .row:active{background:#0a121a;}
@@ -163,7 +174,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
     <span class="bdot"></span>
     <div class="bt">
       <div class="b1">震源<b>3D</b></div>
-      <div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v12.0</em></div>
+      <div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v12.4</em></div>
     </div>
   </div>
   <div class="spacer"></div>
@@ -178,7 +189,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 <div class="hint" id="hint">☰ から地震を選ぶ ／ 2本指で傾ける・回す</div>
 
 <!-- 深さ凡例（過去震源の点群用・待機中のみ） -->
-<div class="dleg" id="dleg" style="display:none"><div class="dcap">過去の震源 ・ 深さ</div><div class="dlr"><span>0km</span><i></i><span>500km</span></div></div>
+<div class="dleg" id="dleg" style="display:none"><div class="dcap">過去の震源 ・ 深さ（赤=浅い → 黄=深い500km）</div><div class="dlr"><span>0km</span><i></i><span>500km</span></div></div>
 
 <!-- ===== 左パネル（nagix風・選択中は常時／背景なし影のみ） ===== -->
 <div class="panel" id="panel">
@@ -207,10 +218,15 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 <!-- ===== 待機中ミニ統計（右上・透過テキスト／再生で自動的に消える） ===== -->
 <div class="istat" id="istat" style="display:none">
   <div class="ichips">
-    <button data-p="month" class="on">今月</button><button data-p="prev">先月</button><button data-p="year">1年</button><button data-p="all">全部</button>
+    <button data-p="month">今月</button><button data-p="prev">先月</button><button data-p="year" class="on">1年</button><button data-p="all">全部</button>
   </div>
   <div class="irow" id="istatMeta">–</div>
+  <div class="ilab">M別</div>
   <div class="ibars" id="istatBars"></div>
+  <div class="ilab">深さ別 km</div>
+  <div class="ibars" id="istatDepth"></div>
+  <div class="ilab" id="iyrlab" style="display:none">年別 件数</div>
+  <canvas id="istatYr" style="display:none;width:158px;height:40px"></canvas>
   <div class="isrc">USGSカタログ M3.5+</div>
 </div>
 
@@ -233,12 +249,17 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
   <button class="tr-play" id="playBtn">▶</button>
   <input class="tr-tl" id="tl" type="range" min="0" max="1000" value="0">
   <button class="tr-spd" id="spdBtn">×2</button>
+  <button class="tr-spd" id="shareBtn" title="共有">⤴</button>
 </div>
 
 <div class="bg" id="bg"></div>
 <div class="sheet" id="sheet">
   <div class="hd"></div>
   <div class="stt">最近の地震 · <b id="cnt">–</b>件 · 更新 <b id="updated">–</b></div>
+  <div class="about">
+    <div><b>使い方</b>地震をタップ→▶で実測再生 ／ 2本指で傾け・回す ／ 地図の点をタップで過去の地震</div>
+    <div><b>データ</b>気象庁(P2P地震情報)・USGS・地理院タイル ／ 点の色＝震源の深さ</div>
+  </div>
   <div class="list" id="listEl"></div>
 </div>
 
@@ -246,7 +267,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 
 <script>
 /* ============================================================
-   震源3D v12.0
+   震源3D v12.4
    仕様（20問で確定）:
    - 待機中は地図のみ（ピン無し） / 選択は一覧☰から / 手動▶で再生
    - 再生中はHUDだけを地図に直接透過（帯・散布図・件数バー・県別・統計）
@@ -254,7 +275,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
    ============================================================ */
 
 /* ===== 設定・定数 ===== */
-const APP_VERSION="v12.0";
+const APP_VERSION="v12.4";
 const LS_KEY="jeq_cache_v3";          // 原則④ キーにバージョン
 const LS_ST="jeq_stations_v1";
 const MAX_RECORDS=120, FETCH_TIMEOUT=9000, REFRESH_AFTER_MS=5*60*1000;  // 原則⑤ 上限明記
@@ -286,13 +307,13 @@ function rampColor(I){
 function hsl2rgb(h,s,l){s/=100;l/=100;const k=n=>(n+h/30)%12;const a=s*Math.min(l,1-l);
   const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
   return[Math.round(f(0)*255),Math.round(f(8)*255),Math.round(f(4)*255)];}
-function depthColor(d){   /* 赤基調: 浅=明るい橙赤 → 深=紅→紫（緑・青は使わない） */
-  d=clamp(d,0,500);let h,s=88,l;
-  if(d<=30){const t=d/30;h=24-t*16;l=62-t*8;}
-  else if(d<=100){const t=(d-30)/70;h=8-t*8;l=54-t*2;}
-  else if(d<=250){const t=(d-100)/150;h=360-t*40;l=52;}
-  else{const t=(d-250)/250;h=320-t*58;l=50;}
-  return hsl2rgb(((h%360)+360)%360,s,l);}
+const DSTOPS=[[0,[255,83,64]],[40,[255,138,61]],[100,[193,58,224]],[180,[58,109,240]],[280,[53,201,106]],[380,[255,210,61]],[500,[255,240,110]]];
+function depthColor(d){   /* 細かい多色: 赤(浅)→橙→紫→青→緑→黄(深) 浅発の大多数は赤系のまま */
+  d=clamp(d,0,500);
+  for(let i=0;i<DSTOPS.length-1;i++){const a=DSTOPS[i][0],ca=DSTOPS[i][1],b=DSTOPS[i+1][0],cb=DSTOPS[i+1][1];
+    if(d>=a&&d<=b){const t=(b-a)?(d-a)/(b-a):0;
+      return[(ca[0]+(cb[0]-ca[0])*t)|0,(ca[1]+(cb[1]-ca[1])*t)|0,(ca[2]+(cb[2]-ca[2])*t)|0];}}
+  return DSTOPS[DSTOPS.length-1][1];}
 /* 理論減衰（司・翠川1999 + 童・山崎1996）— 分析の比較曲線・残差に使用 */
 function pgv(M,D,X){const lv=0.58*M+0.0038*D-1.29-Math.log10(X+0.0028*Math.pow(10,0.5*M))-0.002*X;return Math.pow(10,lv)*1.4;}
 function shindoAt(M,D,delta){const X=Math.sqrt(delta*delta+D*D);const v=pgv(M,D,X);if(v<=0)return 0;return 2.68+1.72*Math.log10(v);}
@@ -303,7 +324,16 @@ let map=null,overlay=null;
 let sel=null,obs=[],tSim=0,tEnd=10,playing=false,speed=2,raf=null,lastTs=0;
 let fieldImg=null,fieldBounds=null,lastReached=-1,lastFieldTs=0,lastHudTs=0,lastLayerTs=0;
 let cachedShown=null,cachedShownN=-2;
-let trTimer=null,lastDotTap=0;
+let trTimer=null,lastDotTap=0,deepLinked=false;
+async function shareQuake(){
+  if(!sel)return;
+  const url=location.origin+location.pathname+"#q="+encodeURIComponent(sel.id);
+  const text=sel.place+" M"+(sel.mag!=null?sel.mag.toFixed(1):"-")+(sel.intensity?(" 最大震度"+sel.intensity):"")+" 深さ"+(sel.depth!=null?sel.depth:"-")+"km / 震源3D";
+  try{
+    if(navigator.share){await navigator.share({title:"震源3D",text:text,url:url});}
+    else if(navigator.clipboard){await navigator.clipboard.writeText(text+" "+url);toast("リンクをコピーしました");}
+  }catch(e){}
+}
 let zSquash=1;   /* 深さ表現の係数: zoom<=6で1(実寸3D) → zoom>=8.6で0(地表) */
 function refreshZSquash(){
   if(!map)return;
@@ -411,6 +441,11 @@ function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clear
 function afterData(){
   $("cnt").textContent=DATA.length;$("updated").textContent=lastFetch?fmtTime(lastFetch):"–";
   renderList();
+  if(!deepLinked&&!sel&&location.hash.indexOf("#q=")===0){
+    const id=decodeURIComponent(location.hash.slice(3));
+    const q=DATA.find(x=>x.id===id);
+    if(q){deepLinked=true;selectQuake(q);}
+  }
 }
 function renderList(){
   const wrap=$("listEl");wrap.innerHTML="";
@@ -654,7 +689,7 @@ function selLayers(){
   }));
   return layers;
 }
-let HISTO_F=null,dMin=0,dMax=500,dfTimer=null,period="month";
+let HISTO_F=null,dMin=0,dMax=500,dfTimer=null,period="year";
 function ymNow(off){const d=new Date();d.setMonth(d.getMonth()+(off||0));return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
 function inPeriod(ym){
   if(period==="all")return true;
@@ -682,10 +717,37 @@ function renderIdleStats(){
   const bins=[["M7+",7,99],["M6",6,7],["M5",5,6],["M4",4,5],["3.5",0,4]];
   const cnt=bins.map(b=>{let n=0;for(const h of d)if(h[3]>=b[1]&&h[3]<b[2])n++;return n;});
   const mx=Math.max(1,...cnt);
+  const BC=["#ffd23d","#ff5b4a","","",""];
   $("istatBars").innerHTML=bins.map((b,i)=>{
     const w=Math.round(cnt[i]/mx*100);
-    return '<div class="ib"><span class="l">'+b[0]+'</span><span class="t"><i style="width:'+w+'%"></i></span><span class="n">'+cnt[i]+'</span></div>';
+    const st='width:'+w+'%'+(BC[i]?';background:'+BC[i]:'');
+    return '<div class="ib"><span class="l">'+b[0]+'</span><span class="t"><i style="'+st+'"></i></span><span class="n">'+cnt[i]+'</span></div>';
   }).join("");
+  /* 深さ別（新カラースケールの凡例を兼ねる） */
+  const dbins=[["0-40",0,40],["-100",40,100],["-180",100,180],["-280",180,280],["-380",280,380],["380+",380,10000]];
+  const dcnt=dbins.map(b=>{let n=0;for(const h of d)if(h[2]>=b[1]&&h[2]<b[2])n++;return n;});
+  const dmx=Math.max(1,...dcnt);
+  $("istatDepth").innerHTML=dbins.map((b,i)=>{
+    const w=Math.round(dcnt[i]/dmx*100);
+    const c=depthColor((b[1]+Math.min(b[2],500))/2);
+    return '<div class="ib"><span class="l">'+b[0]+'</span><span class="t"><i style="width:'+w+'%;background:rgb('+c[0]+','+c[1]+','+c[2]+')"></i></span><span class="n">'+dcnt[i]+'</span></div>';
+  }).join("");
+  /* 年別ヒストグラム（全期間のみ） */
+  const yr=$("istatYr"),yl=$("iyrlab");
+  if(period==="all"&&d.length){
+    yl.style.display="";yr.style.display="block";
+    const y0=2000,y1=new Date().getFullYear();
+    const yc=new Array(y1-y0+1).fill(0);
+    for(const h of d){const y=parseInt(String(h[4]||"").slice(0,4),10);if(y>=y0&&y<=y1)yc[y-y0]++;}
+    const dpr=window.devicePixelRatio||1,w2=158,h2=40;
+    yr.width=Math.round(w2*dpr);yr.height=Math.round(h2*dpr);
+    const cx=yr.getContext("2d");cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,w2,h2);
+    const mxy=Math.max(1,...yc);const bw=w2/yc.length;
+    for(let i=0;i<yc.length;i++){const bh=(yc[i]/mxy)*(h2-11);
+      cx.fillStyle="rgba(255,91,74,.85)";cx.fillRect(i*bw+0.5,h2-11-bh,Math.max(1,bw-1),bh);}
+    cx.font="8px 'IBM Plex Mono',monospace";cx.fillStyle="#8794a4";
+    cx.fillText("2000",0,h2-1);cx.fillText(String(y1),w2-26,h2-1);
+  }else{yl.style.display="none";yr.style.display="none";}
   el.style.display=sel?"none":"block";
 }
 function histoLayers(dimmed){
@@ -707,20 +769,12 @@ function histoLayers(dimmed){
   };
   const trig={getPosition:[zSquash,introB],getFillColor:[dimmed,zSquash,introB]};
   const L=[];
-  /* 発光ハロー（Q2: もやっと光る・重なると燃える） */
-  L.push(new deck.ScatterplotLayer({
-    id:"histoglow",data,getPosition:zpos,
-    getRadius:h=>(2300+Math.pow(Math.max(0,h[3]-3.5),1.6)*3600)*2.3,
-    radiusUnits:"meters",radiusMinPixels:2.6,radiusMaxPixels:64,
-    getFillColor:h=>{const c=depthColor(h[2]);const a=(dimmed?11:(20+(1-zSquash)*16))*aS(h);return[c[0],c[1],c[2],a];},
-    stroked:false,pickable:false,parameters:{depthTest:false},updateTriggers:trig
-  }));
   /* コア（Q1: 光る玉級・実距離で寄るほど育つ） */
   L.push(new deck.ScatterplotLayer({
     id:"histo",data,getPosition:zpos,
-    getRadius:h=>2300+Math.pow(Math.max(0,h[3]-3.5),1.6)*3600,
-    radiusUnits:"meters",radiusMinPixels:1.3,radiusMaxPixels:38,
-    getFillColor:h=>{const c=depthColor(h[2]);const a=(dimmed?38:(100+(1-zSquash)*90))*aS(h);return[c[0],c[1],c[2],Math.min(255,a)];},
+    getRadius:h=>900+Math.pow(Math.max(0,h[3]-3.5),1.6)*1500,
+    radiusUnits:"meters",radiusMinPixels:1.2,radiusMaxPixels:10,
+    getFillColor:h=>{const c=depthColor(h[2]);const a=(dimmed?38:(96+(1-zSquash)*54))*aS(h);return[c[0],c[1],c[2],Math.min(255,a)];},
     stroked:false,pickable:!dimmed,
     onClick:info=>{if(info&&info.object){lastDotTap=Date.now();const h=info.object;
       const ym=(h[4]||"").split("-");const t=ym.length===2?(ym[0]+"年"+(+ym[1])+"月"):"";
@@ -804,6 +858,13 @@ function renderHudStats(arr){
   /* 実データから読み取れることを平文で（ルールベース・本物のみ） */
   const D0=(sel.depth!=null)?sel.depth:10;
   let ins=[];
+  /* 周辺50km圏の過去活動（2000年以降・初回のみ計算してキャッシュ） */
+  if(HISTO&&HISTO.length&&sel.lat!=null&&sel._near==null){
+    const cl2=Math.cos(sel.lat*Math.PI/180);let near=0;
+    for(const h of HISTO){const dd=Math.sqrt((h[0]-sel.lat)**2+((h[1]-sel.lng)*cl2)**2)*111;if(dd<=50)near++;}
+    sel._near=near;
+  }
+  if(sel._near!=null)ins.push("周辺50km圏では2000年以降 M3.5+ が"+sel._near+"回");
   if(D0>=100)ins.push("深発地震：震源の真上より遠方が揺れやすい（異常震域の傾向）");
   else if(D0<=20)ins.push("ごく浅い地震：震源近くに揺れが集中");
   if(res>=0.3)ins.push("実測が理論より強め＝地盤増幅の影響か");
@@ -911,6 +972,7 @@ function selectQuake(q){
   updateLayers();
   $("dleg").style.display="none";$("istat").style.display="none";$("dfilter").style.display="none";
   if(!pulseRun){pulseRun=true;requestAnimationFrame(pulseLoop);}
+  try{history.replaceState(null,"","#q="+encodeURIComponent(q.id));}catch(e){}
   $("dfilter").style.display="none";
   $("panel").classList.add("on");
   const dep=(q.depth!=null)?q.depth:10;
@@ -922,6 +984,7 @@ function selectQuake(q){
 function deselect(){
   $("panel").classList.remove("on");
   sel=null;obs=[];playing=false;cancelAnimationFrame(raf);
+  try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}
   tSim=0;fieldImg=null;cachedShown=null;cachedShownN=-2;
   setHud(false);hideTransport();updateLayers();
   $("btnRefresh").classList.remove("hidden");$("btnList").classList.remove("hidden");
@@ -959,6 +1022,7 @@ function bind(){
   $("bg").addEventListener("click",closeSheet);
   $("playBtn").addEventListener("click",togglePlay);
   $("spdBtn").addEventListener("click",cycleSpeed);
+  $("shareBtn").addEventListener("click",shareQuake);
   $("spdBtn").textContent="×"+speed;
   $("tl").addEventListener("input",e=>{
     if(!sel||!obs.length)return;
