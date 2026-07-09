@@ -9,6 +9,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="震源3D">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#05080d">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
@@ -174,7 +179,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
     <span class="bdot"></span>
     <div class="bt">
       <div class="b1">震源<b>3D</b></div>
-      <div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v13.0</em></div>
+      <div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v14.0</em></div>
     </div>
   </div>
   <div class="spacer"></div>
@@ -182,6 +187,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
     <button class="tbtn" id="btnMap" title="地図切替">◐</button>
     <button class="tbtn" id="btnRefresh" title="更新">⟳</button>
     <button class="tbtn" id="btnList" title="一覧">☰</button>
+    <button class="tbtn" id="btnShare" title="共有">↗</button>
     <button class="tbtn hidden" id="btnClose" title="閉じる">×</button>
   </div>
 </div>
@@ -258,7 +264,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
   <div class="stt">最近の地震 · <b id="cnt">–</b>件 · 更新 <b id="updated">–</b></div>
   <div class="about">
     <div><b>使い方</b>地震をタップ→▶で実測再生 ／ 2本指で傾け・回す ／ 地図の点をタップで過去の地震</div>
-    <div><b>データ</b>気象庁(P2P地震情報)・USGS・地理院タイル ／ 点の色＝震源の深さ</div>
+    <div><b>データ</b>気象庁(P2P地震情報)・USGS・地理院タイル ／ 点の色＝震源の深さ ／ 等深線＝深発地震面（震源分布から推定）</div>
   </div>
   <div class="list" id="listEl"></div>
 </div>
@@ -267,7 +273,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 
 <script>
 /* ============================================================
-   震源3D v13.0
+   震源3D v14.0
    仕様（20問で確定）:
    - 待機中は地図のみ（ピン無し） / 選択は一覧☰から / 手動▶で再生
    - 再生中はHUDだけを地図に直接透過（帯・散布図・件数バー・県別・統計）
@@ -275,7 +281,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
    ============================================================ */
 
 /* ===== 設定・定数 ===== */
-const APP_VERSION="v13.0";
+const APP_VERSION="v14.0";
 const LS_KEY="jeq_cache_v3";          // 原則④ キーにバージョン
 const LS_ST="jeq_stations_v1";
 const MAX_RECORDS=120, FETCH_TIMEOUT=9000, REFRESH_AFTER_MS=5*60*1000;  // 原則⑤ 上限明記
@@ -342,6 +348,44 @@ function refreshZSquash(){
   const b=Math.round(f*10)/10;
   if(b!==zSquash){zSquash=b;updateLayers();}
 }
+let SLAB=null;   /* 深発地震面（和達・ベニオフ帯）: 実震源データから推定した沈み込むプレート形状 */
+function buildSlab(){
+  if(SLAB||!HISTO)return;
+  const lon0=122,lon1=150,lat0=24,lat1=46,st=0.35;
+  const W=Math.round((lon1-lon0)/st)+1,H=Math.round((lat1-lat0)/st)+1;
+  const sum=new Float64Array(W*H),cnt=new Uint16Array(W*H);
+  for(const h of HISTO){const d=h[2];if(d<30)continue;
+    const x=Math.round((h[1]-lon0)/st),y=Math.round((h[0]-lat0)/st);
+    if(x<0||y<0||x>=W||y>=H)continue;const i=y*W+x;sum[i]+=d;cnt[i]++;}
+  const g=new Float64Array(W*H);g.fill(NaN);
+  for(let i=0;i<W*H;i++)if(cnt[i]>=2)g[i]=sum[i]/cnt[i];
+  const g2=new Float64Array(W*H);g2.fill(NaN);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    let sm=0,n=0;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+      const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=W||yy>=H)continue;
+      const v=g[yy*W+xx];if(!isNaN(v)){sm+=v;n++;}}
+    if(n>=3)g2[y*W+x]=sm/n;
+  }
+  const segs=[],labels=[];
+  for(let Lv=50;Lv<=450;Lv+=50){
+    let first=true;
+    for(let y=0;y<H-1;y++)for(let x=0;x<W-1;x++){
+      const v0=g2[y*W+x],v1=g2[y*W+x+1],v2=g2[(y+1)*W+x+1],v3=g2[(y+1)*W+x];
+      if(isNaN(v0)||isNaN(v1)||isNaN(v2)||isNaN(v3))continue;
+      const P=[];
+      if((v0<Lv)!==(v1<Lv)){const t=(Lv-v0)/(v1-v0);P.push([x+t,y]);}
+      if((v1<Lv)!==(v2<Lv)){const t=(Lv-v1)/(v2-v1);P.push([x+1,y+t]);}
+      if((v2<Lv)!==(v3<Lv)){const t=(Lv-v2)/(v3-v2);P.push([x+1-t,y+1]);}
+      if((v3<Lv)!==(v0<Lv)){const t=(Lv-v3)/(v0-v3);P.push([x,y+1-t]);}
+      const cv=pp=>[lon0+pp[0]*st,lat0+pp[1]*st];
+      if(P.length>=2){segs.push({a:cv(P[0]),b:cv(P[1]),d:Lv});
+        if(first&&Lv%100===0){labels.push({p:cv(P[0]),d:Lv});first=false;}}
+      if(P.length===4)segs.push({a:cv(P[2]),b:cv(P[3]),d:Lv});
+    }
+  }
+  SLAB={segs,labels};
+}
 let introB=1,introStarted=false;   /* 起動演出: 点群が降って積もる（Q5） */
 function startIntro(){
   if(introStarted||!HISTO)return;introStarted=true;introB=0;
@@ -404,7 +448,7 @@ async function loadStations(){
 }
 function withTimeoutMs(ms){if(AbortSignal.timeout)return{signal:AbortSignal.timeout(ms)};const c=new AbortController();setTimeout(()=>c.abort(),ms);return{signal:c.signal};}
 async function loadHisto(){
-  try{const st=localStorage.getItem(LS_HISTO);if(st){HISTO=JSON.parse(st);applyDepthFilter();if(!sel){$("dleg").style.display="flex";$("dfilter").style.display="flex";}startIntro();updateLayers();return;}}catch(e){}
+  try{const st=localStorage.getItem(LS_HISTO);if(st){HISTO=JSON.parse(st);buildSlab();applyDepthFilter();if(!sel){$("dleg").style.display="flex";$("dfilter").style.display="flex";}startIntro();updateLayers();return;}}catch(e){}
   try{
     toast("過去の震源データを読込中…（初回のみ）");
     const url="https://earthquake.usgs.gov/fdsnws/event/1/query?format=csv&starttime=2000-01-01"
@@ -420,7 +464,7 @@ async function loadHisto(){
       if(isNaN(la)||isNaN(lo)||isNaN(de)||isNaN(mg))continue;
       out.push([Math.round(la*1000)/1000,Math.round(lo*1000)/1000,Math.round(de*10)/10,Math.round(mg*10)/10,(c[0]||"").slice(0,7)]);
     }
-    if(out.length>200){HISTO=out;try{localStorage.setItem(LS_HISTO,JSON.stringify(out));}catch(e){}
+    if(out.length>200){HISTO=out;buildSlab();try{localStorage.setItem(LS_HISTO,JSON.stringify(out));}catch(e){}
       startIntro();applyDepthFilter();toast("過去震源 "+out.length+"件を表示");if(!sel){$("dleg").style.display="flex";$("dfilter").style.display="flex";}updateLayers();}
   }catch(e){/* 取得失敗しても本体機能に影響なし */}
 }
@@ -439,13 +483,34 @@ let toastTimer=null;
 function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("on"),3200);}
 
 /* ===== 一覧（Q20：全部出す） ===== */
+function buildShareUrl(){
+  let h="";
+  if(sel)h="q="+encodeURIComponent(sel.id);
+  if(map){const c=map.getCenter();
+    h+=(h?"&":"")+"c="+c.lng.toFixed(3)+","+c.lat.toFixed(3)+","+map.getZoom().toFixed(2)+","+Math.round(map.getPitch())+","+Math.round(map.getBearing());}
+  return location.origin+location.pathname+(h?"#"+h:"");
+}
+async function shareView(){
+  const url=buildShareUrl();
+  try{if(navigator.share){await navigator.share({title:"震源3D",url});return;}}catch(e){if(e&&e.name==="AbortError")return;}
+  try{await navigator.clipboard.writeText(url);toast("URLをコピーしました");}catch(e){toast(url);}
+}
+function parseHash(){
+  const h=location.hash.slice(1).replace(/^q=/,"q=");
+  const pp=new URLSearchParams(h);
+  return {q:pp.get("q")?decodeURIComponent(pp.get("q")):null,c:pp.get("c")};
+}
+function applyHashCamera(){
+  const {c}=parseHash();
+  if(c&&map){const a=c.split(",").map(Number);
+    if(a.length===5&&a.every(v=>!isNaN(v)))map.jumpTo({center:[a[0],a[1]],zoom:a[2],pitch:a[3],bearing:a[4]});}
+}
 function afterData(){
   $("cnt").textContent=DATA.length;$("updated").textContent=lastFetch?fmtTime(lastFetch):"–";
   renderList();
-  if(!deepLinked&&!sel&&location.hash.indexOf("#q=")===0){
-    const id=decodeURIComponent(location.hash.slice(3));
-    const q=DATA.find(x=>x.id===id);
-    if(q){deepLinked=true;selectQuake(q);}
+  if(!deepLinked&&!sel&&parseHash().q){
+    const q=DATA.find(x=>x.id===parseHash().q);
+    if(q){deepLinked=true;selectQuake(q,parseHash().c!=null);toast("共有された地震を表示中");}
   }
 }
 function renderList(){
@@ -494,6 +559,7 @@ function initMap(){
       map.addSource("dem",{type:"raster-dem",tiles:["https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png"],encoding:"terrarium",tileSize:256,maxzoom:11});
       map.setTerrain({source:"dem",exaggeration:1.0});   /* Q3,Q6: 3D地形・実寸 */
     }catch(e){}
+    applyHashCamera();
     updateLayers();
   });
   map.on("click",()=>{  /* Q10: 再生中タップで操作バーが一瞬戻る */
@@ -770,6 +836,27 @@ function histoLayers(dimmed){
   };
   const trig={getPosition:[zSquash,introB],getFillColor:[dimmed,zSquash,introB]};
   const L=[];
+  /* 深発地震面の等深線（沈み込むプレートの形・実震源から推定） */
+  if(SLAB){
+    L.push(new deck.LineLayer({
+      id:"slab",data:SLAB.segs,
+      getSourcePosition:sg=>[sg.a[0],sg.a[1],-sg.d*1000*zSquash],
+      getTargetPosition:sg=>[sg.b[0],sg.b[1],-sg.d*1000*zSquash],
+      getColor:sg=>{const c=depthColor(sg.d);return[c[0],c[1],c[2],dimmed?50:125];},
+      getWidth:1.1,widthUnits:"pixels",parameters:{depthTest:false},
+      updateTriggers:{getSourcePosition:[zSquash],getTargetPosition:[zSquash],getColor:[dimmed]}
+    }));
+    L.push(new deck.TextLayer({
+      id:"slablabel",data:SLAB.labels,
+      getPosition:lb=>[lb.p[0],lb.p[1],-lb.d*1000*zSquash],
+      getText:lb=>lb.d+"km",getSize:9,
+      getColor:lb=>{const c=depthColor(lb.d);return[c[0],c[1],c[2],dimmed?110:215];},
+      fontFamily:"IBM Plex Mono, monospace",fontSettings:{sdf:true},
+      outlineWidth:2,outlineColor:[5,8,13,230],characterSet:"0123456789km".split(""),
+      parameters:{depthTest:false},
+      updateTriggers:{getPosition:[zSquash],getColor:[dimmed]}
+    }));
+  }
   /* コア（Q1: 光る玉級・実距離で寄るほど育つ） */
   L.push(new deck.ScatterplotLayer({
     id:"histo",data,getPosition:zpos,
@@ -973,7 +1060,7 @@ function togglePlay(){
 function cycleSpeed(){const s=[1,2,4,8];speed=s[(s.indexOf(speed)+1)%s.length];$("spdBtn").textContent="×"+speed;}
 
 /* ===== 選択（Q2: 一覧から／Q9: 手動▶） ===== */
-function selectQuake(q){
+function selectQuake(q,noFly){
   sel=q;obs=buildObs(q);tSim=0;playing=false;cancelAnimationFrame(raf);
   obs.sort((a,b)=>a.tS-b.tS);
   tEnd=obs.length?obs[obs.length-1].tS+3:10;
@@ -990,7 +1077,7 @@ function selectQuake(q){
   $("panel").classList.add("on");
   const dep=(q.depth!=null)?q.depth:10;
   const pit=clamp(55+dep*0.12,55,74), zm=(dep>100)?5.6:6;
-  if(map&&q.lat!=null&&q.lng!=null)map.flyTo({center:[q.lng,q.lat],zoom:(dep>100)?zm:Math.max(map.getZoom(),zm),pitch:pit,duration:1600,essential:true});
+  if(!noFly&&map&&q.lat!=null&&q.lng!=null)map.flyTo({center:[q.lng,q.lat],zoom:(dep>100)?zm:Math.max(map.getZoom(),zm),pitch:pit,duration:1600,essential:true});
   showTransport(0);                            /* 選択直後は▶を見せる */
   if(!obs.length)toast("観測点データなし（再生不可・位置のみ表示）");
 }
@@ -1026,6 +1113,7 @@ function bind(){
   $("dfMin").addEventListener("input",onDepthFilter);
   $("dfMax").addEventListener("input",onDepthFilter);
   $("btnMap").addEventListener("click",toggleMap);
+  $("btnShare").addEventListener("click",shareView);
   document.querySelectorAll("#istat .ichips button").forEach(b=>b.addEventListener("click",()=>{
     period=b.dataset.p;syncChips();applyDepthFilter();updateLayers();
   }));
@@ -1058,6 +1146,7 @@ window.addEventListener("load",async()=>{
   if(!STATIONS)toast("観測点座標の取得に失敗（再生精度が落ちます）");
   loadData(true);
   loadHisto();
+  if("serviceWorker" in navigator&&location.protocol==="https:"){try{navigator.serviceWorker.register("./sw.js");}catch(e){}}
 });
 </script>
 </body>
