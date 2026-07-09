@@ -59,7 +59,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 .dcap{font-family:var(--mono);font-size:8.5px;color:var(--dim);letter-spacing:.06em;text-shadow:var(--shadow);}
 .dlr{display:flex;align-items:center;gap:7px;}
 .dleg i{width:118px;height:7px;border-radius:3px;display:block;
-  background:linear-gradient(90deg,#ff5340 0%,#ff8a3d 8%,#c13ae0 20%,#3a6df0 36%,#35c96a 56%,#ffd23d 76%,#fff06e 100%);
+  background:linear-gradient(90deg,#a8e058 0%,#40d696 8%,#2ec4d6 18%,#3a8cf0 30%,#5e60eb 46%,#a448e0 66%,#d83cc4 84%,#6e2896 100%);
   box-shadow:0 1px 6px rgba(0,0,0,.6);}
 
 /* ===== HUD（再生中だけ・地図に直接透過／背景なし・影のみ） ===== */
@@ -174,7 +174,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
     <span class="bdot"></span>
     <div class="bt">
       <div class="b1">震源<b>3D</b></div>
-      <div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v12.4</em></div>
+      <div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v12.5</em></div>
     </div>
   </div>
   <div class="spacer"></div>
@@ -189,7 +189,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 <div class="hint" id="hint">☰ から地震を選ぶ ／ 2本指で傾ける・回す</div>
 
 <!-- 深さ凡例（過去震源の点群用・待機中のみ） -->
-<div class="dleg" id="dleg" style="display:none"><div class="dcap">過去の震源 ・ 深さ（赤=浅い → 黄=深い500km）</div><div class="dlr"><span>0km</span><i></i><span>500km</span></div></div>
+<div class="dleg" id="dleg" style="display:none"><div class="dcap">過去の震源 ・ 深さ（緑=浅い → 紫=深い500km）</div><div class="dlr"><span>0km</span><i></i><span>500km</span></div></div>
 
 <!-- ===== 左パネル（nagix風・選択中は常時／背景なし影のみ） ===== -->
 <div class="panel" id="panel">
@@ -267,7 +267,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 
 <script>
 /* ============================================================
-   震源3D v12.4
+   震源3D v12.5
    仕様（20問で確定）:
    - 待機中は地図のみ（ピン無し） / 選択は一覧☰から / 手動▶で再生
    - 再生中はHUDだけを地図に直接透過（帯・散布図・件数バー・県別・統計）
@@ -275,7 +275,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
    ============================================================ */
 
 /* ===== 設定・定数 ===== */
-const APP_VERSION="v12.4";
+const APP_VERSION="v12.5";
 const LS_KEY="jeq_cache_v3";          // 原則④ キーにバージョン
 const LS_ST="jeq_stations_v1";
 const MAX_RECORDS=120, FETCH_TIMEOUT=9000, REFRESH_AFTER_MS=5*60*1000;  // 原則⑤ 上限明記
@@ -307,7 +307,7 @@ function rampColor(I){
 function hsl2rgb(h,s,l){s/=100;l/=100;const k=n=>(n+h/30)%12;const a=s*Math.min(l,1-l);
   const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
   return[Math.round(f(0)*255),Math.round(f(8)*255),Math.round(f(4)*255)];}
-const DSTOPS=[[0,[255,83,64]],[40,[255,138,61]],[100,[193,58,224]],[180,[58,109,240]],[280,[53,201,106]],[380,[255,210,61]],[500,[255,240,110]]];
+const DSTOPS=[[0,[168,224,88]],[40,[64,214,150]],[90,[46,196,214]],[150,[58,140,240]],[230,[94,96,235]],[330,[164,72,224]],[420,[216,60,196]],[500,[110,40,150]]];   /* 寒色フルレインボー(暖色不使用): 黄緑→青緑→シアン→青→藍→紫→マゼンタ→深紫 */
 function depthColor(d){   /* 細かい多色: 赤(浅)→橙→紫→青→緑→黄(深) 浅発の大多数は赤系のまま */
   d=clamp(d,0,500);
   for(let i=0;i<DSTOPS.length-1;i++){const a=DSTOPS[i][0],ca=DSTOPS[i][1],b=DSTOPS[i+1][0],cb=DSTOPS[i+1][1];
