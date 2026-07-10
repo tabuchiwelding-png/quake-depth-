@@ -150,6 +150,13 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 .stt b{color:var(--muted);}
 .about{padding:2px 16px 10px;font-size:10.5px;line-height:1.75;color:var(--muted);border-bottom:1px solid #101a24;}
 .about b{color:var(--cyan);font-family:var(--mono);font-size:9px;margin-right:6px;}
+.shtabs{display:flex;gap:6px;padding:0 14px 9px;}
+.shtabs button{flex:1;height:34px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:12.5px;font-weight:700;font-family:var(--sans);}
+.shtabs button.on{background:#fff;color:#05080d;border-color:#fff;}
+.corr{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px calc(20px + var(--sb));}
+.csec{font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:.06em;padding:13px 0 6px;}
+.cchart{width:100%;height:112px;display:block;}
+.cnote{font-size:10px;line-height:1.65;color:var(--dim);padding-top:5px;}
 .list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 12px calc(18px + var(--sb));}
 .row{display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid #101a24;min-height:44px;}
 .row:active{background:#0a121a;}
@@ -179,7 +186,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
     <span class="bdot"></span>
     <div class="bt">
       <div class="b1">震源<b>3D</b></div>
-      <div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v14.0</em></div>
+      <div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v14.1</em></div>
     </div>
   </div>
   <div class="spacer"></div>
@@ -262,18 +269,34 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 <div class="sheet" id="sheet">
   <div class="hd"></div>
   <div class="stt">最近の地震 · <b id="cnt">–</b>件 · 更新 <b id="updated">–</b></div>
+  <div class="shtabs"><button id="shTabList" class="on">一覧</button><button id="shTabCorr">相関分析</button></div>
   <div class="about">
     <div><b>使い方</b>地震をタップ→▶で実測再生 ／ 2本指で傾け・回す ／ 地図の点をタップで過去の地震</div>
     <div><b>データ</b>気象庁(P2P地震情報)・USGS・地理院タイル ／ 点の色＝震源の深さ ／ 等深線＝深発地震面（震源分布から推定）</div>
   </div>
   <div class="list" id="listEl"></div>
+  <div class="corr" id="corrWrap" style="display:none">
+    <div class="cnote" id="corrCount">–</div>
+    <div class="csec">月齢（潮汐位相）と発生数</div>
+    <canvas id="ccMoon" class="cchart"></canvas>
+    <div class="cnote">潮汐応力が地震の引き金になり得るとする研究（Ide他 2016, Nature Geoscience）があるが効果は微小。差の多くは偶然の範囲で、この図だけで因果は言えない。</div>
+    <div class="csec">季節（月別）の発生数</div>
+    <canvas id="ccMonth" class="cchart"></canvas>
+    <div class="cnote">気温と地震の直接の相関は科学的に確認されていない。積雪・降水荷重による季節変調の研究はあるが効果は小さい。</div>
+    <div class="csec">時刻（24時間・日本時間）</div>
+    <canvas id="ccHour" class="cchart"></canvas>
+    <div class="cnote">夜間が多く見える場合は検出バイアス（人間活動ノイズが減り微小地震を検出しやすい）の影響が大きい。</div>
+    <div class="csec">規模別頻度と b値（グーテンベルク・リヒター則）</div>
+    <canvas id="ccGR" class="cchart"></canvas>
+    <div class="cnote" id="grNote">–</div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 /* ============================================================
-   震源3D v14.0
+   震源3D v14.1
    仕様（20問で確定）:
    - 待機中は地図のみ（ピン無し） / 選択は一覧☰から / 手動▶で再生
    - 再生中はHUDだけを地図に直接透過（帯・散布図・件数バー・県別・統計）
@@ -281,7 +304,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
    ============================================================ */
 
 /* ===== 設定・定数 ===== */
-const APP_VERSION="v14.0";
+const APP_VERSION="v14.1";
 const LS_KEY="jeq_cache_v3";          // 原則④ キーにバージョン
 const LS_ST="jeq_stations_v1";
 const MAX_RECORDS=120, FETCH_TIMEOUT=9000, REFRESH_AFTER_MS=5*60*1000;  // 原則⑤ 上限明記
@@ -406,7 +429,8 @@ function pulseLoop(){
   requestAnimationFrame(pulseLoop);
 }
 let HISTO=null,mapMode="dark";
-const LS_HISTO="jeq_histo_v2";   /* 原則④: 構造変更でキー更新 */
+const LS_HISTO="jeq_histo_v3";   /* 原則④: 構造変更でキー更新（v3: epoch時刻を追加） */
+try{localStorage.removeItem("jeq_histo_v2");localStorage.removeItem("jeq_histo_v1");}catch(e){}   /* 旧キャッシュ掃除（原則⑤） */
 
 /* ===== データ取得（原則⑥：タイムアウト＋フォールバック） ===== */
 function withTimeout(){if(AbortSignal.timeout)return{signal:AbortSignal.timeout(FETCH_TIMEOUT)};const c=new AbortController();setTimeout(()=>c.abort(),FETCH_TIMEOUT);return{signal:c.signal};}
@@ -462,7 +486,8 @@ async function loadHisto(){
       if(c.length<5)continue;
       const la=parseFloat(c[1]),lo=parseFloat(c[2]),de=parseFloat(c[3]),mg=parseFloat(c[4]);
       if(isNaN(la)||isNaN(lo)||isNaN(de)||isNaN(mg))continue;
-      out.push([Math.round(la*1000)/1000,Math.round(lo*1000)/1000,Math.round(de*10)/10,Math.round(mg*10)/10,(c[0]||"").slice(0,7)]);
+      const th=Math.floor(Date.parse(c[0])/3600000);   /* epoch時（月齢・時刻分析用） */
+      out.push([Math.round(la*1000)/1000,Math.round(lo*1000)/1000,Math.round(de*10)/10,Math.round(mg*10)/10,(c[0]||"").slice(0,7),isNaN(th)?0:th]);
     }
     if(out.length>200){HISTO=out;buildSlab();try{localStorage.setItem(LS_HISTO,JSON.stringify(out));}catch(e){}
       startIntro();applyDepthFilter();toast("過去震源 "+out.length+"件を表示");if(!sel){$("dleg").style.display="flex";$("dfilter").style.display="flex";}updateLayers();}
@@ -766,6 +791,87 @@ function inPeriod(ym){
   return true;
 }
 function syncChips(){document.querySelectorAll("#istat .ichips button").forEach(x=>x.classList.toggle("on",x.dataset.p===period));}
+/* ===== 相関分析（月齢・季節・時刻・b値）— すべて手元の実データから計算 ===== */
+const MOON_REF=263106.2333, MOON_SYN=708.734112;   /* 2000-01-06 18:14 UTC の新月 / 朔望月29.5306日(時間) */
+function moonPhase(th){return (((th-MOON_REF)/MOON_SYN)%1+1)%1;}
+function drawBars(cv,vals,opts){
+  const dpr=window.devicePixelRatio||1;
+  const w=cv.clientWidth||330,h=112;
+  cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+  const cx=cv.getContext("2d");cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,w,h);
+  const padL=6,padB=15,padT=8,padR=6;
+  const mx=Math.max(1,...vals);
+  const n=vals.length,bw=(w-padL-padR)/n;
+  const mean=vals.reduce((a,b)=>a+b,0)/n;
+  /* 平均線（一様なら期待される高さ） */
+  const ym=padT+(h-padT-padB)*(1-mean/mx);
+  cx.strokeStyle="rgba(58,226,200,.5)";cx.setLineDash([3,3]);cx.lineWidth=1;
+  cx.beginPath();cx.moveTo(padL,ym);cx.lineTo(w-padR,ym);cx.stroke();cx.setLineDash([]);
+  for(let i=0;i<n;i++){
+    const bh=(h-padT-padB)*vals[i]/mx;
+    cx.fillStyle=(opts&&opts.color)?opts.color(i):"rgba(58,140,240,.9)";
+    cx.fillRect(padL+i*bw+1,h-padB-bh,Math.max(1,bw-2),bh);
+  }
+  cx.font="8.5px 'IBM Plex Mono',monospace";cx.fillStyle="#8794a4";
+  if(opts&&opts.labels)for(const [pos,txt] of opts.labels)cx.fillText(txt,padL+pos*bw,h-4);
+  if(opts&&opts.tr)cx.fillText(opts.tr,w-padR-cx.measureText(opts.tr).width,padT+2);
+}
+function drawCorr(){
+  const d=HISTO_F||HISTO;if(!d||!d.length)return;
+  $("corrCount").textContent="対象: 現在のフィルタ内 "+d.length+"件（期間・深さチップと連動）";
+  /* 月齢8ビン */
+  const mb=new Array(8).fill(0);
+  for(const h of d){if(!h[5])continue;mb[Math.floor(moonPhase(h[5])*8)%8]++;}
+  const mmean=mb.reduce((a,b)=>a+b,0)/8;
+  const dev=Math.round(Math.max(...mb.map(v=>Math.abs(v-mmean)))/mmean*100);
+  drawBars($("ccMoon"),mb,{labels:[[0,"新月"],[2,"上弦"],[4,"満月"],[6,"下弦"]],tr:"最大偏差±"+dev+"%",
+    color:i=>(i===0||i===4)?"rgba(160,120,240,.95)":"rgba(58,140,240,.9)"});
+  /* 月別12 */
+  const mo=new Array(12).fill(0);
+  for(const h of d){const m=parseInt(String(h[4]||"").slice(5,7),10);if(m>=1&&m<=12)mo[m-1]++;}
+  drawBars($("ccMonth"),mo,{labels:[[0,"1月"],[5,"6月"],[11,"12月"]]});
+  /* 時刻24(JST) */
+  const hr=new Array(24).fill(0);
+  for(const h of d){if(!h[5])continue;hr[(h[5]+9)%24]++;}
+  drawBars($("ccHour"),hr,{labels:[[0,"0時"],[11,"12時"],[22,"23時"]]});
+  /* b値（G-R則）: M4.5-6.5の累積頻度に最小二乗 */
+  const pts=[];
+  for(let m=4.5;m<=6.51;m+=0.1){const mm=+m.toFixed(1);let nn=0;for(const h of d)if(h[3]>=mm)nn++;if(nn>=10)pts.push([mm,Math.log10(nn)]);}
+  const cv=$("ccGR"),dpr=window.devicePixelRatio||1,w=cv.clientWidth||330,h2=112;
+  cv.width=Math.round(w*dpr);cv.height=Math.round(h2*dpr);
+  const cx=cv.getContext("2d");cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,w,h2);
+  if(pts.length>=5){
+    const N=pts.length;
+    const sx=pts.reduce((a,p)=>a+p[0],0),sy=pts.reduce((a,p)=>a+p[1],0);
+    const sxx=pts.reduce((a,p)=>a+p[0]*p[0],0),sxy=pts.reduce((a,p)=>a+p[0]*p[1],0);
+    const slope=(N*sxy-sx*sy)/(N*sxx-sx*sx),icpt=(sy-slope*sx)/N;
+    const b=-slope;
+    const x0=4.4,x1=6.6,y0=0,y1=Math.max(...pts.map(p=>p[1]))*1.08;
+    const X=m=>10+(w-20)*(m-x0)/(x1-x0),Y=v=>8+(h2-26)*(1-(v-y0)/(y1-y0));
+    cx.strokeStyle="rgba(255,255,255,.14)";cx.lineWidth=.5;
+    for(let v=0;v<=y1;v+=1){cx.beginPath();cx.moveTo(10,Y(v));cx.lineTo(w-10,Y(v));cx.stroke();}
+    cx.strokeStyle="rgba(58,226,200,.95)";cx.lineWidth=1.4;
+    cx.beginPath();cx.moveTo(X(x0),Y(slope*x0+icpt));cx.lineTo(X(x1),Y(slope*x1+icpt));cx.stroke();
+    for(const pnt of pts){cx.fillStyle="rgba(140,228,96,.95)";cx.beginPath();cx.arc(X(pnt[0]),Y(pnt[1]),2.6,0,Math.PI*2);cx.fill();}
+    cx.font="8.5px 'IBM Plex Mono',monospace";cx.fillStyle="#8794a4";
+    cx.fillText("M4.5",X(4.5)-8,h2-3);cx.fillText("M5.5",X(5.5)-8,h2-3);cx.fillText("M6.5",X(6.5)-8,h2-3);
+    cx.fillText("縦軸: log10 N(≧M)",12,12);
+    $("grNote").textContent="b値 ≈ "+b.toFixed(2)+"（世界平均≈1.0。低いほど大地震の比率が高い地域性）・回帰点 "+N+"個・M4.5〜6.5の累積頻度で推定";
+  }else{
+    $("grNote").textContent="フィルタ内の件数が少なくb値を推定できません（期間を広げてください）";
+  }
+}
+let shTab="list";
+function showShTab(t){
+  shTab=t;
+  $("shTabList").classList.toggle("on",t==="list");
+  $("shTabCorr").classList.toggle("on",t==="corr");
+  $("listEl").style.display=(t==="list")?"":"none";
+  const ab=document.querySelector(".about");if(ab)ab.style.display=(t==="list")?"":"none";
+  $("corrWrap").style.display=(t==="corr")?"":"none";
+  if(t==="corr")setTimeout(drawCorr,40);
+}
+function drawCorrIfOpen(){if(shTab==="corr"&&$("sheet").classList.contains("on"))drawCorr();}
 function applyDepthFilter(){
   if(!HISTO){HISTO_F=null;renderIdleStats();return;}
   const f=()=>HISTO.filter(h=>h[2]>=dMin&&h[2]<=dMax&&inPeriod(h[4]||""));
@@ -773,6 +879,7 @@ function applyDepthFilter(){
   /* 今月がまだ少なければ自動で1年へ（初回のみ） */
   if(period==="month"&&HISTO_F.length<5&&!applyDepthFilter._auto){applyDepthFilter._auto=1;period="year";syncChips();HISTO_F=f();}
   renderIdleStats();
+  drawCorrIfOpen();
 }
 function renderIdleStats(){
   const el=$("istat");if(!el)return;
@@ -1114,6 +1221,8 @@ function bind(){
   $("dfMax").addEventListener("input",onDepthFilter);
   $("btnMap").addEventListener("click",toggleMap);
   $("btnShare").addEventListener("click",shareView);
+  $("shTabList").addEventListener("click",()=>showShTab("list"));
+  $("shTabCorr").addEventListener("click",()=>showShTab("corr"));
   document.querySelectorAll("#istat .ichips button").forEach(b=>b.addEventListener("click",()=>{
     period=b.dataset.p;syncChips();applyDepthFilter();updateLayers();
   }));
