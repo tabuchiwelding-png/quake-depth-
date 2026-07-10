@@ -186,7 +186,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
     <span class="bdot"></span>
     <div class="bt">
       <div class="b1">震源<b>3D</b></div>
-      <div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v14.1</em></div>
+      <div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v14.2</em></div>
     </div>
   </div>
   <div class="spacer"></div>
@@ -296,7 +296,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 
 <script>
 /* ============================================================
-   震源3D v14.1
+   震源3D v14.2
    仕様（20問で確定）:
    - 待機中は地図のみ（ピン無し） / 選択は一覧☰から / 手動▶で再生
    - 再生中はHUDだけを地図に直接透過（帯・散布図・件数バー・県別・統計）
@@ -304,7 +304,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
    ============================================================ */
 
 /* ===== 設定・定数 ===== */
-const APP_VERSION="v14.1";
+const APP_VERSION="v14.2";
 const LS_KEY="jeq_cache_v3";          // 原則④ キーにバージョン
 const LS_ST="jeq_stations_v1";
 const MAX_RECORDS=120, FETCH_TIMEOUT=9000, REFRESH_AFTER_MS=5*60*1000;  // 原則⑤ 上限明記
@@ -569,9 +569,9 @@ function initMap(){
         {id:"bgc",type:"background",paint:{"background-color":"#05080d"}},
         {id:"hillL",type:"raster",source:"hill",paint:{"raster-brightness-max":0.34,"raster-brightness-min":0,"raster-saturation":-1,"raster-contrast":0.25}},
         {id:"dark",type:"raster",source:"pale",paint:{"raster-brightness-max":0.16,"raster-brightness-min":0,"raster-saturation":-1,"raster-contrast":0.3,"raster-opacity":0.62}},
-        {id:"satL",type:"raster",source:"sat",layout:{visibility:"none"},paint:{"raster-brightness-max":0.85}}
+        {id:"satL",type:"raster",source:"sat",layout:{visibility:"none"},paint:{"raster-brightness-max":1.0}}
       ]},
-    center:[137.8,37.5],zoom:4.5,pitch:52,bearing:0,maxPitch:80,minZoom:3,maxZoom:13,attributionControl:true
+    center:[137.8,37.5],zoom:4.5,pitch:52,bearing:0,maxPitch:70,minZoom:3,maxZoom:13,attributionControl:true
   });
   map.touchZoomRotate.enable();map.dragRotate.enable();
   let zsT=0;
@@ -581,7 +581,7 @@ function initMap(){
   map.addControl(overlay);
   map.on("load",()=>{
     try{
-      map.addSource("dem",{type:"raster-dem",tiles:["https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png"],encoding:"terrarium",tileSize:256,maxzoom:11});
+      map.addSource("dem",{type:"raster-dem",tiles:["https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png"],encoding:"terrarium",tileSize:256,maxzoom:12});
       map.setTerrain({source:"dem",exaggeration:1.0});   /* Q3,Q6: 3D地形・実寸 */
     }catch(e){}
     applyHashCamera();
@@ -969,7 +969,7 @@ function histoLayers(dimmed){
     id:"histo",data,getPosition:zpos,
     getRadius:h=>420+Math.pow(Math.max(0,h[3]-3.5),1.5)*620,
     radiusUnits:"meters",radiusMinPixels:1,radiusMaxPixels:5.5,
-    getFillColor:h=>{const c=depthColor(h[2]);const a=(dimmed?42:(168+(1-zSquash)*70))*aS(h);return[c[0],c[1],c[2],Math.min(255,a)];},
+    getFillColor:h=>{const c=depthColor(h[2]);const a=(dimmed?70:(168+(1-zSquash)*70))*aS(h);return[c[0],c[1],c[2],Math.min(255,a)];},
     stroked:true,getLineColor:[6,10,15,140],lineWidthUnits:"pixels",getLineWidth:0.4,pickable:!dimmed,
     onClick:info=>{if(info&&info.object){lastDotTap=Date.now();const h=info.object;
       const ym=(h[4]||"").split("-");const t=ym.length===2?(ym[0]+"年"+(+ym[1])+"月"):"";
@@ -1183,7 +1183,7 @@ function selectQuake(q,noFly){
   $("dfilter").style.display="none";
   $("panel").classList.add("on");
   const dep=(q.depth!=null)?q.depth:10;
-  const pit=clamp(55+dep*0.12,55,74), zm=(dep>100)?5.6:6;
+  const pit=clamp(55+dep*0.12,55,66), zm=(dep>100)?5.6:6;
   if(!noFly&&map&&q.lat!=null&&q.lng!=null)map.flyTo({center:[q.lng,q.lat],zoom:(dep>100)?zm:Math.max(map.getZoom(),zm),pitch:pit,duration:1600,essential:true});
   showTransport(0);                            /* 選択直後は▶を見せる */
   if(!obs.length)toast("観測点データなし（再生不可・位置のみ表示）");
