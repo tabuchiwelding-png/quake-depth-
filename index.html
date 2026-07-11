@@ -21,7 +21,8 @@
 <style>
 :root{
   --ink:#05080d; --text:#eef3f8; --muted:#8794a4; --dim:#54616f; --line:#1b2733;
-  --cyan:#3ae2c8; --cyan-dim:#1f8f7f; --accent:#ff5b4a;
+  --cyan:#79f4ea; --cyan-dim:#4caebc; --accent:#7dd8ff;
+  --aurora-1:#7df6ef; --aurora-2:#73b9ff; --aurora-3:#8479ff; --aurora-4:#c96fff;
   --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
   --sans:system-ui,-apple-system,"Hiragino Kaku Gothic ProN",sans-serif;
   --s1:#9aa6b2;--s2:#2f9e6a;--s3:#2f7fd0;--s4:#e6c528;--s5w:#f0972e;
@@ -30,20 +31,22 @@
   --shadow:0 1px 2px rgba(0,0,0,.95), 0 2px 10px rgba(0,0,0,.65);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(--text);font-family:var(--sans);-webkit-text-size-adjust:100%;}
+html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(circle at 20% 15%, rgba(125,246,239,.06), transparent 28%),radial-gradient(circle at 78% 20%, rgba(115,185,255,.06), transparent 34%),linear-gradient(180deg,#04070d,#060912 40%,#04070d);color:var(--text);font-family:var(--sans);-webkit-text-size-adjust:100%;}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
 #map{position:fixed;inset:0;}
+#aurora{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(60% 32% at 22% 18%, rgba(125,246,239,.10), transparent 55%),radial-gradient(54% 26% at 74% 12%, rgba(115,185,255,.09), transparent 60%),radial-gradient(58% 28% at 48% 80%, rgba(132,121,255,.06), transparent 62%),linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,0));mix-blend-mode:screen;opacity:.88;}
+#vignette{position:fixed;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle at 50% 45%, transparent 48%, rgba(3,7,14,.18) 74%, rgba(3,7,14,.42) 100%);} 
 .maplibregl-ctrl-attrib{font-size:9px!important;background:rgba(5,8,13,.5)!important;}
 .maplibregl-ctrl-attrib a{color:#5a83b0!important;}
 .maplibregl-ctrl-bottom-right{margin-bottom:calc(2px + var(--sb));}
 .top{position:fixed;left:14px;right:12px;top:calc(12px + var(--st));z-index:20;display:flex;align-items:center;gap:9px;pointer-events:none;}
 .brand{display:flex;align-items:center;gap:9px;}
-.bdot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px rgba(255,91,74,.9),0 0 3px rgba(255,91,74,.9);flex:0 0 auto;}
-.bt{display:flex;flex-direction:column;gap:1px;}
-.b1{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:19px;font-weight:600;letter-spacing:.14em;line-height:1;color:#f2f6fa;text-shadow:var(--shadow);}
-.b1 b{font-family:var(--mono);font-weight:600;color:var(--accent);letter-spacing:.02em;font-size:16px;}
-.b2{font-family:var(--mono);font-size:7.5px;letter-spacing:.24em;color:var(--cyan-dim);text-shadow:var(--shadow);}
-.b2 em{font-style:normal;color:#ff9d92;letter-spacing:.05em;}
+.bdot{width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d9ffff 0%,#7df6ef 26%,#73b9ff 60%,rgba(125,246,239,.10) 100%);box-shadow:0 0 16px rgba(125,246,239,.85),0 0 34px rgba(115,185,255,.28);flex:0 0 auto;}
+.bt{display:flex;flex-direction:column;gap:2px;}
+.b1{font-family:var(--mono);font-size:23px;font-weight:700;letter-spacing:.04em;line-height:1;color:transparent;background:linear-gradient(90deg,#f7fbff 0%,#94fff0 34%,#74c4ff 66%,#f3f7ff 100%);-webkit-background-clip:text;background-clip:text;text-shadow:0 0 14px rgba(130,236,255,.10),0 2px 18px rgba(0,0,0,.42);}
+.b1 b{font-family:var(--mono);font-weight:700;color:transparent;background:linear-gradient(90deg,#9efbf7 0%,#c8a7ff 100%);-webkit-background-clip:text;background-clip:text;letter-spacing:.02em;font-size:19px;}
+.b2{font-family:var(--mono);font-size:8px;letter-spacing:.30em;color:#8bf5e7;text-shadow:0 0 10px rgba(121,241,223,.15),0 1px 6px rgba(0,0,0,.7);}
+.b2 em{font-style:normal;color:#bed4ff;letter-spacing:.08em;}
 .spacer{flex:1;}
 .tools{display:flex;gap:8px;pointer-events:auto;}
 .tbtn{width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(8,13,19,.55);color:var(--text);font-size:15px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
@@ -56,38 +59,40 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(-
 .dleg i{width:118px;height:7px;border-radius:3px;display:block;background:linear-gradient(90deg,#bee850 0%,#8ce460 2%,#60e078 4%,#3eda96 6%,#2ad2b8 8%,#26c6d6 11%,#2cb0e8 15%,#3894f2 20%,#4678f2 26%,#5662ee 34%,#7054ea 44%,#9246e4 56%,#b63cd8 70%,#d436c4 86%,#8e28a2 100%);box-shadow:0 1px 6px rgba(0,0,0,.6);}
 .hud{position:fixed;inset:0;z-index:9;pointer-events:none;opacity:0;transition:opacity .4s;}
 .hud.on{opacity:1;}
-.panel{position:fixed;left:14px;top:calc(58px + var(--st));z-index:9;pointer-events:none;opacity:0;transition:opacity .35s;max-width:180px;}
+.panel{position:fixed;left:14px;top:calc(62px + var(--st));z-index:9;pointer-events:none;opacity:0;transition:opacity .35s;max-width:156px;padding:0;border-radius:0;background:transparent;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;}
 .panel.on{opacity:1;}
-.pk{font-family:var(--mono);font-size:9px;color:#8fa3b2;letter-spacing:.07em;margin-top:10px;text-shadow:var(--shadow);}
+.pk{font-family:var(--mono);font-size:8px;color:#8fa3b2;letter-spacing:.08em;margin-top:10px;text-shadow:var(--shadow);}
 .pk:first-child{margin-top:0;}
-.pv{font-family:var(--mono);font-weight:600;color:#fff;text-shadow:var(--shadow);line-height:1.18;}
-.pv.lg{font-size:25px;}
-.pv.md{font-size:15px;}
-.pv.sm{font-size:11.5px;color:#cfe0ea;}
-.prun{font-family:var(--mono);font-size:10.5px;color:var(--cyan);margin-top:11px;text-shadow:var(--shadow);opacity:0;transition:opacity .3s;}
+.pv{font-family:var(--mono);font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.95),0 3px 14px rgba(0,0,0,.65);line-height:1.12;}
+.pv.lg{font-size:20px;}
+.pv.md{font-size:12.5px;}
+.pv.sm{font-size:10px;color:#d5e4ee;}
+.prun{font-family:var(--mono);font-size:9px;color:var(--cyan);margin-top:10px;text-shadow:var(--shadow);opacity:0;transition:opacity .3s;}
 .istat{position:fixed;right:12px;top:calc(66px + var(--st));z-index:9;width:158px;text-align:right;pointer-events:none;}
 .ichips button{pointer-events:auto;}
 .ichips{display:flex;justify-content:flex-end;gap:4px;margin-bottom:7px;}
 .ichips button{height:30px;padding:0 8px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:rgba(8,13,19,.55);color:var(--muted);font-family:var(--mono);font-size:10px;font-weight:600;backdrop-filter:blur(8px);}
-.ichips button.on{background:var(--accent);color:#05080d;border-color:var(--accent);}
-.irow{font-family:var(--mono);font-size:10.5px;line-height:1.6;color:#ffb3ab;text-shadow:var(--shadow);}
+.ichips button.on{background:linear-gradient(135deg,var(--aurora-1),var(--aurora-2));color:#041017;border-color:rgba(125,246,239,.8);box-shadow:0 8px 24px rgba(95,212,255,.22);}
+.irow{font-family:var(--mono);font-size:10.5px;line-height:1.6;color:#bde9ff;text-shadow:var(--shadow);}
 .irow b{color:#fff;font-size:13px;}
 .ibars{margin-top:6px;display:flex;flex-direction:column;gap:2px;}
 .ib{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--muted);text-shadow:var(--shadow);}
-.ib .l{flex:0 0 26px;text-align:right;}.ib .t{flex:1;height:6px;border-radius:2px;background:rgba(0,0,0,.3);overflow:hidden;}.ib .t i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,#ff5b4a,#ff8a3d);}.ib .n{flex:0 0 26px;text-align:left;color:#ffb3ab;}
+.ib .l{flex:0 0 26px;text-align:right;}.ib .t{flex:1;height:6px;border-radius:2px;background:rgba(0,0,0,.3);overflow:hidden;}.ib .t i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--aurora-1),var(--aurora-2),var(--aurora-3));}.ib .n{flex:0 0 26px;text-align:left;color:#ffb3ab;}
 .ilab{font-family:var(--mono);font-size:8.5px;color:var(--dim);letter-spacing:.06em;margin:7px 0 3px;text-shadow:var(--shadow);}
-.iyear{display:flex;align-items:flex-end;gap:1px;height:30px;}.iyear i{flex:1;background:linear-gradient(180deg,#ff8a3d,#ff5b4a);border-radius:1px 1px 0 0;min-height:1px;opacity:.85;}.iyear i.hl{background:linear-gradient(180deg,#ffe27a,#ffd23d);opacity:1;}
+.iyear{display:flex;align-items:flex-end;gap:1px;height:30px;}.iyear i{flex:1;background:linear-gradient(180deg,var(--aurora-2),var(--aurora-3));border-radius:1px 1px 0 0;min-height:1px;opacity:.85;}.iyear i.hl{background:linear-gradient(180deg,#d7ffff,var(--aurora-1));opacity:1;}
 .icap{margin-top:7px;margin-bottom:2px;font-family:var(--mono);font-size:8.5px;color:var(--dim);text-shadow:var(--shadow);}.isrc{margin-top:6px;font-family:var(--mono);font-size:8.5px;color:var(--dim);text-shadow:var(--shadow);}
 .dfilter{position:fixed;right:4px;top:50%;transform:translateY(-50%);z-index:8;display:flex;flex-direction:column;align-items:center;gap:8px;}.dfl{font-family:var(--mono);font-size:9px;color:#9feadd;text-shadow:var(--shadow);}.dfw{width:28px;height:104px;position:relative;}.dfw input{position:absolute;top:50%;left:50%;width:104px;height:24px;transform:translate(-50%,-50%) rotate(90deg);-webkit-appearance:none;background:transparent;}.dfw input::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:#22303d;}.dfw input::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--cyan);border:0;margin-top:-6.5px;box-shadow:0 1px 5px rgba(0,0,0,.6);}
 .hud-left{position:absolute;left:10px;bottom:calc(16px + var(--sb));width:218px;display:flex;flex-direction:column;gap:7px;}#scat{width:218px;height:116px;display:block;}.hud-stats{font-family:var(--mono);font-size:9.5px;line-height:1.55;color:var(--cyan);text-shadow:var(--shadow);}.hud-insight{font-family:var(--sans);font-size:10px;line-height:1.55;color:#ffd9d4;text-shadow:var(--shadow);max-width:218px;}.hud-bars{display:flex;flex-direction:column;gap:2px;}.hb{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9.5px;text-shadow:var(--shadow);}.hb .l{flex:0 0 26px;color:var(--muted);text-align:right;}.hb .t{flex:1;height:7px;border-radius:2px;background:rgba(0,0,0,.28);overflow:hidden;}.hb .t i{display:block;height:100%;border-radius:2px;box-shadow:0 0 6px rgba(0,0,0,.5) inset;}.hb .n{flex:0 0 24px;color:var(--cyan);}
 .hud-pref{position:absolute;right:12px;bottom:calc(18px + var(--sb));width:128px;text-align:left;}.hud-pref .ph{font-family:var(--mono);font-size:9px;color:var(--cyan-dim);letter-spacing:.05em;margin-bottom:4px;text-shadow:var(--shadow);}.hp{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;line-height:1.7;text-shadow:var(--shadow);}.hp .n{color:#c8d4de;}.hp .v{font-weight:600;}
-.tr{position:fixed;left:12px;right:12px;bottom:calc(12px + var(--sb));z-index:22;display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:14px;background:rgba(8,13,19,.62);border:1px solid rgba(255,255,255,.10);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 8px 30px rgba(0,0,0,.45);transform:translateY(150%);opacity:0;transition:transform .3s cubic-bezier(.2,.85,.25,1),opacity .25s;}.tr.on{transform:translateY(0);opacity:1;}.tr-play{flex:0 0 46px;height:46px;border-radius:12px;border:0;background:var(--accent);color:#05080d;font-size:17px;font-weight:600;}.tr-tl{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:#22303d;}.tr-tl::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:0;}.tr-spd{flex:0 0 auto;height:44px;min-width:46px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:rgba(13,20,28,.8);color:var(--text);font-family:var(--mono);font-weight:600;font-size:12px;}
+.tr{position:fixed;left:12px;right:12px;bottom:calc(12px + var(--sb));z-index:22;display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:14px;background:rgba(8,13,19,.62);border:1px solid rgba(255,255,255,.10);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 8px 30px rgba(0,0,0,.45);transform:translateY(150%);opacity:0;transition:transform .3s cubic-bezier(.2,.85,.25,1),opacity .25s;}.tr.on{transform:translateY(0);opacity:1;}.tr-play{flex:0 0 46px;height:46px;border-radius:12px;border:0;background:linear-gradient(135deg,var(--aurora-1),var(--aurora-2));color:#041017;font-size:17px;font-weight:700;box-shadow:0 10px 24px rgba(92,206,255,.22);}.tr-tl{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:#22303d;}.tr-tl::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,var(--aurora-1),var(--aurora-2));border:0;}.tr-spd{flex:0 0 auto;height:44px;min-width:46px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:rgba(13,20,28,.8);color:var(--text);font-family:var(--mono);font-weight:600;font-size:12px;}
 .bg{position:fixed;inset:0;background:rgba(2,4,7,.55);z-index:30;opacity:0;pointer-events:none;transition:opacity .25s;}.bg.on{opacity:1;pointer-events:auto;}.sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;height:78%;background:var(--ink);border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.85,.25,1);display:flex;flex-direction:column;}.sheet.on{transform:translateY(0);}.hd{width:38px;height:4px;border-radius:2px;background:#283643;margin:10px auto 4px;}.stt{text-align:center;font-family:var(--mono);font-size:10px;color:var(--dim);padding-bottom:8px;}.stt b{color:var(--muted);}.about{padding:2px 16px 10px;font-size:10.5px;line-height:1.75;color:var(--muted);border-bottom:1px solid #101a24;}.about b{color:var(--cyan);font-family:var(--mono);font-size:9px;margin-right:6px;}.shtabs{display:flex;gap:6px;padding:0 14px 9px;}.shtabs button{flex:1;height:34px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:12.5px;font-weight:700;font-family:var(--sans);}.shtabs button.on{background:#fff;color:#05080d;border-color:#fff;}.corr{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px calc(20px + var(--sb));}.csec{font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:.06em;padding:13px 0 6px;}.cchart{width:100%;height:112px;display:block;}.cnote{font-size:10px;line-height:1.65;color:var(--dim);padding-top:5px;}.list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 12px calc(18px + var(--sb));}.row{display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid #101a24;min-height:44px;}.row:active{background:#0a121a;}.rb{flex:0 0 auto;width:42px;height:42px;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;color:#05080d;}.rb.dim{background:#26303c;color:#8794a4;}.rb .k{font-family:var(--mono);font-size:8px;font-weight:600;}.rb .v{font-family:var(--mono);font-weight:600;font-size:16px;}.rm{flex:1;min-width:0;}.rp{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.rs{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px;}.rt{flex:0 0 auto;font-family:var(--mono);font-size:11px;color:var(--dim);}
 .toast{position:fixed;left:50%;bottom:calc(80px + var(--sb));transform:translateX(-50%);z-index:40;background:#0c151e;border:1px solid var(--line);color:var(--text);padding:9px 15px;border-radius:8px;font-family:var(--mono);font-size:12px;opacity:0;pointer-events:none;transition:opacity .25s;max-width:88%;text-align:center;}.toast.on{opacity:1;}.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--dim);border-top-color:var(--accent);border-radius:50%;vertical-align:-2px;animation:sp .8s linear infinite;}@keyframes sp{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
 <div id="map"></div>
+<div id="aurora"></div>
+<div id="vignette"></div>
 <div class="top"><div class="brand"><span class="bdot"></span><div class="bt"><div class="b1">震源<b>3D</b></div><div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v14.2</em></div></div></div><div class="spacer"></div><div class="tools"><button class="tbtn" id="btnMap" title="地図切替">◐</button><button class="tbtn" id="btnRefresh" title="更新">⟳</button><button class="tbtn" id="btnList" title="一覧">☰</button><button class="tbtn" id="btnShare" title="共有">↗</button><button class="tbtn hidden" id="btnClose" title="閉じる">×</button></div></div>
 <div class="hint" id="hint">☰ から地震を選ぶ ／ 2本指で傾ける・回す</div>
 <div class="dleg" id="dleg" style="display:none"><div class="dcap">過去の震源 ・ 深さ5km刻み（緑=浅 → 紫=深500km）</div><div class="dlr"><span>0km</span><i></i><span>500km</span></div></div>
@@ -317,24 +322,12 @@ body::after{
 .v15-livebar strong{color:#fff;font-size:10px;overflow:hidden;text-overflow:ellipsis;}
 .v15-livebar i{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);animation:v15-beacon 1.3s ease-in-out infinite;}
 
-.v15-legend{
-  position:fixed;
-  right:13px;
-  bottom:calc(76px + var(--sb));
-  z-index:17;
-  width:132px;
-  opacity:0;transform:translateY(5px);transition:.25s ease;pointer-events:none;
-  padding:8px 9px;border-radius:11px;
-  background:rgba(5,10,17,.58);
-  border:1px solid rgba(255,255,255,.07);
-  backdrop-filter:blur(11px);-webkit-backdrop-filter:blur(11px);
-  font:8.5px/1.45 var(--mono);color:#8092a1;
-}
+.v15-legend{position:fixed;right:12px;bottom:calc(86px + var(--sb));z-index:17;width:auto;max-width:180px;opacity:0;transform:translateY(5px);transition:.25s ease;pointer-events:none;padding:0;border:0;background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;font:600 10px/1.65 var(--mono);color:#d8e6ef;text-align:left;text-shadow:0 1px 2px rgba(0,0,0,.95),0 2px 12px rgba(0,0,0,.72);}
 .v15-legend.on{opacity:1;transform:none;}
-.v15-legend b{display:block;color:#c9d7e1;margin-bottom:4px;letter-spacing:.05em;}
-.v15-legend-row{display:flex;align-items:center;gap:6px;}
-.v15-legend-swatch{width:24px;height:5px;border-radius:4px;background:linear-gradient(90deg,rgba(58,226,200,.15),rgba(58,226,200,.95));}
-.v15-legend-swatch.uncertain{background:repeating-linear-gradient(90deg,rgba(255,189,105,.18) 0 4px,rgba(255,189,105,.75) 4px 7px);}
+.v15-legend b,.v15-legend-row,.v15-legend-swatch{display:none;}
+.v15-legend-note{display:block;color:#d8e6ef;}
+.v15-legend-note em{font-style:normal;color:#73f4df;}
+.v15-legend-note i{font-style:normal;color:#b8b0ff;}
 
 .tr{
   background:linear-gradient(120deg,rgba(5,11,18,.86),rgba(10,18,28,.65));
@@ -373,7 +366,7 @@ body::after{
   "use strict";
 
   const V15 = {
-    version: "v15.0 NEXT",
+    version: "v15.3 PRO AURORA",
     fieldSeq: 0,
     fieldWorker: null,
     stationIndex: null,
@@ -422,9 +415,7 @@ body::after{
     legend.id = "v15Legend";
     legend.className = "v15-legend";
     legend.innerHTML = `
-      <b>表示の意味</b>
-      <div class="v15-legend-row"><span class="v15-legend-swatch"></span><span>観測が密</span></div>
-      <div class="v15-legend-row"><span class="v15-legend-swatch uncertain"></span><span>補間の不確かさ</span></div>`;
+      <div class="v15-legend-note"><em>青緑</em> = 観測が密<br><i>紫系</i> = 深い震源</div>`;
     document.body.appendChild(legend);
   }
 
@@ -782,12 +773,63 @@ body::after{
   if(typeof histoLayers === "function"){
     const originalHistoLayers=histoLayers;
     histoLayers=function histoLayersV15(dimmed){
-      const dataRef=(typeof HISTO_F!=="undefined"&&HISTO_F)||((typeof HISTO!=="undefined")?HISTO:null);
+      const data=(typeof HISTO_F!=="undefined"&&HISTO_F)||((typeof HISTO!=="undefined")?HISTO:null);
       const introDone=typeof introB==="undefined"||introB>=1;
+      if(!data||!data.length) return [];
       if(!introDone) return originalHistoLayers(dimmed);
-      const key=[dimmed?1:0,Math.round((typeof zSquash!=="undefined"?zSquash:1)*10),dataRef?.length||0,typeof dMin!=="undefined"?dMin:0,typeof dMax!=="undefined"?dMax:500,typeof period!=="undefined"?period:""].join("|");
+      const zoom=(typeof map!=="undefined"&&map)?map.getZoom():4.5;
+      const pitch=(typeof map!=="undefined"&&map)?map.getPitch():52;
+      const key=[dimmed?1:0,Math.round((typeof zSquash!=="undefined"?zSquash:1)*10),data.length,typeof dMin!=="undefined"?dMin:0,typeof dMax!=="undefined"?dMax:500,typeof period!=="undefined"?period:"",Math.round(zoom*2),Math.round(pitch/6)].join("|");
       if(V15.histoCache.has(key)) return V15.histoCache.get(key);
-      const layers=originalHistoLayers(dimmed);
+      const zf=(typeof zSquash!=="undefined")?zSquash:1;
+      const zpos=h=>[h[1],h[0],-h[2]*1000*zf];
+      const corePx=zoom<4.2?1.0:zoom<5.5?1.3:zoom<7?1.6:zoom<8.5?2.0:zoom<10?2.5:3.0;
+      const glowPx=corePx*2.3;
+      const layers=[];
+      if(typeof SLAB!=="undefined"&&SLAB){
+        layers.push(new deck.LineLayer({
+          id:"slab",data:SLAB.segs,
+          getSourcePosition:sg=>[sg.a[0],sg.a[1],-sg.d*1000*zf],
+          getTargetPosition:sg=>[sg.b[0],sg.b[1],-sg.d*1000*zf],
+          getColor:sg=>{const c=depthColor(sg.d);return[c[0],c[1],c[2],dimmed?38:90];},
+          getWidth:1.0,widthUnits:"pixels",parameters:{depthTest:false}
+        }));
+      }
+      layers.push(new deck.ScatterplotLayer({
+        id:"histo-glow",data,
+        getPosition:zpos,
+        getRadius:h=>glowPx+Math.max(0,h[3]-4)*0.35,
+        radiusUnits:"pixels",
+        radiusMinPixels:glowPx,
+        radiusMaxPixels:8,
+        getFillColor:h=>{const c=depthColor(h[2]);return[c[0],c[1],c[2],dimmed?18:46];},
+        stroked:false,pickable:false,parameters:{depthTest:false}
+      }));
+      layers.push(new deck.ScatterplotLayer({
+        id:"histo",data,
+        getPosition:zpos,
+        getRadius:h=>corePx+Math.max(0,h[3]-4)*0.22,
+        radiusUnits:"pixels",
+        radiusMinPixels:Math.max(1.1,corePx),
+        radiusMaxPixels:6,
+        getFillColor:h=>{const c=depthColor(h[2]);return[c[0],c[1],c[2],dimmed?78:188];},
+        stroked:zoom>=8.5,
+        getLineColor:[220,248,255,dimmed?40:92],
+        lineWidthUnits:"pixels",
+        getLineWidth:.35,
+        pickable:!dimmed,
+        onClick:info=>{if(info&&info.object){lastDotTap=Date.now();const h=info.object;toast((h[4]||"")+" M"+h[3].toFixed(1)+" ・ 深さ"+Math.round(h[2])+"km");}},
+        parameters:{depthTest:false}
+      }));
+      const majors=data.filter(h=>h[3]>=7);
+      if(majors.length){
+        layers.push(new deck.ScatterplotLayer({
+          id:"m7ring",data:majors,getPosition:zpos,
+          getRadius:corePx*2.4,radiusUnits:"pixels",filled:false,stroked:true,
+          getLineColor:[190,245,255,dimmed?50:140],lineWidthUnits:"pixels",getLineWidth:1.1,
+          parameters:{depthTest:false}
+        }));
+      }
       V15.histoCache.set(key,layers);
       if(V15.histoCache.size>V15.maxCache){
         const first=V15.histoCache.keys().next().value;
@@ -799,75 +841,43 @@ body::after{
 
   /* ---------- 次世代3Dレイヤーを選択地震へ追加 ---------- */
   if(typeof selLayers === "function"){
-    const originalSelLayers=selLayers;
-    selLayers=function selLayersV15(){
-      let layers=originalSelLayers().filter(layer=>layer && layer.id!=="pw" && layer.id!=="sw");
-      if(typeof sel==="undefined"||!sel||typeof deck==="undefined") return layers;
-      const reveal=!!(playing||tSim>0);
-      const reachedNow=reveal?reachedArr():[];
-      const depth=Number(sel.depth)||10;
-      const z=-depth*1000*(typeof zSquash!=="undefined"?zSquash:1);
-      const pulse=.5+.5*Math.sin(performance.now()/360);
+    const originalSelLayers = selLayers;
+    selLayers = function selLayersV15(){
+      let layers = originalSelLayers().filter(layer => layer && !["pw","sw","epiglow","epi","hypoglow","hypo","plumb","depthlabel"].includes(layer.id));
+      if(typeof sel==="undefined" || !sel || typeof deck==="undefined") return layers;
+      const reveal = !!(playing || tSim > 0);
+      const reachedNow = reveal ? reachedArr() : [];
+      const depth = Number(sel.depth) || 10;
+      const z = -depth * 1000 * (typeof zSquash !== "undefined" ? zSquash : 1);
+      const pulse = .5 + .5 * Math.sin(performance.now() / 360);
 
-      /* 深さ別速度モデルと同期したP波・S波面。観測点の到達判定とリングを一致させます。 */
       if(reveal){
-        const pPath=EarthMath.velocity(depth,"P")*Number(tSim||0);
-        const sPath=EarthMath.velocity(depth,"S")*Number(tSim||0);
-        const pRadius=pPath>depth?Math.sqrt(pPath*pPath-depth*depth):0;
-        const sRadius=sPath>depth?Math.sqrt(sPath*sPath-depth*depth):0;
-        if(pRadius>1)layers.push(new deck.ScatterplotLayer({
-          id:"v15-p-wave",data:[{r:pRadius}],getPosition:()=>[sel.lng,sel.lat,0],
-          getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,
-          getLineColor:[112,210,255,225],lineWidthUnits:"pixels",getLineWidth:2.2,parameters:{depthTest:false}
-        }));
-        if(sRadius>1)layers.push(new deck.ScatterplotLayer({
-          id:"v15-s-wave",data:[{r:sRadius}],getPosition:()=>[sel.lng,sel.lat,0],
-          getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,
-          getLineColor:[255,88,68,240],lineWidthUnits:"pixels",getLineWidth:2.8,parameters:{depthTest:false}
-        }));
+        const pPath = EarthMath.velocity(depth,"P") * Number(tSim || 0);
+        const sPath = EarthMath.velocity(depth,"S") * Number(tSim || 0);
+        const pRadius = pPath > depth ? Math.sqrt(pPath*pPath - depth*depth) : 0;
+        const sRadius = sPath > depth ? Math.sqrt(sPath*sPath - depth*depth) : 0;
+        if(pRadius > 1) layers.push(new deck.ScatterplotLayer({id:"v15-p-wave",data:[{r:pRadius}],getPosition:()=>[sel.lng,sel.lat,0],getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,getLineColor:[125,235,255,215],lineWidthUnits:"pixels",getLineWidth:2.2,parameters:{depthTest:false}}));
+        if(sRadius > 1) layers.push(new deck.ScatterplotLayer({id:"v15-s-wave",data:[{r:sRadius}],getPosition:()=>[sel.lng,sel.lat,0],getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,getLineColor:[140,120,255,210],lineWidthUnits:"pixels",getLineWidth:2.6,parameters:{depthTest:false}}));
       }
 
-      /* 震源軸。複数の細い線を重ね、Bloom風に見せる。 */
-      layers.push(new deck.LineLayer({
-        id:"v15-depth-beam-glow",data:[sel],
-        getSourcePosition:q=>[q.lng,q.lat,0],getTargetPosition:q=>[q.lng,q.lat,z],
-        getColor:[71,235,218,42],getWidth:7,widthUnits:"pixels",parameters:{depthTest:false}
-      }));
-      layers.push(new deck.LineLayer({
-        id:"v15-depth-beam",data:[sel],
-        getSourcePosition:q=>[q.lng,q.lat,0],getTargetPosition:q=>[q.lng,q.lat,z],
-        getColor:[176,255,244,185],getWidth:1.15,widthUnits:"pixels",parameters:{depthTest:false}
-      }));
+      layers.push(new deck.LineLayer({id:"v15-depth-beam-glow",data:[sel],getSourcePosition:q=>[q.lng,q.lat,0],getTargetPosition:q=>[q.lng,q.lat,z],getColor:[91,239,225,42],getWidth:9,widthUnits:"pixels",parameters:{depthTest:false}}));
+      layers.push(new deck.LineLayer({id:"v15-depth-beam-mid",data:[sel],getSourcePosition:q=>[q.lng,q.lat,0],getTargetPosition:q=>[q.lng,q.lat,z],getColor:[112,185,255,88],getWidth:3,widthUnits:"pixels",parameters:{depthTest:false}}));
+      layers.push(new deck.LineLayer({id:"v15-depth-beam-core",data:[sel],getSourcePosition:q=>[q.lng,q.lat,0],getTargetPosition:q=>[q.lng,q.lat,z],getColor:[235,255,252,205],getWidth:1.2,widthUnits:"pixels",parameters:{depthTest:false}}));
 
-      layers.push(new deck.ScatterplotLayer({
-        id:"v15-hypo-bloom",data:[sel],getPosition:q=>[q.lng,q.lat,z],
-        getRadius:22+10*pulse,radiusUnits:"pixels",getFillColor:[255,78,62,24+Math.round(32*pulse)],
-        stroked:true,getLineColor:[255,139,115,48],getLineWidth:1.2,lineWidthUnits:"pixels",parameters:{depthTest:false}
-      }));
+      layers.push(new deck.ScatterplotLayer({id:"v15-epicenter-halo",data:[sel],getPosition:q=>[q.lng,q.lat,0],getRadius:28 + pulse * 10,radiusUnits:"pixels",getFillColor:[86,235,220,20 + Math.round(18 * pulse)],stroked:false,parameters:{depthTest:false}}));
+      layers.push(new deck.ScatterplotLayer({id:"v15-epicenter-ring-1",data:[sel],getPosition:q=>[q.lng,q.lat,0],getRadius:16 + pulse * 4,radiusUnits:"pixels",filled:false,stroked:true,getLineColor:[112,245,228,210],lineWidthUnits:"pixels",getLineWidth:2.1,parameters:{depthTest:false}}));
+      layers.push(new deck.ScatterplotLayer({id:"v15-epicenter-ring-2",data:[sel],getPosition:q=>[q.lng,q.lat,0],getRadius:8,radiusUnits:"pixels",filled:false,stroked:true,getLineColor:[255,255,255,220],lineWidthUnits:"pixels",getLineWidth:1.3,parameters:{depthTest:false}}));
+
+      layers.push(new deck.ScatterplotLayer({id:"v15-hypo-halo-far",data:[sel],getPosition:q=>[q.lng,q.lat,z],getRadius:26 + pulse * 10,radiusUnits:"pixels",getFillColor:[68,228,214,16 + Math.round(18 * pulse)],stroked:false,parameters:{depthTest:false}}));
+      layers.push(new deck.ScatterplotLayer({id:"v15-hypo-halo-near",data:[sel],getPosition:q=>[q.lng,q.lat,z],getRadius:14 + pulse * 5,radiusUnits:"pixels",getFillColor:[132,121,255,34 + Math.round(30 * pulse)],stroked:true,getLineColor:[175,170,255,80],lineWidthUnits:"pixels",getLineWidth:1.2,parameters:{depthTest:false}}));
+      layers.push(new deck.ScatterplotLayer({id:"v15-hypo-core",data:[sel],getPosition:q=>[q.lng,q.lat,z],getRadius:6.2,radiusUnits:"pixels",getFillColor:[255,248,245,250],stroked:true,getLineColor:[125,235,255,235],lineWidthUnits:"pixels",getLineWidth:1.5,parameters:{depthTest:false}}));
+      layers.push(new deck.TextLayer({id:"v15-depth-label",data:[sel],getPosition:q=>[q.lng,q.lat,z],getText:q=>((q.depth!=null)?q.depth:10) + "km",getSize:14,getColor:[128,244,230,240],getPixelOffset:[20,-2],fontFamily:"IBM Plex Mono, monospace",fontSettings:{sdf:true},outlineWidth:2,outlineColor:[5,8,13,235],parameters:{depthTest:false}}));
 
       if(reachedNow.length){
-        /* 実測震度を高さに変換した3D柱。高さは物理量ではなく、読み取り用の視覚符号です。 */
-        const columns=reachedNow.length>420?reachedNow.filter((_,i)=>i%Math.ceil(reachedNow.length/420)===0):reachedNow;
-        layers.push(new deck.ColumnLayer({
-          id:"v15-observation-columns",data:columns,diskResolution:10,radius:1200,
-          getPosition:o=>[o.lng,o.lat],
-          getElevation:o=>Math.max(900,Math.pow(Math.max(.7,o.I),1.75)*2100),
-          getFillColor:o=>{const c=typeof colNum==="function"?colNum(o.I):[58,226,200];return[c[0],c[1],c[2],105];},
-          getLineColor:[255,255,255,70],lineWidthMinPixels:.4,extruded:true,wireframe:false,
-          elevationScale:1,pickable:false,material:false,
-          parameters:{depthTest:true}
-        }));
-
-        /* 到達線は最大70本に制限。情報量は増やしても、画面を蕎麦の束にはしません。 */
-        const arcs=[...reachedNow].sort((a,b)=>b.I-a.I||b.delta-a.delta).slice(0,70);
-        layers.push(new deck.ArcLayer({
-          id:"v15-arrival-arcs",data:arcs,
-          getSourcePosition:()=>[sel.lng,sel.lat],getTargetPosition:o=>[o.lng,o.lat],
-          getSourceColor:[255,92,72,110],
-          getTargetColor:o=>{const c=typeof colNum==="function"?colNum(o.I):[58,226,200];return[c[0],c[1],c[2],115];},
-          getWidth:o=>.45+o.I*.16,widthUnits:"pixels",greatCircle:true,
-          getHeight:o=>Math.min(0.16,0.025+o.delta/9000),parameters:{depthTest:false}
-        }));
+        const columns = reachedNow.length > 420 ? reachedNow.filter((_,i)=>i % Math.ceil(reachedNow.length/420) === 0) : reachedNow;
+        layers.push(new deck.ColumnLayer({id:"v15-observation-columns",data:columns,diskResolution:10,radius:1100,getPosition:o=>[o.lng,o.lat],getElevation:o=>Math.max(850,Math.pow(Math.max(.7,o.I),1.72)*1800),getFillColor:o=>{const c = typeof colNum==="function" ? colNum(o.I) : [58,226,200];return [c[0],c[1],c[2],92];},getLineColor:[255,255,255,56],lineWidthMinPixels:.35,extruded:true,wireframe:false,elevationScale:1,pickable:false,material:false,parameters:{depthTest:true}}));
+        const arcs = [...reachedNow].sort((a,b)=>b.I-a.I || b.delta-a.delta).slice(0,64);
+        layers.push(new deck.ArcLayer({id:"v15-arrival-arcs",data:arcs,getSourcePosition:()=>[sel.lng,sel.lat],getTargetPosition:o=>[o.lng,o.lat],getSourceColor:[110,216,255,66],getTargetColor:o=>{const c = typeof colNum==="function" ? colNum(o.I) : [58,226,200];return [c[0],c[1],c[2],84];},getWidth:o=>.35 + o.I * .11,widthUnits:"pixels",greatCircle:true,getHeight:o=>Math.min(0.13,0.02 + o.delta / 9800),parameters:{depthTest:false}}));
       }
       return layers;
     };
@@ -918,10 +928,10 @@ body::after{
 
 
 
-<!-- ===== v15.1 NEXUS FINAL VISUAL OVERRIDES ===== -->
+<!-- ===== v15.3 PRO AURORA FINAL VISUAL OVERRIDES ===== -->
 <style id="v151-final-style">
 /*
-  震源3D v15.1 NEXUS
+  震源3D v15.3 PRO AURORA
   - タイトルをフレームレス・ホログラフィック化
   - 左情報パネルをフレームレス・小型化
   - 右下凡例を文字だけへ変更
@@ -1081,7 +1091,7 @@ body::after{
 
   function patchVersion(){
     const ver=$v("ver");
-    if(ver)ver.textContent="v15.1 NEXUS";
+    if(ver)ver.textContent="v15.3 PRO AURORA";
     document.documentElement.dataset.shingenVersion="15.1";
   }
 
@@ -1263,5 +1273,260 @@ body::after{
   },{once:true});
 })();
 </script>
+
+<style id="proTabsStyle">
+:root{
+  --pro-bg:rgba(4,8,15,.94);
+  --pro-panel:rgba(8,15,25,.76);
+  --pro-line:rgba(145,225,255,.12);
+  --pro-cyan:#7df6ef;
+  --pro-blue:#73b9ff;
+  --pro-violet:#927cff;
+  --pro-text:#eef8ff;
+  --pro-muted:#7f93a6;
+}
+.pro-nav{
+  position:fixed;left:50%;bottom:calc(10px + var(--sb));transform:translateX(-50%);
+  z-index:26;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;
+  width:min(430px,calc(100vw - 20px));padding:5px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(5,11,20,.80),rgba(7,15,26,.58));
+  border:1px solid rgba(145,225,255,.13);
+  box-shadow:0 18px 46px rgba(0,0,0,.44),inset 0 1px rgba(255,255,255,.035);
+  backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);
+}
+.pro-nav.hidden{display:none}
+.pro-tab{
+  min-width:0;height:48px;border:0;border-radius:12px;background:transparent;color:#738697;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  font:600 8px/1 var(--mono);letter-spacing:.08em;transition:.2s ease;
+}
+.pro-tab .ico{font-size:16px;line-height:1;color:#8da2b4}
+.pro-tab.on{color:#e9fbff;background:linear-gradient(135deg,rgba(125,246,239,.16),rgba(115,185,255,.12));box-shadow:inset 0 0 0 1px rgba(125,246,239,.15)}
+.pro-tab.on .ico{color:var(--pro-cyan);text-shadow:0 0 14px rgba(125,246,239,.55)}
+.pro-view{
+  position:fixed;inset:0;z-index:24;display:none;background:
+    radial-gradient(50% 30% at 15% 8%,rgba(125,246,239,.08),transparent 62%),
+    radial-gradient(50% 30% at 85% 12%,rgba(115,185,255,.08),transparent 62%),
+    linear-gradient(180deg,rgba(3,7,13,.97),rgba(5,9,16,.98));
+  color:var(--pro-text);
+}
+.pro-view.on{display:flex;flex-direction:column}
+.pro-head{
+  padding:calc(15px + var(--st)) 16px 11px;display:flex;align-items:flex-end;gap:10px;
+  border-bottom:1px solid rgba(145,225,255,.09);
+  background:linear-gradient(180deg,rgba(3,8,15,.82),rgba(3,8,15,.35));
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.pro-head .eyebrow{font:600 8px/1 var(--mono);letter-spacing:.20em;color:#66baaF;margin-bottom:5px}
+.pro-head h2{margin:0;font:700 21px/1.05 var(--mono);letter-spacing:.02em;color:#f3fbff}
+.pro-head .sub{font:500 9px/1.4 var(--mono);color:#6f8597;margin-top:5px}
+.pro-head .grow{flex:1}
+.pro-close{width:42px;height:42px;border-radius:12px;border:1px solid rgba(145,225,255,.12);background:rgba(9,16,27,.64);color:#b8ccda;font-size:19px}
+.pro-body{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(86px + var(--sb))}
+.pro-section{margin-bottom:18px}
+.pro-section-title{font:600 9px/1 var(--mono);letter-spacing:.14em;color:#77cfd0;margin:0 0 9px}
+.pro-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pro-card{background:linear-gradient(145deg,rgba(11,20,31,.74),rgba(6,12,21,.52));border:1px solid rgba(145,225,255,.10);border-radius:14px;padding:12px;box-shadow:inset 0 1px rgba(255,255,255,.025)}
+.pro-kpi .k{font:600 8px/1 var(--mono);letter-spacing:.10em;color:#72889b}
+.pro-kpi .v{margin-top:7px;font:700 21px/1 var(--mono);color:#f1fbff}
+.pro-kpi .s{margin-top:5px;font:500 8px/1.35 var(--mono);color:#5f7486}
+.pro-chart{width:100%;height:138px;display:block}
+.pro-note{font:500 10px/1.7 var(--sans);color:#8fa2b1}
+.pro-search{display:flex;gap:7px;margin-bottom:10px}
+.pro-search input{flex:1;height:42px;border-radius:12px;border:1px solid rgba(145,225,255,.11);background:rgba(8,15,25,.64);color:#eef9ff;padding:0 13px;font:500 12px var(--sans);outline:none}
+.pro-search input:focus{border-color:rgba(125,246,239,.38);box-shadow:0 0 0 3px rgba(125,246,239,.06)}
+.pro-filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:5px;margin-bottom:8px}
+.pro-filter{flex:0 0 auto;height:31px;border-radius:9px;border:1px solid rgba(145,225,255,.10);background:rgba(8,15,25,.54);color:#8094a5;padding:0 10px;font:600 9px var(--mono)}
+.pro-filter.on{background:linear-gradient(135deg,rgba(125,246,239,.19),rgba(115,185,255,.14));border-color:rgba(125,246,239,.25);color:#e9fbff}
+.pro-list{display:flex;flex-direction:column}
+.pro-row{display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 2px;border-bottom:1px solid rgba(145,225,255,.07)}
+.pro-row:active{background:rgba(125,246,239,.04)}
+.pro-badge{width:42px;height:42px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#041017;font-family:var(--mono);box-shadow:0 8px 18px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.22)}
+.pro-badge small{font-size:7px}.pro-badge b{font-size:15px}
+.pro-row-main{min-width:0}.pro-row-main .name{font:700 12.5px/1.25 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#eff8ff}.pro-row-main .meta{margin-top:4px;font:500 9px/1 var(--mono);color:#6f8292}.pro-row-time{font:500 9px/1 var(--mono);color:#5d7081;text-align:right}
+.pro-empty{padding:42px 12px;text-align:center;color:#607486;font:500 11px/1.7 var(--mono)}
+.pro-method{display:grid;gap:10px}
+.pro-method h3{margin:0 0 7px;font:700 13px/1.2 var(--mono);color:#eaf9ff}
+.pro-method p{margin:0;font:500 10px/1.75 var(--sans);color:#8ea2b2}
+.pro-method dl{display:grid;grid-template-columns:auto 1fr;gap:7px 12px;margin:0}
+.pro-method dt{font:600 9px/1.4 var(--mono);color:#6f8394}.pro-method dd{margin:0;text-align:right;font:600 9px/1.4 var(--mono);color:#bfd2df}
+.pro-status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#7df6ef;box-shadow:0 0 10px rgba(125,246,239,.65);margin-right:6px}
+.pro-legend-line{height:8px;border-radius:999px;background:linear-gradient(90deg,#b7f06f,#75e7b8,#66d6ef,#6fa8ff,#8176ff,#b767ef);margin:8px 0 6px}
+.pro-caption{font:500 8px/1.5 var(--mono);color:#64788a}
+@media(max-width:380px){.pro-nav{width:calc(100vw - 12px)}.pro-tab{height:45px}.pro-head h2{font-size:18px}.pro-body{padding-left:11px;padding-right:11px}.pro-card{padding:10px}}
+</style>
+
+<nav class="pro-nav" id="proNav" aria-label="主要画面">
+  <button class="pro-tab on" data-pro-tab="map"><span class="ico">⌖</span><span>MAP</span></button>
+  <button class="pro-tab" data-pro-tab="analysis"><span class="ico">⌁</span><span>ANALYSIS</span></button>
+  <button class="pro-tab" data-pro-tab="catalog"><span class="ico">≡</span><span>CATALOG</span></button>
+  <button class="pro-tab" data-pro-tab="method"><span class="ico">◇</span><span>METHOD</span></button>
+</nav>
+
+<section class="pro-view" id="proAnalysis" aria-hidden="true">
+  <header class="pro-head">
+    <div><div class="eyebrow">SEISMIC INTELLIGENCE</div><h2>ANALYSIS</h2><div class="sub">カタログ全体を定量的に読む</div></div>
+    <div class="grow"></div><button class="pro-close" data-pro-close>×</button>
+  </header>
+  <div class="pro-body">
+    <div class="pro-section"><div class="pro-grid" id="proKpis"></div></div>
+    <div class="pro-section"><div class="pro-section-title">MAGNITUDE DISTRIBUTION</div><div class="pro-card"><canvas class="pro-chart" id="proMagChart"></canvas></div></div>
+    <div class="pro-section"><div class="pro-section-title">DEPTH DISTRIBUTION</div><div class="pro-card"><canvas class="pro-chart" id="proDepthChart"></canvas></div></div>
+    <div class="pro-section"><div class="pro-section-title">TIME DISTRIBUTION · JST</div><div class="pro-card"><canvas class="pro-chart" id="proHourChart"></canvas></div></div>
+    <div class="pro-section"><div class="pro-section-title">INTERPRETATION</div><div class="pro-card pro-note" id="proAnalysisNote"></div></div>
+  </div>
+</section>
+
+<section class="pro-view" id="proCatalog" aria-hidden="true">
+  <header class="pro-head">
+    <div><div class="eyebrow">EARTHQUAKE DATABASE</div><h2>CATALOG</h2><div class="sub" id="proCatalogSub">最近の地震</div></div>
+    <div class="grow"></div><button class="pro-close" data-pro-close>×</button>
+  </header>
+  <div class="pro-body">
+    <div class="pro-search"><input id="proSearch" type="search" placeholder="震央地名・M・深さで検索"></div>
+    <div class="pro-filter-row">
+      <button class="pro-filter on" data-filter="all">すべて</button>
+      <button class="pro-filter" data-filter="m5">M5+</button>
+      <button class="pro-filter" data-filter="m6">M6+</button>
+      <button class="pro-filter" data-filter="shallow">浅発 ≤30km</button>
+      <button class="pro-filter" data-filter="deep">深発 ≥100km</button>
+    </div>
+    <div class="pro-list" id="proCatalogList"></div>
+  </div>
+</section>
+
+<section class="pro-view" id="proMethod" aria-hidden="true">
+  <header class="pro-head">
+    <div><div class="eyebrow">METHOD & DATA</div><h2>METHOD</h2><div class="sub">何が実測で、何が推定か</div></div>
+    <div class="grow"></div><button class="pro-close" data-pro-close>×</button>
+  </header>
+  <div class="pro-body">
+    <div class="pro-method">
+      <div class="pro-card"><h3><span class="pro-status-dot"></span>データ状態</h3><dl id="proDataState"></dl></div>
+      <div class="pro-card"><h3>実測データ</h3><p>震源時刻、震央位置、深さ、マグニチュード、最大震度、各観測点の震度は取得データに基づきます。表示上の補間面や波面とは明確に区別しています。</p></div>
+      <div class="pro-card"><h3>推定・可視化</h3><p>色面は観測震度からの空間補間、P波・S波リングは1次元速度モデル、深発地震面は過去震源分布から推定した可視化です。公式の等震度線や確定した地下構造ではありません。</p></div>
+      <div class="pro-card"><h3>距離と走時</h3><dl><dt>地表距離</dt><dd>WGS84 Vincenty逆解法</dd><dt>走時モデル</dt><dd>深さ別1-D近似</dd><dt>補間</dt><dd>近傍重み付きIDW</dd><dt>時刻</dt><dd>JST表示</dd></dl></div>
+      <div class="pro-card"><h3>深さカラースケール</h3><div class="pro-legend-line"></div><div class="pro-caption">浅い震源 0km → 深い震源 500km</div></div>
+      <div class="pro-card"><h3>専門利用の前提</h3><p>この画面は状況把握と探索のための可視化です。防災判断、構造物評価、業務上の確定判断には気象庁や各機関の一次資料と正式発表を併用してください。</p></div>
+    </div>
+  </div>
+</section>
+
+<script id="proTabsScript">
+(() => {
+  'use strict';
+  const $p = id => document.getElementById(id);
+  let current='map', catalogFilter='all';
+  const viewMap={analysis:'proAnalysis',catalog:'proCatalog',method:'proMethod'};
+
+  function setTab(name){
+    current=name;
+    document.querySelectorAll('.pro-tab').forEach(b=>b.classList.toggle('on',b.dataset.proTab===name));
+    Object.entries(viewMap).forEach(([k,id])=>{
+      const el=$p(id); if(!el)return;
+      const on=k===name; el.classList.toggle('on',on); el.setAttribute('aria-hidden',String(!on));
+    });
+    if(name==='analysis') renderAnalysis();
+    if(name==='catalog') renderCatalog();
+    if(name==='method') renderMethod();
+  }
+  window.openProfessionalTab=setTab;
+
+  function closeViews(){setTab('map')}
+
+  function intensityColor(lab){
+    if(typeof SCOL!=='undefined'&&lab&&SCOL[lab])return SCOL[lab];
+    return '#7b8b98';
+  }
+
+  function renderCatalog(){
+    const list=$p('proCatalogList'),input=$p('proSearch'); if(!list)return;
+    const q=(input?.value||'').trim().toLowerCase();
+    let rows=(typeof DATA!=='undefined'&&Array.isArray(DATA))?[...DATA]:[];
+    rows=rows.filter(x=>{
+      const m=Number(x.mag)||0,d=Number(x.depth)||0;
+      if(catalogFilter==='m5'&&m<5)return false;
+      if(catalogFilter==='m6'&&m<6)return false;
+      if(catalogFilter==='shallow'&&d>30)return false;
+      if(catalogFilter==='deep'&&d<100)return false;
+      if(q){const hay=`${x.place||''} m${m.toFixed(1)} ${d}km ${x.intensity||''}`.toLowerCase();if(!hay.includes(q))return false;}
+      return true;
+    });
+    $p('proCatalogSub').textContent=`${rows.length}件表示 / 全${typeof DATA!=='undefined'?DATA.length:0}件`;
+    if(!rows.length){list.innerHTML='<div class="pro-empty">条件に一致する地震がありません。</div>';return;}
+    const frag=document.createDocumentFragment();
+    rows.forEach(x=>{
+      const row=document.createElement('div');row.className='pro-row';
+      const lab=x.intensity||'–';
+      row.innerHTML=`<div class="pro-badge" style="background:${intensityColor(x.intensity)}"><small>震度</small><b>${lab}</b></div><div class="pro-row-main"><div class="name">${typeof escapeHtml==='function'?escapeHtml(x.place||'震源不明'):(x.place||'震源不明')}</div><div class="meta">M${x.mag!=null?Number(x.mag).toFixed(1):'–'} · ${x.depth!=null?x.depth:'–'}km · ${Array.isArray(x.points)?x.points.length:0}点</div></div><div class="pro-row-time">${typeof fmtTime==='function'?fmtTime(x.t):''}</div>`;
+      row.addEventListener('click',()=>{closeViews(); if(typeof selectQuake==='function')selectQuake(x);});
+      frag.appendChild(row);
+    });
+    list.replaceChildren(frag);
+  }
+
+  function drawBarChart(canvas,values,labels,opts={}){
+    if(!canvas)return;
+    const dpr=window.devicePixelRatio||1,w=canvas.clientWidth||320,h=138;
+    canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
+    const c=canvas.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);
+    const p={l:24,r:8,t:12,b:22};const mx=Math.max(1,...values);const bw=(w-p.l-p.r)/values.length;
+    c.strokeStyle='rgba(145,225,255,.08)';c.lineWidth=1;
+    for(let i=0;i<4;i++){const y=p.t+(h-p.t-p.b)*i/3;c.beginPath();c.moveTo(p.l,y);c.lineTo(w-p.r,y);c.stroke();}
+    values.forEach((v,i)=>{
+      const bh=(h-p.t-p.b)*(v/mx);const x=p.l+i*bw+2,y=h-p.b-bh;
+      const g=c.createLinearGradient(0,y,0,h-p.b);g.addColorStop(0,opts.top||'#7df6ef');g.addColorStop(1,opts.bottom||'#6f79ff');
+      c.fillStyle=g;c.fillRect(x,y,Math.max(2,bw-4),bh);
+    });
+    c.fillStyle='#718698';c.font="8px 'IBM Plex Mono',monospace";
+    labels.forEach((t,i)=>{if(!t)return;const x=p.l+i*bw+bw/2-c.measureText(t).width/2;c.fillText(t,x,h-6);});
+    c.fillStyle='#64788a';c.fillText(String(mx),2,p.t+4);c.fillText('0',8,h-p.b+3);
+  }
+
+  function calcBValue(data){
+    const pts=[];
+    for(let m=4.5;m<=6.5;m+=.1){const mm=+m.toFixed(1);const n=data.filter(h=>Number(h[3])>=mm).length;if(n>=10)pts.push([mm,Math.log10(n)]);}
+    if(pts.length<5)return null;
+    const N=pts.length,sx=pts.reduce((a,p)=>a+p[0],0),sy=pts.reduce((a,p)=>a+p[1],0),sxx=pts.reduce((a,p)=>a+p[0]*p[0],0),sxy=pts.reduce((a,p)=>a+p[0]*p[1],0);
+    return -(N*sxy-sx*sy)/(N*sxx-sx*sx);
+  }
+
+  function renderAnalysis(){
+    const data=(typeof HISTO_F!=='undefined'&&Array.isArray(HISTO_F)?HISTO_F:(typeof HISTO!=='undefined'&&Array.isArray(HISTO)?HISTO:[]));
+    if(!data.length){$p('proKpis').innerHTML='<div class="pro-card pro-note">過去震源データを読み込み中です。</div>';return;}
+    const mags=data.map(h=>Number(h[3])||0),depths=data.map(h=>Number(h[2])||0).sort((a,b)=>a-b);
+    const maxM=Math.max(...mags),medianD=depths[Math.floor(depths.length/2)]||0,b=calcBValue(data);
+    const deep=data.filter(h=>Number(h[2])>=100).length;
+    $p('proKpis').innerHTML=`<div class="pro-card pro-kpi"><div class="k">EVENTS</div><div class="v">${data.length}</div><div class="s">現在の期間・深さ条件</div></div><div class="pro-card pro-kpi"><div class="k">MAX MAGNITUDE</div><div class="v">M${maxM.toFixed(1)}</div><div class="s">カタログ最大</div></div><div class="pro-card pro-kpi"><div class="k">MEDIAN DEPTH</div><div class="v">${Math.round(medianD)}km</div><div class="s">深さ中央値</div></div><div class="pro-card pro-kpi"><div class="k">b-VALUE</div><div class="v">${b?b.toFixed(2):'–'}</div><div class="s">M4.5–6.5回帰</div></div>`;
+    const magBins=[0,0,0,0,0];data.forEach(h=>{const m=Number(h[3]);if(m>=7)magBins[4]++;else if(m>=6)magBins[3]++;else if(m>=5)magBins[2]++;else if(m>=4)magBins[1]++;else magBins[0]++;});
+    drawBarChart($p('proMagChart'),magBins,['3.5','M4','M5','M6','M7+'],{top:'#8af9ef',bottom:'#7775ff'});
+    const dBins=[0,0,0,0,0,0];data.forEach(h=>{const d=Number(h[2]);if(d<20)dBins[0]++;else if(d<40)dBins[1]++;else if(d<100)dBins[2]++;else if(d<230)dBins[3]++;else if(d<400)dBins[4]++;else dBins[5]++;});
+    drawBarChart($p('proDepthChart'),dBins,['0–20','20–40','40–100','100–230','230–400','400+'],{top:'#73e8ca',bottom:'#9c63ef'});
+    const hours=new Array(24).fill(0);data.forEach(h=>{if(h[5])hours[(Number(h[5])+9)%24]++;});
+    drawBarChart($p('proHourChart'),hours,hours.map((_,i)=>i%6===0?String(i):''),{top:'#7bd7ff',bottom:'#6e75ff'});
+    const deepPct=Math.round(deep/data.length*100);
+    $p('proAnalysisNote').innerHTML=`対象カタログのうち深さ100km以上は <b style="color:#d8f7ff">${deepPct}%</b>。b値は ${b?b.toFixed(2):'算出不能'} です。b値は期間・地域・検出下限で変動するため、単独で危険度を断定する指標ではありません。表示結果は探索用であり、一次資料と併用してください。`;
+  }
+
+  function renderMethod(){
+    const hist=typeof HISTO!=='undefined'&&Array.isArray(HISTO)?HISTO.length:0;
+    const recent=typeof DATA!=='undefined'&&Array.isArray(DATA)?DATA.length:0;
+    const stations=typeof STATIONS!=='undefined'&&STATIONS?Object.keys(STATIONS).length:0;
+    $p('proDataState').innerHTML=`<dt>最近の地震</dt><dd>${recent}件</dd><dt>過去震源</dt><dd>${hist}件</dd><dt>観測点座標</dt><dd>${stations?stations+'地点':'未取得'}</dd><dt>表示バージョン</dt><dd>v15.3 PRO AURORA</dd>`;
+  }
+
+  document.querySelectorAll('.pro-tab').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.proTab)));
+  document.querySelectorAll('[data-pro-close]').forEach(b=>b.addEventListener('click',closeViews));
+  $p('proSearch')?.addEventListener('input',renderCatalog);
+  document.querySelectorAll('.pro-filter').forEach(b=>b.addEventListener('click',()=>{catalogFilter=b.dataset.filter;document.querySelectorAll('.pro-filter').forEach(x=>x.classList.toggle('on',x===b));renderCatalog();}));
+
+  window.addEventListener('load',()=>{
+    const ver=$p('ver');if(ver)ver.textContent='v15.3 PRO AURORA';
+    const listBtn=$p('btnList');
+    if(listBtn) listBtn.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();setTab('catalog');},{capture:true});
+  });
+})();
+</script>
+
 </body>
 </html>
