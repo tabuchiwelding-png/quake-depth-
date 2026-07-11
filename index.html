@@ -15,9 +15,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05080d">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
-<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-<script src="https://unpkg.com/deck.gl@8.9.35/dist.min.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.css'">
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.js'"></script>
+<script src="https://unpkg.com/deck.gl@8.9.35/dist.min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/deck.gl@8.9.35/dist.min.js'"></script>
 <style>
 :root{
   --ink:#05080d; --text:#eef3f8; --muted:#8794a4; --dim:#54616f; --line:#1b2733;
@@ -93,7 +93,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(circle
 <div id="map"></div>
 <div id="aurora"></div>
 <div id="vignette"></div>
-<div class="top"><div class="brand"><span class="bdot"></span><div class="bt"><div class="b1">震源<b>3D</b></div><div class="b2">日本の地震を立体表示 <em id="ver">v16.1</em></div></div></div><div class="spacer"></div><div class="tools"><button class="tbtn" id="btnMap" title="地図切替">◐</button><button class="tbtn" id="btnRefresh" title="更新">⟳</button><button class="tbtn" id="btnList" title="一覧">☰</button><button class="tbtn" id="btnShare" title="共有">↗</button><button class="tbtn hidden" id="btnClose" title="閉じる">×</button></div></div>
+<div class="top"><div class="brand"><span class="bdot"></span><div class="bt"><div class="b1">震源<b>3D</b></div><div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v14.2</em></div></div></div><div class="spacer"></div><div class="tools"><button class="tbtn" id="btnMap" title="地図切替">◐</button><button class="tbtn" id="btnRefresh" title="更新">⟳</button><button class="tbtn" id="btnList" title="一覧">☰</button><button class="tbtn" id="btnShare" title="共有">↗</button><button class="tbtn hidden" id="btnClose" title="閉じる">×</button></div></div>
 <div class="hint" id="hint">☰ から地震を選ぶ ／ 2本指で傾ける・回す</div>
 <div class="dleg" id="dleg" style="display:none"><div class="dcap">過去の震源 ・ 深さ5km刻み（緑=浅 → 紫=深500km）</div><div class="dlr"><span>0km</span><i></i><span>500km</span></div></div>
 <div class="panel" id="panel"><div class="pk">発生日時</div><div class="pv sm" id="pDate">–</div><div class="pv lg" id="pTime">–</div><div class="pk">震央地名</div><div class="pv md" id="pPlace">–</div><div class="pk">震源の深さ</div><div class="pv lg" id="pDep">–</div><div class="pk">最大震度</div><div class="pv lg" id="pInt">–</div><div class="pk">マグニチュード</div><div class="pv lg" id="pMag">–</div><div class="prun" id="pRun"><span id="hudT">0.0s</span> · 到達 <span id="hudR">0/0</span></div></div>
@@ -366,7 +366,7 @@ body::after{
   "use strict";
 
   const V15 = {
-    version: "v16.1 日本版",
+    version: "v16.2",
     fieldSeq: 0,
     fieldWorker: null,
     stationIndex: null,
@@ -393,7 +393,7 @@ body::after{
     accuracy.innerHTML = `
       <div class="v15-accuracy-head">
         <span class="v15-accuracy-dot" id="v15AccuracyDot"></span>
-        <span>データ信頼度</span>
+        <span>DATA CONFIDENCE</span>
         <span class="v15-accuracy-score" id="v15AccuracyScore">–</span>
       </div>
       <div class="v15-accuracy-grid">
@@ -408,7 +408,7 @@ body::after{
     const live = document.createElement("div");
     live.id = "v15Livebar";
     live.className = "v15-livebar";
-    live.innerHTML = `<i></i><span>選択中</span><strong id="v15LiveText">–</strong>`;
+    live.innerHTML = `<i></i><span>SELECTED</span><strong id="v15LiveText">–</strong>`;
     document.body.appendChild(live);
 
     const legend = document.createElement("div");
@@ -928,10 +928,10 @@ body::after{
 
 
 
-<!-- ===== v16.1 日本版 FINAL VISUAL OVERRIDES ===== -->
+<!-- ===== v16.2 FINAL VISUAL OVERRIDES ===== -->
 <style id="v151-final-style">
 /*
-  震源3D v16.1 日本版
+  震源3D v16.2
   - タイトルをフレームレス・ホログラフィック化
   - 左情報パネルをフレームレス・小型化
   - 右下凡例を文字だけへ変更
@@ -1024,7 +1024,7 @@ body::after{
   text-shadow:0 1px 2px rgba(0,0,0,.98),0 3px 12px rgba(0,0,0,.76)!important;
 }
 
-/* ---------- データ信頼度も軽量化 ---------- */
+/* ---------- DATA CONFIDENCEも軽量化 ---------- */
 .v15-accuracy{
   left:14px!important;
   top:calc(326px + var(--st))!important;
@@ -1091,7 +1091,7 @@ body::after{
 
   function patchVersion(){
     const ver=$v("ver");
-    if(ver)ver.textContent="v16.1 日本版";
+    if(ver)ver.textContent="v16.2";
     document.documentElement.dataset.shingenVersion="15.1";
   }
 
@@ -1357,29 +1357,29 @@ body::after{
 </style>
 
 <nav class="pro-nav" id="proNav" aria-label="主要画面">
-  <button class="pro-tab on" data-pro-tab="map"><span class="ico">⌖</span><span>地図</span></button>
-  <button class="pro-tab" data-pro-tab="analysis"><span class="ico">⌁</span><span>分析</span></button>
-  <button class="pro-tab" data-pro-tab="catalog"><span class="ico">≡</span><span>地震一覧</span></button>
-  <button class="pro-tab" data-pro-tab="method"><span class="ico">◇</span><span>仕様</span></button>
+  <button class="pro-tab on" data-pro-tab="map"><span class="ico">⌖</span><span>MAP</span></button>
+  <button class="pro-tab" data-pro-tab="analysis"><span class="ico">⌁</span><span>ANALYSIS</span></button>
+  <button class="pro-tab" data-pro-tab="catalog"><span class="ico">≡</span><span>CATALOG</span></button>
+  <button class="pro-tab" data-pro-tab="method"><span class="ico">◇</span><span>METHOD</span></button>
 </nav>
 
 <section class="pro-view" id="proAnalysis" aria-hidden="true">
   <header class="pro-head">
-    <div><div class="eyebrow">地震カタログ分析</div><h2>分析</h2><div class="sub">カタログ全体を定量的に読む</div></div>
+    <div><div class="eyebrow">SEISMIC INTELLIGENCE</div><h2>ANALYSIS</h2><div class="sub">カタログ全体を定量的に読む</div></div>
     <div class="grow"></div><button class="pro-close" data-pro-close>×</button>
   </header>
   <div class="pro-body">
     <div class="pro-section"><div class="pro-grid" id="proKpis"></div></div>
-    <div class="pro-section"><div class="pro-section-title">規模別の分布</div><div class="pro-card"><canvas class="pro-chart" id="proMagChart"></canvas></div></div>
-    <div class="pro-section"><div class="pro-section-title">深さ別の分布</div><div class="pro-card"><canvas class="pro-chart" id="proDepthChart"></canvas></div></div>
-    <div class="pro-section"><div class="pro-section-title">時間帯別の発生数・日本時間</div><div class="pro-card"><canvas class="pro-chart" id="proHourChart"></canvas></div></div>
-    <div class="pro-section"><div class="pro-section-title">分析結果の読み方</div><div class="pro-card pro-note" id="proAnalysisNote"></div></div>
+    <div class="pro-section"><div class="pro-section-title">MAGNITUDE DISTRIBUTION</div><div class="pro-card"><canvas class="pro-chart" id="proMagChart"></canvas></div></div>
+    <div class="pro-section"><div class="pro-section-title">DEPTH DISTRIBUTION</div><div class="pro-card"><canvas class="pro-chart" id="proDepthChart"></canvas></div></div>
+    <div class="pro-section"><div class="pro-section-title">TIME DISTRIBUTION · JST</div><div class="pro-card"><canvas class="pro-chart" id="proHourChart"></canvas></div></div>
+    <div class="pro-section"><div class="pro-section-title">INTERPRETATION</div><div class="pro-card pro-note" id="proAnalysisNote"></div></div>
   </div>
 </section>
 
 <section class="pro-view" id="proCatalog" aria-hidden="true">
   <header class="pro-head">
-    <div><div class="eyebrow">地震情報データベース</div><h2>地震一覧</h2><div class="sub" id="proCatalogSub">最近の地震</div></div>
+    <div><div class="eyebrow">EARTHQUAKE DATABASE</div><h2>CATALOG</h2><div class="sub" id="proCatalogSub">最近の地震</div></div>
     <div class="grow"></div><button class="pro-close" data-pro-close>×</button>
   </header>
   <div class="pro-body">
@@ -1397,7 +1397,7 @@ body::after{
 
 <section class="pro-view" id="proMethod" aria-hidden="true">
   <header class="pro-head">
-    <div><div class="eyebrow">計算方法とデータ</div><h2>仕様</h2><div class="sub">何が実測で、何が推定か</div></div>
+    <div><div class="eyebrow">METHOD & DATA</div><h2>METHOD</h2><div class="sub">何が実測で、何が推定か</div></div>
     <div class="grow"></div><button class="pro-close" data-pro-close>×</button>
   </header>
   <div class="pro-body">
@@ -1405,7 +1405,7 @@ body::after{
       <div class="pro-card"><h3><span class="pro-status-dot"></span>データ状態</h3><dl id="proDataState"></dl></div>
       <div class="pro-card"><h3>実測データ</h3><p>震源時刻、震央位置、深さ、マグニチュード、最大震度、各観測点の震度は取得データに基づきます。表示上の補間面や波面とは明確に区別しています。</p></div>
       <div class="pro-card"><h3>推定・可視化</h3><p>色面は観測震度からの空間補間、P波・S波リングは1次元速度モデル、深発地震面は過去震源分布から推定した可視化です。公式の等震度線や確定した地下構造ではありません。</p></div>
-      <div class="pro-card"><h3>距離と走時</h3><dl><dt>地表距離</dt><dd>WGS84 Vincenty逆解法</dd><dt>走時モデル</dt><dd>深さ別1-D近似</dd><dt>補間</dt><dd>近傍重み付きIDW</dd><dt>時刻</dt><dd>日本時間表示</dd></dl></div>
+      <div class="pro-card"><h3>距離と走時</h3><dl><dt>地表距離</dt><dd>WGS84 Vincenty逆解法</dd><dt>走時モデル</dt><dd>深さ別1-D近似</dd><dt>補間</dt><dd>近傍重み付きIDW</dd><dt>時刻</dt><dd>JST表示</dd></dl></div>
       <div class="pro-card"><h3>深さカラースケール</h3><div class="pro-legend-line"></div><div class="pro-caption">浅い震源 0km → 深い震源 500km</div></div>
       <div class="pro-card"><h3>専門利用の前提</h3><p>この画面は状況把握と探索のための可視化です。防災判断、構造物評価、業務上の確定判断には気象庁や各機関の一次資料と正式発表を併用してください。</p></div>
     </div>
@@ -1497,7 +1497,7 @@ body::after{
     const mags=data.map(h=>Number(h[3])||0),depths=data.map(h=>Number(h[2])||0).sort((a,b)=>a-b);
     const maxM=Math.max(...mags),medianD=depths[Math.floor(depths.length/2)]||0,b=calcBValue(data);
     const deep=data.filter(h=>Number(h[2])>=100).length;
-    $p('proKpis').innerHTML=`<div class="pro-card pro-kpi"><div class="k">対象件数</div><div class="v">${data.length}</div><div class="s">現在の期間・深さ条件</div></div><div class="pro-card pro-kpi"><div class="k">最大マグニチュード</div><div class="v">M${maxM.toFixed(1)}</div><div class="s">カタログ最大</div></div><div class="pro-card pro-kpi"><div class="k">深さ中央値</div><div class="v">${Math.round(medianD)}km</div><div class="s">深さ中央値</div></div><div class="pro-card pro-kpi"><div class="k">b値</div><div class="v">${b?b.toFixed(2):'–'}</div><div class="s">M4.5–6.5回帰</div></div>`;
+    $p('proKpis').innerHTML=`<div class="pro-card pro-kpi"><div class="k">EVENTS</div><div class="v">${data.length}</div><div class="s">現在の期間・深さ条件</div></div><div class="pro-card pro-kpi"><div class="k">MAX MAGNITUDE</div><div class="v">M${maxM.toFixed(1)}</div><div class="s">カタログ最大</div></div><div class="pro-card pro-kpi"><div class="k">MEDIAN DEPTH</div><div class="v">${Math.round(medianD)}km</div><div class="s">深さ中央値</div></div><div class="pro-card pro-kpi"><div class="k">b-VALUE</div><div class="v">${b?b.toFixed(2):'–'}</div><div class="s">M4.5–6.5回帰</div></div>`;
     const magBins=[0,0,0,0,0];data.forEach(h=>{const m=Number(h[3]);if(m>=7)magBins[4]++;else if(m>=6)magBins[3]++;else if(m>=5)magBins[2]++;else if(m>=4)magBins[1]++;else magBins[0]++;});
     drawBarChart($p('proMagChart'),magBins,['3.5','M4','M5','M6','M7+'],{top:'#8af9ef',bottom:'#7775ff'});
     const dBins=[0,0,0,0,0,0];data.forEach(h=>{const d=Number(h[2]);if(d<20)dBins[0]++;else if(d<40)dBins[1]++;else if(d<100)dBins[2]++;else if(d<230)dBins[3]++;else if(d<400)dBins[4]++;else dBins[5]++;});
@@ -1512,7 +1512,7 @@ body::after{
     const hist=typeof HISTO!=='undefined'&&Array.isArray(HISTO)?HISTO.length:0;
     const recent=typeof DATA!=='undefined'&&Array.isArray(DATA)?DATA.length:0;
     const stations=typeof STATIONS!=='undefined'&&STATIONS?Object.keys(STATIONS).length:0;
-    $p('proDataState').innerHTML=`<dt>最近の地震</dt><dd>${recent}件</dd><dt>過去震源</dt><dd>${hist}件</dd><dt>観測点座標</dt><dd>${stations?stations+'地点':'未取得'}</dd><dt>表示バージョン</dt><dd>v16.1 日本版</dd>`;
+    $p('proDataState').innerHTML=`<dt>最近の地震</dt><dd>${recent}件</dd><dt>過去震源</dt><dd>${hist}件</dd><dt>観測点座標</dt><dd>${stations?stations+'地点':'未取得'}</dd><dt>表示バージョン</dt><dd>v16.2</dd>`;
   }
 
   document.querySelectorAll('.pro-tab').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.proTab)));
@@ -1521,7 +1521,7 @@ body::after{
   document.querySelectorAll('.pro-filter').forEach(b=>b.addEventListener('click',()=>{catalogFilter=b.dataset.filter;document.querySelectorAll('.pro-filter').forEach(x=>x.classList.toggle('on',x===b));renderCatalog();}));
 
   window.addEventListener('load',()=>{
-    const ver=$p('ver');if(ver)ver.textContent='v16.1 日本版';
+    const ver=$p('ver');if(ver)ver.textContent='v16.2';
     const listBtn=$p('btnList');
     if(listBtn) listBtn.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();setTab('catalog');},{capture:true});
   });
@@ -1562,7 +1562,7 @@ body::after{
   -webkit-backdrop-filter:blur(16px) saturate(1.12)!important;
 }
 
-/* モバイルではタイトルに重なっていた 選択中 バーを出さない */
+/* モバイルではタイトルに重なっていた SELECTED バーを出さない */
 @media(max-width:700px){.v15-livebar{display:none!important;}}
 
 .panel{left:16px!important;top:calc(118px + var(--st))!important;max-width:150px!important;}
@@ -1671,7 +1671,7 @@ body::after{
 <script id="v155-professional-fix">
 (() => {
   'use strict';
-  const VERSION='v16.1 日本版';
+  const VERSION='v16.2';
   const $=id=>document.getElementById(id);
 
   /* 1) 灰色ベタ面の原因だったMapLibre terrainを完全停止する。
@@ -1831,12 +1831,12 @@ body::after{
     const body=document.querySelector('#proAnalysis .pro-body');if(!body||$('proMonthChart'))return;
     const hour=$('proHourChart')?.closest('.pro-section');
     if(hour){
-      const month=document.createElement('div');month.className='pro-section';month.innerHTML='<div class="pro-chart-head"><div class="pro-chart-title">直近12か月の発生推移</div><div class="pro-chart-meta" id="proMonthMeta">日本時間</div></div><div class="pro-card"><canvas class="pro-chart" id="proMonthChart"></canvas><div class="pro-chart-caption">各月の件数推移。観測網やカタログ条件の変化も含みます。</div></div>';
+      const month=document.createElement('div');month.className='pro-section';month.innerHTML='<div class="pro-chart-head"><div class="pro-chart-title">MONTHLY TREND · LAST 12 MONTHS</div><div class="pro-chart-meta" id="proMonthMeta">JST</div></div><div class="pro-card"><canvas class="pro-chart" id="proMonthChart"></canvas><div class="pro-chart-caption">各月の件数推移。観測網やカタログ条件の変化も含みます。</div></div>';
       hour.after(month);
-      const scatter=document.createElement('div');scatter.className='pro-section';scatter.innerHTML='<div class="pro-chart-head"><div class="pro-chart-title">マグニチュードと深さ</div><div class="pro-chart-meta" id="proScatterMeta">標本</div></div><div class="pro-card"><canvas class="pro-chart pro-chart-tall" id="proScatterChart"></canvas><div class="pro-chart-caption">横軸はマグニチュード、縦軸は深さ。色も深さを表します。</div></div>';
+      const scatter=document.createElement('div');scatter.className='pro-section';scatter.innerHTML='<div class="pro-chart-head"><div class="pro-chart-title">MAGNITUDE × DEPTH</div><div class="pro-chart-meta" id="proScatterMeta">sample</div></div><div class="pro-card"><canvas class="pro-chart pro-chart-tall" id="proScatterChart"></canvas><div class="pro-chart-caption">横軸はマグニチュード、縦軸は深さ。色も深さを表します。</div></div>';
       month.after(scatter);
     }
-    const mapTitles=[['proMagChart','規模別件数と累積件数'],['proDepthChart','深さ別の構成'],['proHourChart','時間帯別の活動・日本時間']];
+    const mapTitles=[['proMagChart','MAGNITUDE FREQUENCY + CUMULATIVE'],['proDepthChart','DEPTH COMPOSITION'],['proHourChart','HOURLY ACTIVITY · JST']];
     mapTitles.forEach(([id,title])=>{const sec=$(id)?.closest('.pro-section');const t=sec?.querySelector('.pro-section-title');if(t)t.textContent=title;});
   }
 
@@ -1846,12 +1846,12 @@ body::after{
     if(!data.length)return;
     const mags=data.map(h=>+h[3]||0),depths=data.map(h=>+h[2]||0).sort((a,b)=>a-b),maxM=Math.max(...mags),median=depths[Math.floor(depths.length*.5)]||0,p90=depths[Math.floor(depths.length*.9)]||0,b=bValue(data),deep=data.filter(h=>+h[2]>=100).length;
     const k=$('proKpis');if(k)k.innerHTML=`
-      <div class="pro-card pro-kpi"><div class="k">対象件数</div><div class="v">${data.length.toLocaleString()}</div><div class="s">現在の期間・深さ条件</div></div>
-      <div class="pro-card pro-kpi"><div class="k">最大マグニチュード</div><div class="v">M${maxM.toFixed(1)}</div><div class="s">カタログ最大</div></div>
-      <div class="pro-card pro-kpi"><div class="k">深さ中央値</div><div class="v">${Math.round(median)}km</div><div class="s">50パーセンタイル</div></div>
-      <div class="pro-card pro-kpi"><div class="k">深さ90%値</div><div class="v">${Math.round(p90)}km</div><div class="s">90パーセンタイル</div></div>
-      <div class="pro-card pro-kpi"><div class="k">b値</div><div class="v">${b?b.toFixed(2):'–'}</div><div class="s">M4.5–6.5回帰</div></div>
-      <div class="pro-card pro-kpi"><div class="k">深発地震の割合</div><div class="v">${(deep/data.length*100).toFixed(1)}%</div><div class="s">深さ100km以上</div></div>`;
+      <div class="pro-card pro-kpi"><div class="k">EVENTS</div><div class="v">${data.length.toLocaleString()}</div><div class="s">現在の期間・深さ条件</div></div>
+      <div class="pro-card pro-kpi"><div class="k">MAX MAGNITUDE</div><div class="v">M${maxM.toFixed(1)}</div><div class="s">カタログ最大</div></div>
+      <div class="pro-card pro-kpi"><div class="k">MEDIAN DEPTH</div><div class="v">${Math.round(median)}km</div><div class="s">50パーセンタイル</div></div>
+      <div class="pro-card pro-kpi"><div class="k">P90 DEPTH</div><div class="v">${Math.round(p90)}km</div><div class="s">90パーセンタイル</div></div>
+      <div class="pro-card pro-kpi"><div class="k">b-VALUE</div><div class="v">${b?b.toFixed(2):'–'}</div><div class="s">M4.5–6.5回帰</div></div>
+      <div class="pro-card pro-kpi"><div class="k">DEEP SHARE</div><div class="v">${(deep/data.length*100).toFixed(1)}%</div><div class="s">深さ100km以上</div></div>`;
     drawMagnitude($('proMagChart'),data);
     drawDepth($('proDepthChart'),data);
     const hours=new Array(24).fill(0);data.forEach(h=>{if(h[5])hours[(+h[5]+9)%24]++;});drawArea($('proHourChart'),hours,hours.map((_,i)=>i%3===0?`${i}h`:''));
@@ -1878,496 +1878,247 @@ body::after{
 })();
 </script>
 
-<!-- ===== 震源3D v16.0 CINEMATIC AURORA / FINAL OVERRIDE ===== -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<style id="v16CinematicStyle">
+
+<style id="v162-stable-japanese-css">
 :root{
-  --v16-void:#02050a;
-  --v16-ink:#07101a;
-  --v16-panel:rgba(5,12,21,.64);
-  --v16-panel-strong:rgba(5,12,21,.86);
-  --v16-edge:rgba(147,239,255,.13);
-  --v16-edge-hot:rgba(130,255,241,.30);
-  --v16-cyan:#82fff0;
-  --v16-blue:#73bfff;
-  --v16-violet:#9b82ff;
-  --v16-magenta:#d07cff;
-  --v16-text:#f4fbff;
-  --v16-muted:#7c93a6;
-  --v16-warn:#ffd086;
-  --v16-danger:#ff8176;
-  --v16-font:'Inter',system-ui,-apple-system,sans-serif;
-  --v16-display:'Space Grotesk','Inter',system-ui,sans-serif;
+  --jp-bg:#03070c;
+  --jp-panel:rgba(5,13,21,.84);
+  --jp-panel-soft:rgba(6,15,24,.64);
+  --jp-line:rgba(145,211,221,.16);
+  --jp-line-soft:rgba(145,211,221,.08);
+  --jp-text:#eef7f8;
+  --jp-muted:#8ea4aa;
+  --jp-dim:#62777d;
+  --jp-accent:#82ddd5;
+  --jp-blue:#78b9d5;
+  --jp-warn:#e5bd61;
 }
-html,body{background:var(--v16-void)!important;font-family:var(--v16-font)!important;}
-#map{background:#02050a!important;}
-#cinematicAurora{position:fixed;inset:0;z-index:3;pointer-events:none;width:100%;height:100%;mix-blend-mode:screen;opacity:.72;}
-#cinematicGrain{position:fixed;inset:0;z-index:8;pointer-events:none;opacity:.12;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.34'/%3E%3C/svg%3E");mix-blend-mode:soft-light;}
-#cinematicScan{position:fixed;inset:0;z-index:9;pointer-events:none;opacity:.055;background:repeating-linear-gradient(180deg,transparent 0 3px,rgba(180,245,255,.15) 4px,transparent 5px);}
-body::before{background:radial-gradient(circle at 50% 46%,transparent 0 34%,rgba(0,5,12,.18) 68%,rgba(0,3,8,.72) 100%)!important;}
-body::after{display:none!important;}
-#aurora{display:none!important;}
-#vignette{background:radial-gradient(circle at 50% 42%,transparent 0 45%,rgba(1,5,12,.22) 76%,rgba(0,2,7,.64) 100%)!important;z-index:4!important;}
-.maplibregl-canvas{filter:saturate(.64) brightness(.72) contrast(1.15) hue-rotate(-3deg)!important;}
-.maplibregl-ctrl-attrib{opacity:.5!important;}
 
-/* ブランド。箱ではなく機器刻印のように見せる */
-.top{left:18px!important;right:14px!important;top:calc(14px + var(--st))!important;align-items:flex-start!important;}
-.brand{gap:10px!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;}
-.brand::before{content:"";position:absolute;left:17px;top:39px;width:112px;height:1px;background:linear-gradient(90deg,var(--v16-cyan),rgba(115,191,255,.25),transparent);box-shadow:0 0 12px rgba(130,255,240,.3);}
-.brand::after{display:none!important;}
-.bdot{width:7px!important;height:7px!important;margin-top:9px;background:#e9ffff!important;box-shadow:0 0 8px #dffffb,0 0 22px rgba(130,255,240,.8),0 0 52px rgba(115,191,255,.38)!important;}
-.b1{font-family:var(--v16-display)!important;font-size:25px!important;font-weight:600!important;letter-spacing:-.02em!important;background:linear-gradient(96deg,#f7fdff,#adfff6 42%,#94cfff 72%,#d5c5ff)!important;-webkit-background-clip:text!important;background-clip:text!important;text-shadow:0 0 18px rgba(124,238,255,.12)!important;}
-.b1 b{font-size:15px!important;letter-spacing:.08em!important;margin-left:5px;background:linear-gradient(90deg,#87fff0,#9ba1ff)!important;-webkit-background-clip:text!important;background-clip:text!important;}
-.b2{font-size:7px!important;letter-spacing:.31em!important;color:#7fcfc9!important;margin-top:7px!important;white-space:nowrap;}
-.b2 em{display:inline-block;color:#a9b8ff!important;letter-spacing:.14em!important;margin-left:8px;}
-.tools{gap:6px!important;}
-.tbtn{width:41px!important;height:41px!important;border-radius:11px!important;border:1px solid rgba(145,222,255,.10)!important;background:linear-gradient(145deg,rgba(8,18,30,.68),rgba(3,9,17,.42))!important;box-shadow:inset 0 1px rgba(255,255,255,.035),0 9px 25px rgba(0,0,0,.34)!important;color:#a9bccb!important;backdrop-filter:blur(18px) saturate(1.2)!important;-webkit-backdrop-filter:blur(18px) saturate(1.2)!important;}
-.tbtn:active{border-color:rgba(130,255,240,.28)!important;color:#efffff!important;}
-#btnClose{color:#ff9d98!important;}
+/* MapLibreを確実に画面の土台へ置く */
+#map{z-index:0!important;background:#03070c!important;visibility:visible!important;opacity:1!important;}
+.maplibregl-map,.maplibregl-canvas-container,.maplibregl-canvas{visibility:visible!important;opacity:1!important;}
+#aurora{z-index:1!important;opacity:.15!important;mix-blend-mode:screen!important;}
+#vignette{z-index:2!important;background:radial-gradient(circle at 50% 44%,transparent 0 58%,rgba(1,5,9,.12) 80%,rgba(0,2,5,.38) 100%)!important;}
+.maplibregl-canvas{filter:saturate(.70) brightness(.82) contrast(1.08)!important;}
 
-/* 待機統計を計器として整理 */
-.istat{right:16px!important;top:calc(76px + var(--st))!important;width:176px!important;text-align:left!important;}
-.ichips{justify-content:flex-start!important;gap:5px!important;margin-bottom:12px!important;}
-.ichips button{height:28px!important;padding:0 9px!important;border-radius:999px!important;border:1px solid rgba(145,222,255,.09)!important;background:rgba(4,11,19,.46)!important;color:#71899c!important;font-size:8px!important;box-shadow:none!important;}
-.ichips button.on{background:linear-gradient(90deg,rgba(130,255,240,.90),rgba(115,191,255,.92))!important;color:#031017!important;border-color:transparent!important;box-shadow:0 0 22px rgba(115,210,255,.15)!important;}
-.irow{font-size:9px!important;line-height:1.7!important;color:#9bb3c5!important;text-align:right!important;margin-bottom:9px!important;}
-.irow b{font-size:15px!important;color:#f3fbff!important;font-family:var(--v16-display)!important;}
-.ilab{font-size:7px!important;letter-spacing:.15em!important;color:#546b7e!important;text-align:right!important;margin:9px 0 5px!important;}
-.ibars{gap:4px!important;}
-.ib{font-size:8px!important;gap:6px!important;}
-.ib .l{color:#7c91a3!important;}
-.ib .t{height:4px!important;background:rgba(125,185,215,.055)!important;border-radius:99px!important;}
-.ib .t i{border-radius:99px!important;box-shadow:0 0 8px currentColor!important;}
-.ib .n{color:#c9d8e2!important;text-align:right!important;}
-.isrc{font-size:7px!important;color:#4e6274!important;text-align:right!important;letter-spacing:.06em!important;}
-
-/* 深さレール */
-.dfilter{right:12px!important;gap:5px!important;}
-.dfw{width:24px!important;height:114px!important;}
-.dfw input::-webkit-slider-runnable-track{height:2px!important;background:linear-gradient(90deg,rgba(130,255,240,.20),rgba(155,130,255,.28))!important;}
-.dfw input::-webkit-slider-thumb{width:14px!important;height:14px!important;margin-top:-6px!important;background:#d9ffff!important;box-shadow:0 0 0 4px rgba(130,255,240,.11),0 0 16px rgba(130,255,240,.48)!important;}
-.dfl{font-size:8px!important;color:#98dcd4!important;}
-
-/* 選択中の情報。縦のHUDとして扱う */
-.panel{left:20px!important;top:calc(89px + var(--st))!important;max-width:154px!important;padding-left:12px!important;}
-.panel::before{display:block!important;content:""!important;position:absolute!important;left:0!important;top:2px!important;bottom:2px!important;width:1px!important;background:linear-gradient(180deg,var(--v16-cyan),rgba(115,191,255,.22),transparent)!important;box-shadow:0 0 14px rgba(130,255,240,.35)!important;}
-.pk{font-size:7px!important;letter-spacing:.14em!important;color:#60788b!important;margin-top:13px!important;}
-.pv{font-family:var(--v16-display)!important;font-weight:600!important;text-shadow:0 2px 14px rgba(0,0,0,.76)!important;}
-.pv.lg{font-size:24px!important;letter-spacing:-.03em!important;}
-.pv.md{font-size:14px!important;}
-.pv.sm{font-size:10px!important;color:#b8ccd8!important;}
-.prun{font-size:8px!important;letter-spacing:.04em!important;color:var(--v16-cyan)!important;}
-
-/* 旧トランスポートは非表示。v16を使用 */
-.tr{display:none!important;}
-#v16Transport{position:fixed;left:50%;bottom:calc(77px + var(--sb));transform:translate(-50%,18px);z-index:40;width:min(520px,calc(100vw - 24px));height:68px;padding:8px 10px;display:grid;grid-template-columns:52px minmax(0,1fr) 48px;gap:10px;align-items:center;border:1px solid rgba(148,226,255,.13);border-radius:18px;background:linear-gradient(150deg,rgba(7,16,27,.90),rgba(3,9,17,.76));box-shadow:0 22px 64px rgba(0,0,0,.52),inset 0 1px rgba(255,255,255,.035),0 0 0 1px rgba(62,139,174,.035);backdrop-filter:blur(24px) saturate(1.25);-webkit-backdrop-filter:blur(24px) saturate(1.25);opacity:0;pointer-events:none;transition:opacity .28s ease,transform .32s cubic-bezier(.2,.8,.2,1);}
-#v16Transport.on{opacity:1;pointer-events:auto;transform:translate(-50%,0);}
-.v16-play{width:48px;height:48px;border:0;border-radius:50%;background:radial-gradient(circle at 34% 28%,#f2ffff 0 8%,#9cfff2 19%,#72c9ff 58%,#615dff 100%);color:#031017;display:grid;place-items:center;box-shadow:0 0 0 1px rgba(255,255,255,.34),0 0 26px rgba(107,226,255,.28),0 12px 26px rgba(0,0,0,.36);font-size:16px;font-weight:800;}
-.v16-play.playing{background:radial-gradient(circle at 34% 28%,#fff 0 8%,#c3bfff 23%,#8b7fff 62%,#6d55ff 100%);}
-.v16-track{min-width:0;display:flex;flex-direction:column;gap:7px;}
-.v16-track-head{display:flex;align-items:center;gap:8px;font:600 8px/1 var(--mono);letter-spacing:.08em;color:#71889a;}
-.v16-track-head strong{font:600 10px/1 var(--v16-display);color:#e9faff;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.v16-track-head .grow{flex:1;}
-.v16-time{color:#9eece4;}
-.v16-range{width:100%;height:18px;margin:0;-webkit-appearance:none;background:transparent;}
-.v16-range::-webkit-slider-runnable-track{height:3px;border-radius:99px;background:linear-gradient(90deg,var(--v16-cyan) 0 var(--v16-progress,0%),rgba(127,166,191,.13) var(--v16-progress,0%) 100%);box-shadow:0 0 12px rgba(130,255,240,.08);}
-.v16-range::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;margin-top:-5.5px;background:#f0ffff;border:2px solid #77dfff;box-shadow:0 0 14px rgba(130,255,240,.55);}
-.v16-speed{height:42px;border:1px solid rgba(145,222,255,.11);border-radius:12px;background:rgba(5,12,21,.56);color:#c9d9e4;font:700 10px var(--mono);}
-
-/* シネマモードスイッチ */
-#v16CinemaBtn{position:fixed;right:14px;bottom:calc(153px + var(--sb));z-index:28;width:42px;height:42px;border-radius:50%;border:1px solid rgba(145,222,255,.12);background:rgba(5,13,23,.72);color:#8ba0b2;display:none;place-items:center;box-shadow:0 10px 28px rgba(0,0,0,.35);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);}
-#v16CinemaBtn.on{display:grid;}
-#v16CinemaBtn.active{color:#e9ffff;border-color:rgba(130,255,240,.28);box-shadow:0 0 26px rgba(130,255,240,.18);}
-#v16CinemaBtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
-
-/* 下部ドック。巨大なボタン感を減らす */
-.pro-nav{width:min(500px,calc(100vw - 28px))!important;bottom:calc(12px + var(--sb))!important;padding:4px!important;border-radius:17px!important;background:linear-gradient(155deg,rgba(6,14,24,.82),rgba(3,9,17,.68))!important;border:1px solid rgba(145,222,255,.10)!important;box-shadow:0 20px 55px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.03)!important;backdrop-filter:blur(24px) saturate(1.2)!important;-webkit-backdrop-filter:blur(24px) saturate(1.2)!important;}
-.pro-tab{height:48px!important;border-radius:13px!important;color:#657b8e!important;font-size:7px!important;letter-spacing:.14em!important;gap:4px!important;position:relative;overflow:hidden;}
-.pro-tab::after{content:"";position:absolute;left:28%;right:28%;bottom:3px;height:1px;background:transparent;box-shadow:none;transition:.25s;}
-.pro-tab.on{background:linear-gradient(135deg,rgba(124,245,235,.09),rgba(115,191,255,.06))!important;color:#effcff!important;box-shadow:inset 0 0 0 1px rgba(130,255,240,.08)!important;}
-.pro-tab.on::after{background:linear-gradient(90deg,transparent,var(--v16-cyan),transparent);box-shadow:0 0 10px rgba(130,255,240,.45);}
-.pro-tab .ico{color:#71889b!important;}
-.pro-tab.on .ico{color:#b9fff7!important;text-shadow:0 0 16px rgba(130,255,240,.4)!important;}
-
-/* プロ画面 */
-.pro-view{background:radial-gradient(52% 34% at 8% 0%,rgba(91,238,226,.075),transparent 64%),radial-gradient(48% 30% at 96% 6%,rgba(115,151,255,.08),transparent 64%),linear-gradient(180deg,#030812 0%,#050a12 100%)!important;}
-.pro-head{padding:calc(18px + var(--st)) 18px 13px!important;border-bottom:1px solid rgba(145,222,255,.07)!important;background:linear-gradient(180deg,rgba(3,9,17,.90),rgba(3,9,17,.45))!important;}
-.pro-head .eyebrow{font-size:7px!important;letter-spacing:.28em!important;color:#68aaa9!important;}
-.pro-head h2{font-family:var(--v16-display)!important;font-size:25px!important;letter-spacing:-.03em!important;font-weight:600!important;}
-.pro-head .sub{font-size:8px!important;letter-spacing:.04em!important;}
-.pro-body{padding:17px 15px calc(92px + var(--sb))!important;}
-.pro-section{margin-bottom:22px!important;}
-.pro-section-title,.pro-chart-title{font:600 8px/1 var(--mono)!important;letter-spacing:.19em!important;color:#78bfc2!important;}
-.pro-card{background:linear-gradient(145deg,rgba(7,16,27,.72),rgba(4,10,18,.48))!important;border:1px solid rgba(145,222,255,.075)!important;border-radius:16px!important;box-shadow:inset 0 1px rgba(255,255,255,.025),0 13px 36px rgba(0,0,0,.16)!important;}
-.pro-grid{gap:9px!important;}
-.pro-kpi{min-height:94px;padding:13px!important;position:relative;overflow:hidden;}
-.pro-kpi::after{content:"";position:absolute;width:90px;height:90px;right:-44px;top:-44px;border-radius:50%;background:radial-gradient(circle,rgba(130,255,240,.10),transparent 66%);}
-.pro-kpi .k{font-size:7px!important;letter-spacing:.16em!important;}
-.pro-kpi .v{font-family:var(--v16-display)!important;font-size:25px!important;font-weight:600!important;letter-spacing:-.04em!important;}
-.pro-kpi .s{font-size:7px!important;}
-.pro-chart{height:204px!important;}
-.pro-chart-tall{height:246px!important;}
-.pro-chart-caption{font-size:8px!important;line-height:1.65!important;color:#61788b!important;margin-top:8px!important;}
-.pro-note{font-size:10px!important;line-height:1.85!important;}
-.pro-search input{height:46px!important;border-radius:13px!important;background:rgba(4,11,19,.58)!important;border-color:rgba(145,222,255,.09)!important;}
-.pro-filter{height:32px!important;border-radius:999px!important;background:rgba(5,12,21,.50)!important;}
-.pro-row{padding:13px 3px!important;}
-.pro-badge{border-radius:50%!important;width:40px!important;height:40px!important;box-shadow:0 0 0 1px rgba(255,255,255,.12),0 10px 20px rgba(0,0,0,.24)!important;}
-.pro-method{gap:12px!important;}
-.pro-method .pro-card{padding:15px!important;}
-.pro-method h3{font-family:var(--v16-display)!important;font-size:14px!important;font-weight:600!important;}
-
-/* 新しい分析パネル */
-.v16-analysis-grid{display:grid;grid-template-columns:1fr;gap:12px;}
-.v16-chart-card{padding:12px!important;}
-.v16-chart-head{display:flex;align-items:center;margin-bottom:8px;gap:8px;}
-.v16-chart-head strong{font:600 8px/1 var(--mono);letter-spacing:.16em;color:#83c9ca;}
-.v16-chart-head span{margin-left:auto;font:500 7px/1 var(--mono);letter-spacing:.08em;color:#526a7d;}
-.v16-chart{width:100%;height:224px;display:block;}
-.v16-chart.small{height:190px;}
-.v16-chart-note{font:500 8px/1.7 var(--v16-font);color:#61788b;margin-top:7px;}
-.v16-tooltip{position:fixed;z-index:80;pointer-events:none;opacity:0;transform:translate(-50%,-115%);padding:7px 9px;border-radius:9px;background:rgba(3,10,18,.92);border:1px solid rgba(145,222,255,.15);box-shadow:0 12px 28px rgba(0,0,0,.38);font:600 9px/1.45 var(--mono);color:#dff9ff;transition:opacity .12s;white-space:nowrap;}
-.v16-tooltip.on{opacity:1;}
-
-@media(min-width:760px){
-  .v16-analysis-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
-  .pro-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+/* iPhoneの時計・Dynamic Islandと絶対に重ねない */
+.top{
+  left:12px!important;
+  right:10px!important;
+  top:max(calc(10px + env(safe-area-inset-top,0px)),64px)!important;
+  display:grid!important;
+  grid-template-columns:minmax(126px,148px) auto!important;
+  justify-content:space-between!important;
+  align-items:start!important;
+  column-gap:8px!important;
+  width:auto!important;
 }
-@media(max-width:390px){
-  .top{left:13px!important;right:9px!important;}
-  .b1{font-size:21px!important;}
-  .b1 b{font-size:13px!important;}
-  .b2{font-size:6.2px!important;letter-spacing:.24em!important;}
-  .tbtn{width:38px!important;height:38px!important;}
-  .tools{gap:4px!important;}
-  .istat{right:8px!important;width:164px!important;}
-  #v16Transport{width:calc(100vw - 14px);grid-template-columns:48px minmax(0,1fr) 44px;bottom:calc(72px + var(--sb));}
-  .v16-play{width:44px;height:44px;}
-  .panel{left:14px!important;}
+.brand{min-width:0!important;max-width:148px!important;gap:8px!important;padding-top:3px!important;}
+.bt{min-width:0!important;}
+.b1{font-family:var(--sans)!important;font-size:22px!important;font-weight:800!important;letter-spacing:.01em!important;line-height:1!important;color:#f1f8f9!important;background:none!important;-webkit-text-fill-color:initial!important;text-shadow:0 2px 18px rgba(0,0,0,.52)!important;white-space:nowrap!important;}
+.b1 b{font-family:var(--mono)!important;font-size:14px!important;color:var(--jp-accent)!important;background:none!important;-webkit-text-fill-color:initial!important;margin-left:4px!important;}
+.b2{margin-top:7px!important;font-family:var(--sans)!important;font-size:8px!important;letter-spacing:.05em!important;line-height:1.35!important;color:var(--jp-muted)!important;white-space:normal!important;text-shadow:0 2px 10px rgba(0,0,0,.68)!important;}
+.b2 em{font-family:var(--mono)!important;font-size:7.5px!important;color:#9cc3ca!important;letter-spacing:.03em!important;margin-left:4px!important;}
+.bdot{width:8px!important;height:8px!important;margin-top:8px!important;background:#d7fffa!important;box-shadow:0 0 11px rgba(130,221,213,.85),0 0 25px rgba(120,185,213,.22)!important;}
+.spacer{display:none!important;}
+.tools{display:grid!important;grid-template-columns:repeat(4,40px)!important;gap:5px!important;pointer-events:auto!important;}
+.tbtn{
+  width:40px!important;height:40px!important;border-radius:11px!important;
+  border:1px solid var(--jp-line)!important;
+  background:linear-gradient(180deg,rgba(7,17,27,.89),rgba(4,11,18,.82))!important;
+  color:#dcebed!important;font-size:15px!important;
+  box-shadow:0 10px 26px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.035)!important;
+  backdrop-filter:blur(15px)!important;-webkit-backdrop-filter:blur(15px)!important;
 }
-@media(prefers-reduced-motion:reduce){#cinematicAurora{display:none!important;}}
+#btnClose{color:#efaaa4!important;}
+
+/* 待機統計はヘッダーの下へ */
+.istat{right:12px!important;top:max(calc(124px + env(safe-area-inset-top,0px)),176px)!important;width:166px!important;text-align:right!important;}
+.ichips{gap:5px!important;margin-bottom:9px!important;}
+.ichips button{height:31px!important;padding:0 9px!important;border-radius:9px!important;background:rgba(5,13,21,.72)!important;border:1px solid var(--jp-line-soft)!important;color:#879ba0!important;}
+.ichips button.on{background:linear-gradient(135deg,#9be8df,#8bc6d9)!important;color:#061116!important;border-color:rgba(155,232,223,.75)!important;box-shadow:0 8px 22px rgba(91,177,181,.16)!important;}
+.irow{color:#c6dde1!important;}.irow b{color:#f3f9fa!important;}
+.ib .t{background:rgba(1,5,9,.58)!important;}
+.ib .n{color:#c4d9dc!important;}
+.ilab,.isrc{color:#667a80!important;}
+
+/* 選択情報 */
+.panel{left:15px!important;top:max(calc(126px + env(safe-area-inset-top,0px)),178px)!important;max-width:152px!important;}
+.pk{font-size:8px!important;color:#75898f!important;margin-top:11px!important;}
+.pv{color:#f4f9fa!important;}.pv.lg{font-size:21px!important;}.pv.md{font-size:13px!important;}.pv.sm{font-size:10px!important;}
+.prun{color:var(--jp-accent)!important;font-size:9px!important;}
+.v15-livebar{display:none!important;}
+.v15-accuracy{left:15px!important;top:max(calc(414px + env(safe-area-inset-top,0px)),466px)!important;width:215px!important;background:linear-gradient(150deg,rgba(5,13,21,.78),rgba(5,13,21,.48))!important;border-color:var(--jp-line-soft)!important;}
+.v15-accuracy-head{color:#82979c!important;}.v15-accuracy-score{color:#f0f7f8!important;}.v15-accuracy-grid span:nth-child(even){color:#bfd2d5!important;}
+.v15-legend{display:none!important;}
+
+/* 操作案内と深さ凡例 */
+.hint{bottom:calc(84px + env(safe-area-inset-bottom,0px))!important;font-family:var(--sans)!important;font-size:11px!important;color:#809499!important;white-space:nowrap!important;}
+.dleg{bottom:calc(84px + env(safe-area-inset-bottom,0px))!important;color:#b9d8d6!important;}
+.dcap{color:#677b80!important;}
+
+/* 再生バーは下部ナビの上 */
+.tr{left:12px!important;right:12px!important;bottom:calc(82px + env(safe-area-inset-bottom,0px))!important;z-index:34!important;border-radius:14px!important;background:linear-gradient(180deg,rgba(5,14,23,.94),rgba(3,10,17,.90))!important;border-color:rgba(130,221,213,.18)!important;}
+.tr-play{background:linear-gradient(135deg,#a1e9df,#85bfd3)!important;color:#061116!important;}
+.tr-tl::-webkit-slider-thumb{background:#9ce4dc!important;}
+
+/* 日本語ナビ。過度なネオンは使わない */
+.pro-nav{z-index:30!important;bottom:calc(9px + env(safe-area-inset-bottom,0px))!important;width:min(430px,calc(100vw - 20px))!important;padding:4px!important;border-radius:16px!important;background:linear-gradient(180deg,rgba(5,14,23,.95),rgba(3,10,17,.93))!important;border:1px solid rgba(145,211,221,.15)!important;box-shadow:0 16px 44px rgba(0,0,0,.42),inset 0 1px rgba(255,255,255,.03)!important;}
+.pro-tab{height:50px!important;border-radius:12px!important;color:#70868c!important;font-family:var(--sans)!important;font-size:10px!important;font-weight:700!important;letter-spacing:.03em!important;}
+.pro-tab .ico{color:#80979d!important;}
+.pro-tab.on{background:rgba(94,161,169,.13)!important;box-shadow:inset 0 0 0 1px rgba(130,221,213,.14)!important;color:#edf8f8!important;}
+.pro-tab.on .ico{color:#9ce5dd!important;text-shadow:none!important;}
+
+/* 各タブ */
+.pro-view{background:radial-gradient(68% 38% at 10% 0%,rgba(92,155,163,.055),transparent 68%),linear-gradient(180deg,#040a10,#050b12 50%,#03080d)!important;}
+.pro-head{padding:max(calc(14px + env(safe-area-inset-top,0px)),62px) 16px 12px!important;background:rgba(3,10,17,.91)!important;border-bottom:1px solid var(--jp-line-soft)!important;}
+.pro-head .eyebrow{display:none!important;}
+.pro-head h2{font-family:var(--sans)!important;font-size:21px!important;letter-spacing:.02em!important;color:#f1f7f8!important;}
+.pro-head .sub{font-family:var(--sans)!important;font-size:10px!important;color:#7f9499!important;}
+.pro-close{border-color:var(--jp-line)!important;background:rgba(8,18,28,.72)!important;color:#d9e8ea!important;}
+.pro-body{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))!important;}
+.pro-section-title,.pro-chart-title{font-family:var(--sans)!important;font-size:10px!important;letter-spacing:.04em!important;color:#82979d!important;}
+.pro-chart-meta{font-family:var(--mono)!important;color:#8ba4a8!important;}
+.pro-card{background:linear-gradient(145deg,rgba(8,18,28,.72),rgba(4,11,18,.58))!important;border-color:var(--jp-line-soft)!important;box-shadow:0 14px 36px rgba(0,0,0,.20),inset 0 1px rgba(255,255,255,.02)!important;}
+.pro-card::before{background:linear-gradient(90deg,transparent,rgba(130,221,213,.18),transparent)!important;}
+.pro-kpi .k{font-family:var(--sans)!important;letter-spacing:.04em!important;color:#758b91!important;}
+.pro-kpi .v{color:#eef7f8!important;}.pro-kpi .s,.pro-chart-caption{font-family:var(--sans)!important;color:#71868b!important;}
+.pro-filter.on{background:rgba(94,161,169,.14)!important;color:#edf8f8!important;border-color:rgba(130,221,213,.18)!important;}
+
+/* 初期化失敗を黒画面のまま放置しない */
+#startupError{position:fixed;left:18px;right:18px;top:50%;transform:translateY(-50%);z-index:100;display:none;padding:18px;border:1px solid rgba(229,189,97,.28);border-radius:14px;background:rgba(7,14,21,.94);color:#dce8e9;font:500 13px/1.7 var(--sans);box-shadow:0 18px 50px rgba(0,0,0,.45);}
+#startupError.on{display:block;}#startupError b{display:block;margin-bottom:5px;color:#f2d48b;font-size:15px;}#startupError small{color:#85999e;}
+
+@media(max-width:380px){
+  .top{left:9px!important;right:7px!important;grid-template-columns:minmax(116px,136px) auto!important;column-gap:4px!important;}
+  .b1{font-size:20px!important;}.b1 b{font-size:13px!important;}.b2{font-size:7.5px!important;}
+  .tools{grid-template-columns:repeat(4,36px)!important;gap:4px!important;}.tbtn{width:36px!important;height:38px!important;}
+  .istat{right:8px!important;width:158px!important;}.ichips button{padding:0 7px!important;}
+  .panel{left:11px!important;}.v15-accuracy{left:11px!important;width:202px!important;}
+}
+@media(max-height:740px){
+  .top{top:max(calc(8px + env(safe-area-inset-top,0px)),52px)!important;}
+  .panel{top:max(calc(112px + env(safe-area-inset-top,0px)),158px)!important;}
+  .v15-accuracy{top:max(calc(365px + env(safe-area-inset-top,0px)),410px)!important;}
+}
 </style>
-<script id="v16CinematicScript">
+
+<div id="startupError" role="alert"><b>地図を読み込めませんでした</b><span id="startupErrorText">通信状態を確認して、更新ボタンを押してください。</span><br><small>地震一覧と分析画面は、保存データがあれば引き続き利用できます。</small></div>
+
+<script id="v162-stable-japanese-js">
 (() => {
   'use strict';
-  const VERSION='v16.1 日本版';
-  const $v=id=>document.getElementById(id);
-  const perf={low:(navigator.deviceMemory||4)<=3||(navigator.hardwareConcurrency||4)<=4};
-  let cinema=false,cinemaRaf=0,cinemaLast=0;
-  let tooltip=null;
+  const VERSION='v16.2';
+  const byId=id=>document.getElementById(id);
 
-  function installCanvas(){
-    if(!$v('cinematicAurora')){
-      const c=document.createElement('canvas');c.id='cinematicAurora';document.body.appendChild(c);
-      const g=document.createElement('div');g.id='cinematicGrain';document.body.appendChild(g);
-      const s=document.createElement('div');s.id='cinematicScan';document.body.appendChild(s);
+  function japaneseText(){
+    const ver=byId('ver'); if(ver) ver.textContent=VERSION;
+    const sub=document.querySelector('.b2');
+    if(sub) sub.innerHTML='日本の地震を立体表示 <em>'+VERSION+'</em>';
+
+    const tabs={map:['地図'],analysis:['分析'],catalog:['地震一覧'],method:['仕様']};
+    document.querySelectorAll('.pro-tab').forEach(btn=>{
+      const key=btn.dataset.proTab;
+      const spans=btn.querySelectorAll('span');
+      if(tabs[key]&&spans.length>1)spans[spans.length-1].textContent=tabs[key][0];
+    });
+
+    const heads={
+      proAnalysis:['分析','地震カタログの傾向を確認'],
+      proCatalog:['地震一覧','最近発生した地震を検索'],
+      proMethod:['仕様','実測値・推定値・計算方法']
+    };
+    for(const [id,[title,subtext]] of Object.entries(heads)){
+      const root=byId(id); if(!root)continue;
+      const h=root.querySelector('h2'); if(h)h.textContent=title;
+      const s=root.querySelector('.sub'); if(s)s.textContent=subtext;
     }
+
+    document.querySelectorAll('.v15-accuracy-head span').forEach(el=>{
+      if(el.textContent.trim()==='DATA CONFIDENCE')el.textContent='データ信頼度';
+    });
+    const live=document.querySelector('#v15Livebar span');if(live)live.textContent='選択中';
+
+    const replacements={
+      'MAGNITUDE FREQUENCY + CUMULATIVE':'マグニチュード別の発生数と累積件数',
+      'DEPTH COMPOSITION':'震源の深さ構成',
+      'HOURLY ACTIVITY · JST':'時間帯別の発生数（日本時間）',
+      'MONTHLY TREND · LAST 12 MONTHS':'直近12か月の推移',
+      'MAGNITUDE × DEPTH':'マグニチュードと深さの関係',
+      'EVENTS':'対象件数','MAX MAGNITUDE':'最大マグニチュード','MEDIAN DEPTH':'深さ中央値',
+      'P90 DEPTH':'深さ90%点','b-VALUE':'b値','DEEP SHARE':'深発地震の割合'
+    };
+    document.querySelectorAll('.pro-section-title,.pro-chart-title,.pro-kpi .k').forEach(el=>{
+      const k=el.textContent.trim();if(replacements[k])el.textContent=replacements[k];
+    });
   }
 
-  function startAurora(){
-    const cv=$v('cinematicAurora');if(!cv||cv.__running)return;cv.__running=true;
-    const ctx=cv.getContext('2d',{alpha:true});let w=0,h=0,dpr=1,t0=performance.now(),last=0;
-    const resize=()=>{dpr=Math.min(window.devicePixelRatio||1,perf.low?1.25:1.75);w=innerWidth;h=innerHeight;cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);};
-    resize();addEventListener('resize',resize,{passive:true});
-    function frame(now){
-      if(document.hidden){requestAnimationFrame(frame);return;}
-      if(now-last<(perf.low?52:33)){requestAnimationFrame(frame);return;}last=now;
-      const t=(now-t0)/1000;ctx.clearRect(0,0,w,h);
-      ctx.globalCompositeOperation='lighter';
-      const bands=perf.low?2:4;
-      for(let i=0;i<bands;i++){
-        const baseY=h*(.13+i*.18)+Math.sin(t*.13+i*1.7)*h*.045;
-        const amp=h*(.055+i*.009),phase=t*(.10+i*.018)+i*1.9;
-        const grad=ctx.createLinearGradient(0,baseY-amp,w,baseY+amp);
-        const alpha=.024+i*.006;
-        grad.addColorStop(0,`rgba(70,255,230,${alpha})`);
-        grad.addColorStop(.35,`rgba(80,200,255,${alpha*1.18})`);
-        grad.addColorStop(.72,`rgba(135,115,255,${alpha*.92})`);
-        grad.addColorStop(1,'rgba(200,95,255,0)');
-        ctx.fillStyle=grad;ctx.beginPath();ctx.moveTo(0,h);
-        for(let x=0;x<=w+24;x+=24){const y=baseY+Math.sin(x*.006+phase)*amp+Math.sin(x*.014-phase*.7)*amp*.34;ctx.lineTo(x,y);}
-        ctx.lineTo(w,h);ctx.closePath();ctx.fill();
-      }
-      const pulse=.5+.5*Math.sin(t*.22);const rg=ctx.createRadialGradient(w*.55,h*.38,0,w*.55,h*.38,Math.max(w,h)*.72);
-      rg.addColorStop(0,`rgba(92,235,255,${.018+.012*pulse})`);rg.addColorStop(.42,'rgba(90,125,255,.018)');rg.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=rg;ctx.fillRect(0,0,w,h);
-      ctx.globalCompositeOperation='source-over';requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
-  }
-
-  function removeTerrainForever(){
+  function terrainOff(){
+    try{if(typeof map!=='undefined'&&map)map.setTerrain(null);}catch(e){}
     try{if(typeof setTerrainEnabled==='function')setTerrainEnabled=()=>{try{map?.setTerrain(null);}catch(e){}};}catch(e){}
     try{if(typeof ensureTerrainSource==='function')ensureTerrainSource=()=>{};}catch(e){}
-    try{map?.setTerrain(null);}catch(e){}
   }
 
-  function toneMap(){
-    if(typeof map==='undefined'||!map)return;removeTerrainForever();
-    const set=(id,prop,val)=>{try{if(map.getLayer(id))map.setPaintProperty(id,prop,val);}catch(e){}};
-    set('satL','raster-saturation',-.62);set('satL','raster-brightness-max',.58);set('satL','raster-brightness-min',.02);set('satL','raster-contrast',.24);set('satL','raster-opacity',.88);
-    set('dark','raster-saturation',-1);set('dark','raster-brightness-max',.12);set('dark','raster-contrast',.38);set('dark','raster-opacity',.72);
-    set('hillL','raster-opacity',.24);set('hillL','raster-brightness-max',.22);
+  function mapTone(){
+    if(typeof map==='undefined'||!map)return;
+    terrainOff();
+    const set=(id,p,v)=>{try{if(map.getLayer(id))map.setPaintProperty(id,p,v);}catch(e){}};
+    set('satL','raster-saturation',-.28);set('satL','raster-contrast',.12);set('satL','raster-brightness-min',.03);set('satL','raster-brightness-max',.78);set('satL','raster-opacity',.90);
+    set('dark','raster-opacity',.64);set('hillL','raster-opacity',.38);
   }
 
-  function installTransport(){
-    if($v('v16Transport'))return;
-    const box=document.createElement('div');box.id='v16Transport';box.innerHTML=`
-      <button class="v16-play" id="v16Play" aria-label="再生">▶</button>
-      <div class="v16-track">
-        <div class="v16-track-head"><span>地震波再生</span><strong id="v16TrackTitle">–</strong><span class="grow"></span><span class="v16-time" id="v16Time">0.0s</span></div>
-        <input class="v16-range" id="v16Range" type="range" min="0" max="1000" value="0">
-      </div>
-      <button class="v16-speed" id="v16Speed">×2</button>`;
-    document.body.appendChild(box);
-    $v('v16Play').addEventListener('click',()=>{if(typeof togglePlay==='function')togglePlay();syncTransport();});
-    $v('v16Speed').addEventListener('click',()=>{if(typeof cycleSpeed==='function')cycleSpeed();syncTransport();});
-    $v('v16Range').addEventListener('input',e=>{
-      if(typeof sel==='undefined'||!sel||!Array.isArray(obs)||!obs.length)return;
-      playing=false;cancelAnimationFrame(raf);const b=$v('playBtn');if(b)b.textContent='▶';
-      tSim=(+e.target.value/1000)*tEnd;lastReached=reached();if(typeof rebuildField==='function')rebuildField();if(typeof hudDynamic==='function')hudDynamic();if(typeof updateHudAll==='function')updateHudAll();if(typeof setHud==='function')setHud(tSim>0);if(typeof updateLayers==='function')updateLayers();syncTransport();
-    });
-    const c=document.createElement('button');c.id='v16CinemaBtn';c.innerHTML='<svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 2-5"/><path d="M5 4v5h5"/><circle cx="12" cy="12" r="2"/></svg>';document.body.appendChild(c);
-    c.addEventListener('click',()=>{cinema=!cinema;c.classList.toggle('active',cinema);if(cinema)startCinema();else cancelAnimationFrame(cinemaRaf);});
+  function showStartupError(message){
+    const box=byId('startupError'),txt=byId('startupErrorText');
+    if(txt&&message)txt.textContent=message;if(box)box.classList.add('on');
+  }
+  function hideStartupError(){byId('startupError')?.classList.remove('on');}
+
+  function ensureReplay(){
+    const tr=byId('tr');
+    if(!tr)return;
+    tr.style.removeProperty('display');
+    if(typeof sel!=='undefined'&&sel)tr.classList.add('on');
   }
 
-  function syncTransport(){
-    const root=$v('v16Transport'),play=$v('v16Play'),range=$v('v16Range'),sp=$v('v16Speed');if(!root)return;
-    const active=typeof sel!=='undefined'&&!!sel;root.classList.toggle('on',active);$v('v16CinemaBtn')?.classList.toggle('on',active);
-    if(!active)return;
-    play.textContent=playing?'❚❚':'▶';play.classList.toggle('playing',!!playing);range.value=Math.round(Math.max(0,Math.min(1,(tEnd? tSim/tEnd:0)))*1000);range.style.setProperty('--v16-progress',`${range.value/10}%`);
-    $v('v16Time').textContent=`${Number(tSim||0).toFixed(1)}s · ${typeof reached==='function'?reached():0}/${obs?.length||0}`;
-    $v('v16TrackTitle').textContent=`${sel.place||'震源'} · M${sel.mag!=null?Number(sel.mag).toFixed(1):'–'} · ${sel.depth??'–'}km`;
-    sp.textContent=`×${typeof speed!=='undefined'?speed:2}`;
-  }
-
-  function startCinema(){
-    cancelAnimationFrame(cinemaRaf);cinemaLast=performance.now();
-    function loop(now){
-      if(!cinema||typeof sel==='undefined'||!sel||typeof map==='undefined'||!map)return;
-      if(now-cinemaLast>40){cinemaLast=now;try{map.rotateTo(map.getBearing()+.045,{duration:0});}catch(e){}}
-      cinemaRaf=requestAnimationFrame(loop);
-    }cinemaRaf=requestAnimationFrame(loop);
-  }
-
-  function patchPlayback(){
-    if(typeof selectQuake==='function'&&!selectQuake.__v16){
-      const old=selectQuake;const next=function(q,noFly){removeTerrainForever();const r=old(q,true);removeTerrainForever();setTimeout(()=>{try{map?.flyTo({center:[q.lng,q.lat],zoom:(q.depth||10)>100?5.7:6.15,pitch:47,bearing:-18,duration:noFly?0:1400,essential:true});}catch(e){}syncTransport();},30);return r;};next.__v16=true;selectQuake=next;
+  function wrapFunctions(){
+    if(typeof selectQuake==='function'&&!selectQuake.__v162){
+      const old=selectQuake;
+      const next=function(q,noFly){const r=old(q,noFly);terrainOff();requestAnimationFrame(()=>{mapTone();ensureReplay();japaneseText();});return r;};
+      next.__v162=true;selectQuake=next;
     }
-    if(typeof deselect==='function'&&!deselect.__v16){const old=deselect;const next=function(){cinema=false;cancelAnimationFrame(cinemaRaf);$v('v16CinemaBtn')?.classList.remove('active');const r=old();removeTerrainForever();syncTransport();return r;};next.__v16=true;deselect=next;}
-    if(typeof setPlaying==='function'&&!setPlaying.__v16){const old=setPlaying;const next=function(p){const r=old(p);syncTransport();return r;};next.__v16=true;setPlaying=next;}
-    if(typeof finishPlayback==='function'&&!finishPlayback.__v16){const old=finishPlayback;const next=function(){const r=old();syncTransport();return r;};next.__v16=true;finishPlayback=next;}
-    if(typeof tick==='function'&&!tick.__v16){const old=tick;const next=function(ts){old(ts);syncTransport();};next.__v16=true;tick=next;}
+    if(typeof deselect==='function'&&!deselect.__v162){
+      const old=deselect;
+      const next=function(){const r=old();terrainOff();mapTone();return r;};next.__v162=true;deselect=next;
+    }
   }
 
-  function patchHisto(){
-    if(typeof histoLayers!=='function'||histoLayers.__v16)return;
-    const cache=new Map();
-    const fn=function(dimmed){
-      const data=(typeof HISTO_F!=='undefined'&&HISTO_F)||(typeof HISTO!=='undefined'&&HISTO)||[];if(!data.length||typeof deck==='undefined')return[];
-      const zoom=typeof map!=='undefined'&&map?map.getZoom():4.5,pitch=typeof map!=='undefined'&&map?map.getPitch():0,zf=typeof zSquash!=='undefined'?zSquash:1;
-      const key=[data.length,dimmed?1:0,Math.round(zoom*4),Math.round(pitch/5),Math.round(zf*10),typeof dMin!=='undefined'?dMin:0,typeof dMax!=='undefined'?dMax:500,typeof period!=='undefined'?period:''].join('|');
-      if(cache.has(key))return cache.get(key);
-      const core=Math.max(1.2,Math.min(3.8,.75+zoom*.20)),glow=core*2.8,z=h=>[h[1],h[0],-Math.max(0,h[2])*1000*zf],layers=[];
-      if(typeof SLAB!=='undefined'&&SLAB?.segs?.length){layers.push(new deck.LineLayer({id:'v16-slab-glow',data:SLAB.segs,getSourcePosition:s=>[s.a[0],s.a[1],-s.d*1000*zf],getTargetPosition:s=>[s.b[0],s.b[1],-s.d*1000*zf],getColor:s=>{const c=depthColor(s.d);return[c[0],c[1],c[2],dimmed?22:62];},getWidth:2.4,widthUnits:'pixels',parameters:{depthTest:false}}));layers.push(new deck.LineLayer({id:'v16-slab-core',data:SLAB.segs,getSourcePosition:s=>[s.a[0],s.a[1],-s.d*1000*zf],getTargetPosition:s=>[s.b[0],s.b[1],-s.d*1000*zf],getColor:s=>{const c=depthColor(s.d);return[c[0],c[1],c[2],dimmed?42:112];},getWidth:.65,widthUnits:'pixels',parameters:{depthTest:false}}));}
-      layers.push(new deck.ScatterplotLayer({id:'v16-histo-aura',data,getPosition:z,getRadius:h=>glow+Math.max(0,h[3]-4)*.45,radiusUnits:'pixels',radiusMinPixels:glow,radiusMaxPixels:12,getFillColor:h=>{const c=depthColor(h[2]);return[c[0],c[1],c[2],dimmed?12:34];},stroked:false,pickable:false,parameters:{depthTest:false}}));
-      layers.push(new deck.ScatterplotLayer({id:'v16-histo-core',data,getPosition:z,getRadius:h=>core+Math.max(0,h[3]-4)*.28,radiusUnits:'pixels',radiusMinPixels:core,radiusMaxPixels:7.5,getFillColor:h=>{const c=depthColor(h[2]);return[c[0],c[1],c[2],dimmed?64:202];},stroked:zoom>7.5,getLineColor:[225,252,255,dimmed?30:100],lineWidthUnits:'pixels',getLineWidth:.35,pickable:!dimmed,onClick:info=>{if(info?.object){lastDotTap=Date.now();const h=info.object;toast(`${h[4]||''} · M${Number(h[3]).toFixed(1)} · ${Math.round(h[2])}km`);}},parameters:{depthTest:false}}));
-      const strong=data.filter(h=>h[3]>=6.5);if(strong.length)layers.push(new deck.ScatterplotLayer({id:'v16-strong-rings',data:strong,getPosition:z,getRadius:h=>core*2.2+(h[3]-6.5)*2.4,radiusUnits:'pixels',filled:false,stroked:true,getLineColor:[188,246,255,dimmed?40:145],lineWidthUnits:'pixels',getLineWidth:.9,parameters:{depthTest:false}}));
-      cache.set(key,layers);if(cache.size>16)cache.delete(cache.keys().next().value);return layers;
-    };fn.__v16=true;histoLayers=fn;
-  }
-
-  function patchSelectedLayers(){
-    if(typeof selLayers!=='function'||selLayers.__v16)return;
-    const old=selLayers;
-    const fn=function(){
-      let base=old().filter(l=>l&&!['pw','sw','plumb','epiglow','epi','hypoglow','hypo','depthlabel'].includes(l.id)&&!String(l.id).startsWith('v15')&&!String(l.id).startsWith('v151'));
-      if(typeof sel==='undefined'||!sel||typeof deck==='undefined')return base;
-      const reveal=!!(playing||tSim>0),arr=reveal?reachedArr():[],depth=Number(sel.depth)||10,z=-depth*1000*(typeof zSquash!=='undefined'?zSquash:1),pulse=.5+.5*Math.sin(performance.now()/420),layers=[...base];
-      if(reveal){const pv=window.ShingenV15?.EarthMath?.velocity?.(depth,'P')||6.9,sv=window.ShingenV15?.EarthMath?.velocity?.(depth,'S')||3.9,p=pv*tSim,s=sv*tSim,rp=p>depth?Math.sqrt(p*p-depth*depth):0,rs=s>depth?Math.sqrt(s*s-depth*depth):0;if(rp>1)layers.push(new deck.ScatterplotLayer({id:'v16-pwave-aura',data:[{r:rp}],getPosition:()=>[sel.lng,sel.lat,0],getRadius:d=>d.r*1000,radiusUnits:'meters',filled:false,stroked:true,getLineColor:[124,232,255,160],lineWidthUnits:'pixels',getLineWidth:3.4,parameters:{depthTest:false}}),new deck.ScatterplotLayer({id:'v16-pwave-core',data:[{r:rp}],getPosition:()=>[sel.lng,sel.lat,0],getRadius:d=>d.r*1000,radiusUnits:'meters',filled:false,stroked:true,getLineColor:[208,250,255,220],lineWidthUnits:'pixels',getLineWidth:.7,parameters:{depthTest:false}}));if(rs>1)layers.push(new deck.ScatterplotLayer({id:'v16-swave-aura',data:[{r:rs}],getPosition:()=>[sel.lng,sel.lat,0],getRadius:d=>d.r*1000,radiusUnits:'meters',filled:false,stroked:true,getLineColor:[151,124,255,154],lineWidthUnits:'pixels',getLineWidth:3.8,parameters:{depthTest:false}}),new deck.ScatterplotLayer({id:'v16-swave-core',data:[{r:rs}],getPosition:()=>[sel.lng,sel.lat,0],getRadius:d=>d.r*1000,radiusUnits:'meters',filled:false,stroked:true,getLineColor:[212,200,255,222],lineWidthUnits:'pixels',getLineWidth:.75,parameters:{depthTest:false}}));}
-      layers.push(new deck.LineLayer({id:'v16-axis-aura',data:[sel],getSourcePosition:q=>[q.lng,q.lat,0],getTargetPosition:q=>[q.lng,q.lat,z],getColor:[95,246,230,38],getWidth:10,widthUnits:'pixels',parameters:{depthTest:false}}));
-      layers.push(new deck.LineLayer({id:'v16-axis-core',data:[sel],getSourcePosition:q=>[q.lng,q.lat,0],getTargetPosition:q=>[q.lng,q.lat,z],getColor:[230,255,252,220],getWidth:1.1,widthUnits:'pixels',parameters:{depthTest:false}}));
-      layers.push(new deck.ScatterplotLayer({id:'v16-epi-aura',data:[sel],getPosition:q=>[q.lng,q.lat,0],getRadius:30+pulse*8,radiusUnits:'pixels',getFillColor:[95,244,230,13+Math.round(pulse*14)],stroked:false,parameters:{depthTest:false}}));
-      layers.push(new deck.ScatterplotLayer({id:'v16-epi-ring',data:[sel],getPosition:q=>[q.lng,q.lat,0],getRadius:14+pulse*3,radiusUnits:'pixels',filled:false,stroked:true,getLineColor:[174,255,247,190],lineWidthUnits:'pixels',getLineWidth:1.4,parameters:{depthTest:false}}));
-      layers.push(new deck.ScatterplotLayer({id:'v16-hypo-aura',data:[sel],getPosition:q=>[q.lng,q.lat,z],getRadius:26+pulse*9,radiusUnits:'pixels',getFillColor:[126,102,255,17+Math.round(pulse*16)],stroked:false,parameters:{depthTest:false}}));
-      layers.push(new deck.ScatterplotLayer({id:'v16-hypo-shell',data:[sel],getPosition:q=>[q.lng,q.lat,z],getRadius:11+pulse*2,radiusUnits:'pixels',getFillColor:[112,230,255,40],stroked:true,getLineColor:[202,248,255,190],lineWidthUnits:'pixels',getLineWidth:1.3,parameters:{depthTest:false}}));
-      layers.push(new deck.ScatterplotLayer({id:'v16-hypo-core',data:[sel],getPosition:q=>[q.lng,q.lat,z],getRadius:4.8,radiusUnits:'pixels',getFillColor:[247,255,255,255],stroked:true,getLineColor:[124,215,255,240],lineWidthUnits:'pixels',getLineWidth:1.2,parameters:{depthTest:false}}));
-      layers.push(new deck.TextLayer({id:'v16-depth-tag',data:[sel],getPosition:q=>[q.lng,q.lat,z],getText:q=>`${q.depth??10} km`,getSize:13,getColor:[169,255,245,238],getPixelOffset:[22,-1],fontFamily:'IBM Plex Mono, monospace',fontSettings:{sdf:true},outlineWidth:2,outlineColor:[2,6,12,240],parameters:{depthTest:false}}));
-      if(arr.length){const columns=arr.length>300?arr.filter((_,i)=>i%Math.ceil(arr.length/300)===0):arr;layers.push(new deck.ColumnLayer({id:'v16-columns',data:columns,diskResolution:12,radius:850,getPosition:o=>[o.lng,o.lat],getElevation:o=>Math.max(700,Math.pow(Math.max(.7,o.I),1.76)*1850),getFillColor:o=>{const c=colNum(o.I);return[c[0],c[1],c[2],82];},getLineColor:[218,250,255,45],lineWidthMinPixels:.3,extruded:true,wireframe:false,elevationScale:1,pickable:false,material:{ambient:.35,diffuse:.6,shininess:18,specularColor:[160,220,255]},parameters:{depthTest:true}}));const arcs=[...arr].sort((a,b)=>b.I-a.I||b.delta-a.delta).slice(0,42);layers.push(new deck.ArcLayer({id:'v16-arcs',data:arcs,getSourcePosition:()=>[sel.lng,sel.lat],getTargetPosition:o=>[o.lng,o.lat],getSourceColor:[116,235,255,50],getTargetColor:o=>{const c=colNum(o.I);return[c[0],c[1],c[2],72];},getWidth:o=>.3+o.I*.09,widthUnits:'pixels',greatCircle:true,getHeight:o=>Math.min(.11,.018+o.delta/11000),parameters:{depthTest:false}}));}
-      return layers;
-    };fn.__v16=true;selLayers=fn;
-  }
-
-  function patchLighting(){
-    if(typeof updateLayers!=='function'||updateLayers.__v16||typeof deck==='undefined')return;
-    let effects=[];try{const ambient=new deck.AmbientLight({color:[145,210,255],intensity:1.0});const dir=new deck.DirectionalLight({color:[180,240,255],intensity:1.8,direction:[-3,-5,-2]});effects=[new deck.LightingEffect({ambientLight:ambient,directionalLight:dir})];}catch(e){}
-    const fn=function(){if(!overlay)return;const layers=sel?[...histoLayers(true),...selLayers()]:histoLayers(false);overlay.setProps({layers,effects});};fn.__v16=true;updateLayers=fn;
-  }
-
-  function installAnalysis(){
-    const body=document.querySelector('#proAnalysis .pro-body');if(!body||$v('v16EnergyChart'))return;
-    const wrap=document.createElement('div');wrap.className='pro-section';wrap.innerHTML=`<div class="pro-section-title">詳細分析</div><div class="v16-analysis-grid"><div class="pro-card v16-chart-card"><div class="v16-chart-head"><strong>月別・相対エネルギー</strong><span>Σ10^(1.5M)</span></div><canvas class="v16-chart" id="v16EnergyChart"></canvas><div class="v16-chart-note">放出エネルギーの相対指標。正式なエネルギー評価ではありません。</div></div><div class="pro-card v16-chart-card"><div class="v16-chart-head"><strong>深さと規模の集中度</strong><span>区分集計</span></div><canvas class="v16-chart" id="v16MatrixChart"></canvas><div class="v16-chart-note">色が明るいほど、同じ深さ・規模帯に震源が集中しています。</div></div><div class="pro-card v16-chart-card"><div class="v16-chart-head"><strong>規模別累積頻度</strong><span>log N = a − bM</span></div><canvas class="v16-chart small" id="v16GRChart"></canvas><div class="v16-chart-note">M4.5以上の累積頻度を回帰。検出下限と期間に強く依存します。</div></div><div class="pro-card v16-chart-card"><div class="v16-chart-head"><strong>地震活動の特徴</strong><span>相対値</span></div><canvas class="v16-chart small" id="v16RadarChart"></canvas><div class="v16-chart-note">規模・深さ・時間偏りを同一尺度で比較する探索用指標です。</div></div></div>`;
-    body.insertBefore(wrap,body.querySelector('.pro-section:last-child'));
-  }
-
-  function canvasFit(cv,h){const d=Math.min(devicePixelRatio||1,2),w=Math.max(280,cv.clientWidth||320);cv.width=Math.round(w*d);cv.height=Math.round(h*d);const c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);c.clearRect(0,0,w,h);return{c,w,h};}
-  function line(c,x1,y1,x2,y2,color='rgba(145,222,255,.07)',width=1){c.strokeStyle=color;c.lineWidth=width;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();}
-  function font(c,size=8,color='#71889b',weight=500){c.font=`${weight} ${size}px IBM Plex Mono, monospace`;c.fillStyle=color;}
-  function analysisData(){return typeof HISTO_F!=='undefined'&&Array.isArray(HISTO_F)?HISTO_F:(typeof HISTO!=='undefined'&&Array.isArray(HISTO)?HISTO:[]);}
-  function drawEnergy(cv,data){const {c,w,h}=canvasFit(cv,224),p={l:34,r:12,t:18,b:30};const months=[];const now=new Date();for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;months.push([ym,0]);}const mi=new Map(months.map((m,i)=>[m[0],i]));data.forEach(e=>{const i=mi.get(e[4]);if(i!=null)months[i][1]+=Math.pow(10,1.5*(+e[3]||0));});const vals=months.map(m=>Math.log10(m[1]+1)),mx=Math.max(1,...vals),dx=(w-p.l-p.r)/(vals.length-1),Y=v=>p.t+(h-p.t-p.b)*(1-v/mx);for(let i=0;i<5;i++){const y=p.t+(h-p.t-p.b)*i/4;line(c,p.l,y,w-p.r,y);font(c,7);c.fillText((mx*(1-i/4)).toFixed(1),2,y+3);}const g=c.createLinearGradient(0,p.t,0,h-p.b);g.addColorStop(0,'rgba(130,255,240,.34)');g.addColorStop(1,'rgba(115,110,255,.015)');c.beginPath();c.moveTo(p.l,h-p.b);vals.forEach((v,i)=>c.lineTo(p.l+i*dx,Y(v)));c.lineTo(w-p.r,h-p.b);c.closePath();c.fillStyle=g;c.fill();const lg=c.createLinearGradient(p.l,0,w-p.r,0);lg.addColorStop(0,'#82fff0');lg.addColorStop(.5,'#73bfff');lg.addColorStop(1,'#a883ff');c.strokeStyle=lg;c.lineWidth=2;c.beginPath();vals.forEach((v,i)=>{const x=p.l+i*dx,y=Y(v);i?c.lineTo(x,y):c.moveTo(x,y);});c.stroke();font(c,7);c.textAlign='center';months.forEach((m,i)=>{if(i%2===0)c.fillText(m[0].slice(5),p.l+i*dx,h-9);});c.textAlign='left';font(c,7,'#5d7487');c.fillText('相対エネルギー log10',p.l,10);}
-  function drawMatrix(cv,data){const {c,w,h}=canvasFit(cv,224),p={l:34,r:10,t:16,b:28},cols=9,rows=8,grid=Array.from({length:rows},()=>Array(cols).fill(0));data.forEach(e=>{const m=+e[3],d=Math.min(499,+e[2]||0);const x=Math.max(0,Math.min(cols-1,Math.floor((m-3.5)/(8-3.5)*cols))),y=Math.max(0,Math.min(rows-1,Math.floor(d/500*rows)));grid[y][x]++;});const mx=Math.max(1,...grid.flat()),cw=(w-p.l-p.r)/cols,ch=(h-p.t-p.b)/rows;for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){const q=grid[y][x]/mx,xx=p.l+x*cw,yy=p.t+y*ch;const r=Math.round(85+100*q),g=Math.round(110+135*q),b=Math.round(180+75*q);c.fillStyle=`rgba(${r},${g},${b},${.06+.86*Math.pow(q,.65)})`;c.fillRect(xx+1,yy+1,cw-2,ch-2);}font(c,7);[4,5,6,7,8].forEach(m=>{const x=p.l+(m-3.5)/(8-3.5)*(w-p.l-p.r);c.textAlign='center';c.fillText(`M${m}`,x,h-8);});c.textAlign='right';[0,100,200,300,400,500].forEach(d=>{const y=p.t+d/500*(h-p.t-p.b);c.fillText(String(d),p.l-5,y+3);});c.textAlign='left';font(c,7,'#5d7487');c.fillText('深さ km',2,9);}
-  function drawGR(cv,data){const {c,w,h}=canvasFit(cv,190),p={l:34,r:12,t:16,b:28},pts=[];for(let m=4.5;m<=6.6;m+=.1){const mm=+m.toFixed(1),n=data.filter(e=>(+e[3]||0)>=mm).length;if(n>=5)pts.push([mm,Math.log10(n)]);}if(pts.length<3)return;const sx=pts.reduce((a,p)=>a+p[0],0),sy=pts.reduce((a,p)=>a+p[1],0),sxx=pts.reduce((a,p)=>a+p[0]*p[0],0),sxy=pts.reduce((a,p)=>a+p[0]*p[1],0),N=pts.length,slope=(N*sxy-sx*sy)/(N*sxx-sx*sx),ic=(sy-slope*sx)/N,b=-slope,minX=4.5,maxX=6.6,maxY=Math.max(...pts.map(p=>p[1]))*1.05,X=m=>p.l+(w-p.l-p.r)*(m-minX)/(maxX-minX),Y=v=>p.t+(h-p.t-p.b)*(1-v/maxY);for(let i=0;i<5;i++){const y=p.t+(h-p.t-p.b)*i/4;line(c,p.l,y,w-p.r,y);font(c,7);c.fillText((maxY*(1-i/4)).toFixed(1),2,y+3);}c.strokeStyle='#82fff0';c.lineWidth=1.8;c.beginPath();pts.forEach((q,i)=>i?c.lineTo(X(q[0]),Y(q[1])):c.moveTo(X(q[0]),Y(q[1])));c.stroke();c.strokeStyle='#b28cff';c.setLineDash([4,4]);c.beginPath();c.moveTo(X(minX),Y(slope*minX+ic));c.lineTo(X(maxX),Y(slope*maxX+ic));c.stroke();c.setLineDash([]);pts.forEach(q=>{c.fillStyle='#dffeff';c.beginPath();c.arc(X(q[0]),Y(q[1]),2,0,Math.PI*2);c.fill();});font(c,8,'#bceef0',600);c.fillText(`b = ${b.toFixed(2)}`,w-64,11);font(c,7);[4.5,5,5.5,6,6.5].forEach(m=>{c.textAlign='center';c.fillText(m.toFixed(1),X(m),h-8);});c.textAlign='left';}
-  function drawRadar(cv,data){const {c,w,h}=canvasFit(cv,190),cx=w/2,cy=h/2+4,R=Math.min(w,h)*.34,axes=['M6以上','深発','浅発','夜間','集中度','最大M'],mags=data.map(e=>+e[3]||0),n=data.length||1,vals=[data.filter(e=>(+e[3]||0)>=6).length/n,data.filter(e=>(+e[2]||0)>=100).length/n,data.filter(e=>(+e[2]||0)<=30).length/n,data.filter(e=>{const hr=((+e[5]||0)+9)%24;return hr<6||hr>=21;}).length/n,Math.min(1,n/20000),Math.min(1,(Math.max(...mags)-3.5)/4.5)];for(let ring=1;ring<=4;ring++){c.strokeStyle='rgba(145,222,255,.07)';c.beginPath();axes.forEach((_,i)=>{const a=-Math.PI/2+i*Math.PI*2/axes.length,x=cx+Math.cos(a)*R*ring/4,y=cy+Math.sin(a)*R*ring/4;i?c.lineTo(x,y):c.moveTo(x,y);});c.closePath();c.stroke();}axes.forEach((a,i)=>{const ang=-Math.PI/2+i*Math.PI*2/axes.length;line(c,cx,cy,cx+Math.cos(ang)*R,cy+Math.sin(ang)*R);font(c,7,'#71889b',600);c.textAlign=Math.cos(ang)>.3?'left':Math.cos(ang)<-.3?'right':'center';c.fillText(a,cx+Math.cos(ang)*(R+13),cy+Math.sin(ang)*(R+13)+3);});const grad=c.createRadialGradient(cx,cy,0,cx,cy,R);grad.addColorStop(0,'rgba(130,255,240,.28)');grad.addColorStop(1,'rgba(139,113,255,.18)');c.beginPath();vals.forEach((v,i)=>{const a=-Math.PI/2+i*Math.PI*2/axes.length,x=cx+Math.cos(a)*R*Math.max(.05,v),y=cy+Math.sin(a)*R*Math.max(.05,v);i?c.lineTo(x,y):c.moveTo(x,y);});c.closePath();c.fillStyle=grad;c.fill();c.strokeStyle='#9cfff4';c.lineWidth=1.6;c.stroke();c.textAlign='left';}
-  function renderAdvanced(){installAnalysis();const data=analysisData();if(!data.length)return;drawEnergy($v('v16EnergyChart'),data);drawMatrix($v('v16MatrixChart'),data);drawGR($v('v16GRChart'),data);drawRadar($v('v16RadarChart'),data);}
-
-  function patchTabs(){
-    document.querySelector('[data-pro-tab="analysis"]')?.addEventListener('click',()=>setTimeout(()=>requestAnimationFrame(renderAdvanced),90));
-    addEventListener('resize',()=>{if($v('proAnalysis')?.classList.contains('on'))setTimeout(renderAdvanced,80);});
+  function healthCheck(){
+    const libOk=typeof maplibregl!=='undefined'&&typeof deck!=='undefined';
+    if(!libOk){showStartupError('地図エンジンの読み込みに失敗しました。通信状態を確認し、更新してください。');return;}
+    if(typeof map!=='undefined'&&map){
+      hideStartupError();terrainOff();mapTone();
+      try{map.resize();}catch(e){}
+    }else{
+      setTimeout(()=>{
+        if(typeof map==='undefined'||!map)showStartupError('地図の初期化が完了しませんでした。更新ボタンを押して再読み込みしてください。');
+      },4500);
+    }
   }
 
   function boot(){
-    installCanvas();installTransport();installAnalysis();startAurora();removeTerrainForever();patchPlayback();patchHisto();patchSelectedLayers();patchLighting();patchTabs();toneMap();
-    const ver=$v('ver');if(ver)ver.textContent=VERSION;
-    if(typeof map!=='undefined'&&map){if(map.loaded()){toneMap();updateLayers();}else map.on('load',()=>{toneMap();updateLayers();});map.on('styledata',()=>setTimeout(toneMap,20));}
-    const observer=new MutationObserver(()=>syncTransport());observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
-    setInterval(()=>{removeTerrainForever();syncTransport();},1200);
+    japaneseText();wrapFunctions();terrainOff();ensureReplay();healthCheck();
+    byId('btnRefresh')?.addEventListener('click',()=>{hideStartupError();setTimeout(healthCheck,1200);});
+    byId('btnMap')?.addEventListener('click',()=>setTimeout(mapTone,100));
+    document.querySelectorAll('.pro-tab').forEach(btn=>btn.addEventListener('click',()=>{setTimeout(japaneseText,40);setTimeout(japaneseText,180);}));
+    let mutationTimer=0;
+    const observer=new MutationObserver(()=>{clearTimeout(mutationTimer);mutationTimer=setTimeout(japaneseText,40);});
+    observer.observe(document.body,{subtree:true,childList:true,characterData:true});
+    window.addEventListener('resize',()=>{try{map?.resize();}catch(e){}});
+    setInterval(()=>{terrainOff();japaneseText();if(typeof map!=='undefined'&&map){hideStartupError();try{map.resize();}catch(e){}}},2500);
   }
+
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-})();
-</script>
-
-
-<style id="v161JapaneseFix">
-:root{
-  --jp-bg:#05090d;
-  --jp-panel:rgba(7,14,19,.82);
-  --jp-panel-soft:rgba(7,14,19,.62);
-  --jp-line:rgba(151,198,204,.14);
-  --jp-accent:#7fd3ca;
-  --jp-accent-2:#7ca8c2;
-  --jp-text:#eef4f4;
-  --jp-muted:#7f9499;
-  --jp-warn:#e2b86f;
-}
-html,body{background:var(--jp-bg)!important;color:var(--jp-text)!important;}
-#cinematicAurora{opacity:.18!important;mix-blend-mode:soft-light!important;}
-#cinematicGrain{opacity:.035!important;}
-#cinematicScan{opacity:.018!important;}
-#vignette{background:radial-gradient(circle at 50% 42%,transparent 0 54%,rgba(1,5,9,.18) 80%,rgba(0,2,5,.52) 100%)!important;}
-.maplibregl-canvas{filter:saturate(.78) brightness(.73) contrast(1.10)!important;}
-
-/* 上部はタイトルと操作を明確に分離。幅不足でもボタンを画面外へ出さない */
-.top{
-  left:12px!important;right:10px!important;top:calc(12px + var(--st))!important;
-  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
-  align-items:start!important;column-gap:8px!important;overflow:visible!important;
-}
-.brand{min-width:0!important;max-width:100%!important;gap:8px!important;position:relative!important;}
-.brand::before,.brand::after{display:none!important;content:none!important;}
-.bdot{width:7px!important;height:7px!important;margin-top:8px!important;background:#dffbf7!important;box-shadow:0 0 8px rgba(223,251,247,.88),0 0 20px rgba(127,211,202,.42)!important;}
-.bt{min-width:0!important;overflow:visible!important;}
-.b1{font-family:var(--sans)!important;font-size:22px!important;line-height:1!important;font-weight:700!important;letter-spacing:.02em!important;color:#f0f5f5!important;background:none!important;-webkit-text-fill-color:initial!important;text-shadow:0 2px 14px rgba(0,0,0,.60)!important;white-space:nowrap!important;}
-.b1 b{font-family:var(--mono)!important;font-size:14px!important;color:var(--jp-accent)!important;background:none!important;-webkit-text-fill-color:initial!important;margin-left:5px!important;letter-spacing:.05em!important;}
-.b2{font-family:var(--sans)!important;font-size:8px!important;line-height:1.3!important;letter-spacing:.10em!important;color:#82a4a4!important;margin-top:6px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-.b2 em{font-family:var(--mono)!important;font-style:normal!important;color:#93aeb4!important;letter-spacing:.04em!important;margin-left:5px!important;}
-.tools{display:grid!important;grid-auto-flow:column!important;grid-auto-columns:38px!important;gap:5px!important;flex:0 0 auto!important;max-width:167px!important;overflow:visible!important;}
-.tbtn{width:38px!important;height:38px!important;border-radius:10px!important;background:rgba(6,13,19,.78)!important;border:1px solid var(--jp-line)!important;color:#b3c2c5!important;box-shadow:0 8px 22px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.025)!important;}
-#v15Livebar{display:none!important;}
-
-/* 画面全体の配色を、青紫のネオンから墨色＋青緑へ整理 */
-.ichips button.on,.pro-filter.on{background:var(--jp-accent)!important;color:#071211!important;border-color:transparent!important;box-shadow:0 0 16px rgba(127,211,202,.14)!important;}
-.pro-nav{background:rgba(5,12,18,.88)!important;border-color:var(--jp-line)!important;box-shadow:0 16px 42px rgba(0,0,0,.44)!important;}
-.pro-tab{color:#71858a!important;font-family:var(--sans)!important;font-size:9px!important;letter-spacing:.02em!important;}
-.pro-tab.on{background:rgba(127,211,202,.09)!important;color:#eef8f7!important;box-shadow:inset 0 0 0 1px rgba(127,211,202,.12)!important;}
-.pro-tab.on::after{background:var(--jp-accent)!important;box-shadow:0 0 8px rgba(127,211,202,.35)!important;}
-.pro-tab .ico{color:#7f979d!important;}
-.pro-tab.on .ico{color:var(--jp-accent)!important;text-shadow:none!important;}
-.pro-view{background:linear-gradient(180deg,#061016 0%,#050a0e 100%)!important;}
-.pro-head{background:rgba(5,12,18,.94)!important;border-bottom-color:var(--jp-line)!important;}
-.pro-head .eyebrow{font-family:var(--sans)!important;font-size:9px!important;letter-spacing:.06em!important;color:#74989a!important;}
-.pro-head h2{font-family:var(--sans)!important;font-size:24px!important;letter-spacing:.01em!important;color:#f0f5f5!important;}
-.pro-head .sub{font-family:var(--sans)!important;font-size:10px!important;color:#788e93!important;}
-.pro-section-title,.pro-chart-title,.v16-chart-head strong{font-family:var(--sans)!important;font-size:11px!important;letter-spacing:.03em!important;color:#91bab8!important;}
-.pro-card{background:rgba(7,15,21,.80)!important;border-color:rgba(151,198,204,.10)!important;border-radius:12px!important;box-shadow:0 10px 26px rgba(0,0,0,.16)!important;}
-.pro-kpi::after{display:none!important;}
-.pro-kpi .k{font-family:var(--sans)!important;font-size:9px!important;letter-spacing:.03em!important;color:#779093!important;}
-.pro-kpi .v{font-family:var(--mono)!important;color:#edf4f4!important;}
-.pro-kpi .s,.v16-chart-note,.pro-chart-caption{font-family:var(--sans)!important;color:#71868b!important;}
-.v16-chart-head span{font-family:var(--sans)!important;color:#657b80!important;}
-.v16-play{background:var(--jp-accent)!important;color:#071211!important;box-shadow:0 0 0 1px rgba(255,255,255,.18),0 10px 24px rgba(0,0,0,.34)!important;}
-.v16-play.playing{background:#91b8c9!important;}
-.v16-range::-webkit-slider-runnable-track{background:linear-gradient(90deg,var(--jp-accent) 0 var(--v16-progress,0%),rgba(127,151,158,.16) var(--v16-progress,0%) 100%)!important;}
-.v16-range::-webkit-slider-thumb{background:#f2f7f7!important;border-color:var(--jp-accent)!important;box-shadow:0 0 10px rgba(127,211,202,.40)!important;}
-.v16-track-head{font-family:var(--sans)!important;letter-spacing:.02em!important;}
-.v16-track-head strong{font-family:var(--sans)!important;}
-.v16-time{color:var(--jp-accent)!important;}
-.v15-accuracy-head,.v15-accuracy-grid{font-family:var(--sans)!important;letter-spacing:.02em!important;}
-.v15-accuracy-dot{background:var(--jp-accent)!important;box-shadow:0 0 8px rgba(127,211,202,.40)!important;}
-
-/* タイトルと4ボタンを小型端末でも必ず同一画面内へ収める */
-@media(max-width:430px){
-  .top{left:10px!important;right:8px!important;column-gap:5px!important;}
-  .brand{gap:6px!important;}
-  .b1{font-size:20px!important;}
-  .b1 b{font-size:12px!important;margin-left:3px!important;}
-  .b2{font-size:7.2px!important;letter-spacing:.05em!important;max-width:190px!important;}
-  .tools{grid-auto-columns:35px!important;gap:4px!important;max-width:152px!important;}
-  .tbtn{width:35px!important;height:35px!important;border-radius:9px!important;}
-  .istat{top:calc(72px + var(--st))!important;right:8px!important;width:158px!important;}
-}
-@media(max-width:360px){
-  .b1{font-size:18px!important;}
-  .b2{max-width:150px!important;font-size:6.6px!important;}
-  .tools{grid-auto-columns:33px!important;max-width:144px!important;}
-  .tbtn{width:33px!important;height:33px!important;}
-}
-</style>
-
-<script id="v161JapaneseScript">
-(() => {
-  'use strict';
-  const localize = () => {
-    const ver=document.getElementById('ver'); if(ver) ver.textContent='v16.1';
-    const subtitle=document.querySelector('.b2');
-    if(subtitle) subtitle.innerHTML='日本の地震を立体表示 <em id="ver">v16.1</em>';
-
-    const accuracy=document.querySelector('#v15Accuracy .v15-accuracy-head span:nth-child(2)');
-    if(accuracy) accuracy.textContent='データ信頼度';
-    const live=document.querySelector('#v15Livebar span'); if(live) live.textContent='選択中';
-
-    const tabNames={map:'地図',analysis:'分析',catalog:'地震一覧',method:'仕様'};
-    document.querySelectorAll('.pro-tab').forEach(btn=>{
-      const label=btn.querySelector('span:last-child');
-      if(label&&tabNames[btn.dataset.proTab]) label.textContent=tabNames[btn.dataset.proTab];
-    });
-
-    const heads=[
-      ['#proAnalysis .eyebrow','地震カタログ分析'],['#proAnalysis h2','分析'],
-      ['#proCatalog .eyebrow','地震情報データベース'],['#proCatalog h2','地震一覧'],
-      ['#proMethod .eyebrow','計算方法とデータ'],['#proMethod h2','仕様・精度']
-    ];
-    heads.forEach(([q,t])=>{const el=document.querySelector(q);if(el)el.textContent=t;});
-
-    const replacements={
-      '対象件数':'対象件数','EVENTS':'対象件数','MAX MAGNITUDE':'最大マグニチュード',
-      'MEDIAN DEPTH':'深さ中央値','P90 DEPTH':'深さ90%値','b-VALUE':'b値','DEEP SHARE':'深発地震の割合',
-      'ADVANCED SEISMIC SIGNATURE':'詳細分析','ENERGY PROXY · MONTHLY':'月別・相対エネルギー',
-      'DEPTH × MAGNITUDE DENSITY':'深さと規模の集中度','GUTENBERG–RICHTER':'規模別累積頻度',
-      'SEISMIC FINGERPRINT':'地震活動の特徴','NORMALIZED':'相対値','2D BIN':'区分集計'
-    };
-    document.querySelectorAll('.pro-kpi .k,.pro-section-title,.pro-chart-title,.v16-chart-head strong,.v16-chart-head span').forEach(el=>{
-      const t=el.textContent.trim(); if(replacements[t])el.textContent=replacements[t];
-    });
-
-    const replay=document.querySelector('.v16-track-head > span:first-child');
-    if(replay) replay.textContent='地震波再生';
-  };
-
-  const observer=new MutationObserver(localize);
-  const boot=()=>{localize();observer.observe(document.body,{subtree:true,childList:true});};
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  window.addEventListener('load',()=>setTimeout(healthCheck,800),{once:true});
 })();
 </script>
 
