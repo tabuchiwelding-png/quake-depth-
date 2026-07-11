@@ -366,7 +366,7 @@ body::after{
   "use strict";
 
   const V15 = {
-    version: "v15.4 PRO AURORA",
+    version: "v15.5 PRO AURORA",
     fieldSeq: 0,
     fieldWorker: null,
     stationIndex: null,
@@ -928,10 +928,10 @@ body::after{
 
 
 
-<!-- ===== v15.4 PRO AURORA FINAL VISUAL OVERRIDES ===== -->
+<!-- ===== v15.5 PRO AURORA FINAL VISUAL OVERRIDES ===== -->
 <style id="v151-final-style">
 /*
-  震源3D v15.4 PRO AURORA
+  震源3D v15.5 PRO AURORA
   - タイトルをフレームレス・ホログラフィック化
   - 左情報パネルをフレームレス・小型化
   - 右下凡例を文字だけへ変更
@@ -1091,7 +1091,7 @@ body::after{
 
   function patchVersion(){
     const ver=$v("ver");
-    if(ver)ver.textContent="v15.4 PRO AURORA";
+    if(ver)ver.textContent="v15.5 PRO AURORA";
     document.documentElement.dataset.shingenVersion="15.1";
   }
 
@@ -1512,7 +1512,7 @@ body::after{
     const hist=typeof HISTO!=='undefined'&&Array.isArray(HISTO)?HISTO.length:0;
     const recent=typeof DATA!=='undefined'&&Array.isArray(DATA)?DATA.length:0;
     const stations=typeof STATIONS!=='undefined'&&STATIONS?Object.keys(STATIONS).length:0;
-    $p('proDataState').innerHTML=`<dt>最近の地震</dt><dd>${recent}件</dd><dt>過去震源</dt><dd>${hist}件</dd><dt>観測点座標</dt><dd>${stations?stations+'地点':'未取得'}</dd><dt>表示バージョン</dt><dd>v15.4 PRO AURORA</dd>`;
+    $p('proDataState').innerHTML=`<dt>最近の地震</dt><dd>${recent}件</dd><dt>過去震源</dt><dd>${hist}件</dd><dt>観測点座標</dt><dd>${stations?stations+'地点':'未取得'}</dd><dt>表示バージョン</dt><dd>v15.5 PRO AURORA</dd>`;
   }
 
   document.querySelectorAll('.pro-tab').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.proTab)));
@@ -1521,10 +1521,360 @@ body::after{
   document.querySelectorAll('.pro-filter').forEach(b=>b.addEventListener('click',()=>{catalogFilter=b.dataset.filter;document.querySelectorAll('.pro-filter').forEach(x=>x.classList.toggle('on',x===b));renderCatalog();}));
 
   window.addEventListener('load',()=>{
-    const ver=$p('ver');if(ver)ver.textContent='v15.4 PRO AURORA';
+    const ver=$p('ver');if(ver)ver.textContent='v15.5 PRO AURORA';
     const listBtn=$p('btnList');
     if(listBtn) listBtn.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();setTab('catalog');},{capture:true});
   });
+})();
+</script>
+
+<style id="v155-professional-css">
+:root{
+  --pro-cyan:#86f7ef;
+  --pro-blue:#78c8ff;
+  --pro-indigo:#8585ff;
+  --pro-violet:#c080ff;
+  --pro-ink:#050911;
+  --pro-panel:rgba(5,11,20,.78);
+  --pro-line:rgba(158,226,255,.14);
+}
+
+/* 地図は主役。過剰な彩度と発光を抑えて、観測情報を前へ出す */
+#aurora{opacity:.34!important;mix-blend-mode:screen!important;}
+#vignette{background:radial-gradient(circle at 50% 44%,transparent 56%,rgba(2,6,12,.18) 78%,rgba(2,6,12,.48) 100%)!important;}
+.maplibregl-canvas{filter:saturate(.78) brightness(.84) contrast(1.08);}
+
+.top{left:16px!important;right:12px!important;top:calc(13px + var(--st))!important;}
+.brand{gap:8px!important;}
+.b1{font-size:21px!important;letter-spacing:.025em!important;}
+.b1 b{font-size:17px!important;}
+.b2{font-size:7.4px!important;letter-spacing:.27em!important;color:#8beee5!important;}
+.bdot{width:8px!important;height:8px!important;box-shadow:0 0 12px rgba(134,247,239,.74),0 0 28px rgba(120,200,255,.23)!important;}
+
+.tools{gap:7px!important;}
+.tbtn{
+  width:42px!important;height:42px!important;border-radius:12px!important;
+  border:1px solid rgba(158,226,255,.12)!important;
+  background:linear-gradient(180deg,rgba(8,15,25,.70),rgba(5,10,18,.56))!important;
+  color:#dcebf5!important;
+  box-shadow:0 10px 30px rgba(0,0,0,.26),inset 0 1px rgba(255,255,255,.035)!important;
+  backdrop-filter:blur(16px) saturate(1.12)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(1.12)!important;
+}
+
+/* モバイルではタイトルに重なっていた SELECTED バーを出さない */
+@media(max-width:700px){.v15-livebar{display:none!important;}}
+
+.panel{left:16px!important;top:calc(118px + var(--st))!important;max-width:150px!important;}
+.pk{font-size:7.5px!important;color:#788b9c!important;margin-top:11px!important;}
+.pv.lg{font-size:20px!important;letter-spacing:-.025em!important;}
+.pv.md{font-size:12.5px!important;}
+.pv.sm{font-size:9.5px!important;}
+.prun{font-size:8.5px!important;color:var(--pro-cyan)!important;}
+
+/* Map上では信頼度を要約。詳細はMETHODに集約 */
+.v15-accuracy{
+  left:16px!important;top:calc(420px + var(--st))!important;
+  width:210px!important;padding:7px 8px!important;border-radius:10px!important;
+  background:linear-gradient(145deg,rgba(5,11,20,.67),rgba(5,11,20,.30))!important;
+  border:1px solid rgba(158,226,255,.09)!important;
+  box-shadow:0 12px 34px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.025)!important;
+  backdrop-filter:blur(14px) saturate(1.08)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.08)!important;
+}
+.v15-accuracy-head{font-size:7.5px!important;letter-spacing:.12em!important;}
+.v15-accuracy-score{font-size:9px!important;}
+.v15-accuracy-grid{font-size:7.5px!important;line-height:1.45!important;margin-top:5px!important;}
+.v15-accuracy-grid span:nth-child(3),.v15-accuracy-grid span:nth-child(4),
+.v15-accuracy-grid span:nth-child(5),.v15-accuracy-grid span:nth-child(6){display:none!important;}
+.v15-disclaimer{display:none!important;}
+.v15-legend{display:none!important;}
+
+/* 再生操作をPROナビより上へ。これが再生不能に見えた直接原因 */
+.tr{
+  left:16px!important;right:16px!important;
+  bottom:calc(82px + var(--sb))!important;
+  z-index:31!important;
+  padding:7px 8px!important;border-radius:14px!important;
+  border:1px solid rgba(158,226,255,.15)!important;
+  background:linear-gradient(180deg,rgba(5,12,21,.91),rgba(5,10,18,.79))!important;
+  box-shadow:0 18px 50px rgba(0,0,0,.42),inset 0 1px rgba(255,255,255,.035)!important;
+}
+.tr-play{height:42px!important;flex-basis:42px!important;border-radius:11px!important;background:linear-gradient(135deg,var(--pro-cyan),var(--pro-blue))!important;}
+.tr-spd{height:40px!important;min-width:44px!important;border-radius:10px!important;background:rgba(12,21,33,.78)!important;}
+.tr-tl{height:3px!important;background:#233243!important;}
+
+.pro-nav{
+  z-index:28!important;bottom:calc(10px + var(--sb))!important;
+  width:min(430px,calc(100vw - 24px))!important;padding:4px!important;border-radius:15px!important;
+  background:linear-gradient(180deg,rgba(5,12,21,.88),rgba(5,10,18,.77))!important;
+  border:1px solid rgba(158,226,255,.12)!important;
+  box-shadow:0 18px 50px rgba(0,0,0,.42),inset 0 1px rgba(255,255,255,.025)!important;
+}
+.pro-tab{height:48px!important;border-radius:11px!important;color:#718596!important;letter-spacing:.11em!important;}
+.pro-tab .ico{width:18px;height:18px;display:flex;align-items:center;justify-content:center;color:#8298aa!important;}
+.pro-tab .ico svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round;}
+.pro-tab.on{background:linear-gradient(135deg,rgba(134,247,239,.12),rgba(120,200,255,.09))!important;box-shadow:inset 0 0 0 1px rgba(134,247,239,.12)!important;color:#eafaff!important;}
+
+/* 専門タブは「カードの山」ではなく、情報面として整理 */
+.pro-view{
+  background:
+    radial-gradient(65% 38% at 8% 0%,rgba(134,247,239,.055),transparent 66%),
+    radial-gradient(60% 34% at 92% 6%,rgba(120,200,255,.055),transparent 66%),
+    linear-gradient(180deg,#050a12,#060b14 46%,#050911)!important;
+}
+.pro-head{padding:calc(16px + var(--st)) 17px 12px!important;border-bottom:1px solid rgba(158,226,255,.08)!important;background:rgba(4,10,18,.80)!important;}
+.pro-head h2{font-size:22px!important;letter-spacing:.025em!important;}
+.pro-head .eyebrow{color:#77b8bd!important;letter-spacing:.23em!important;}
+.pro-body{padding-bottom:calc(88px + var(--sb))!important;}
+.pro-section{margin-bottom:22px!important;}
+.pro-section-title{font-size:8px!important;letter-spacing:.19em!important;color:#6f879a!important;margin-bottom:8px!important;}
+.pro-card{
+  position:relative;overflow:hidden;
+  background:linear-gradient(145deg,rgba(10,19,30,.58),rgba(5,11,20,.43))!important;
+  border:1px solid rgba(158,226,255,.085)!important;border-radius:14px!important;
+  box-shadow:0 16px 42px rgba(0,0,0,.20),inset 0 1px rgba(255,255,255,.02)!important;
+}
+.pro-card::before{content:"";position:absolute;left:12px;right:12px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(134,247,239,.28),rgba(120,200,255,.18),transparent);}
+.pro-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;}
+.pro-kpi{min-height:94px!important;padding:12px!important;}
+.pro-kpi .k{font-size:7.5px!important;color:#71899c!important;letter-spacing:.17em!important;}
+.pro-kpi .v{font-size:24px!important;letter-spacing:-.035em!important;color:#effbff!important;}
+.pro-kpi .s{font-size:8px!important;color:#6c8192!important;}
+.pro-chart{height:188px!important;}
+.pro-chart-tall{height:216px!important;}
+.pro-chart-head{display:flex;align-items:flex-end;gap:10px;margin-bottom:8px;}
+.pro-chart-title{font:600 8px/1 var(--mono);letter-spacing:.18em;color:#71899c;}
+.pro-chart-meta{margin-left:auto;font:600 8px/1 var(--mono);color:#9eb7c8;}
+.pro-chart-caption{margin-top:8px;font:500 8px/1.55 var(--sans);color:#6f8393;}
+.pro-tooltip{position:fixed;z-index:60;display:none;pointer-events:none;min-width:92px;padding:7px 8px;border-radius:8px;background:rgba(4,10,18,.94);border:1px solid rgba(158,226,255,.16);box-shadow:0 12px 30px rgba(0,0,0,.40);font:600 8px/1.45 var(--mono);color:#dff8ff;}
+.pro-tooltip.on{display:block;}
+
+.pro-row{border-bottom:1px solid rgba(158,226,255,.065)!important;padding:12px 3px!important;}
+.pro-row:hover{background:rgba(134,247,239,.025);}
+.pro-badge{border-radius:10px!important;box-shadow:inset 0 1px rgba(255,255,255,.16)!important;}
+.pro-search input{background:rgba(8,16,27,.72)!important;border-color:rgba(158,226,255,.11)!important;}
+.pro-filter{border-color:rgba(158,226,255,.10)!important;background:rgba(8,16,27,.48)!important;}
+.pro-filter.on{background:linear-gradient(135deg,rgba(134,247,239,.13),rgba(120,200,255,.09))!important;}
+
+@media(max-height:760px){
+  .panel{top:calc(108px + var(--st))!important;}
+  .v15-accuracy{top:calc(390px + var(--st))!important;}
+}
+@media(max-width:380px){
+  .panel{left:13px!important;}
+  .v15-accuracy{left:13px!important;width:198px!important;}
+  .tr{left:12px!important;right:12px!important;}
+}
+</style>
+
+<script id="v155-professional-fix">
+(() => {
+  'use strict';
+  const VERSION='v15.5 PRO AURORA';
+  const $=id=>document.getElementById(id);
+
+  /* 1) 灰色ベタ面の原因だったMapLibre terrainを完全停止する。
+     選択時だけ再有効化していた旧処理も、この最終パッチで無効化する。 */
+  function removeTerrain(){
+    try{
+      if(typeof map!=='undefined'&&map){
+        map.setTerrain(null);
+        if(typeof terrainEnabled!=='undefined')terrainEnabled=false;
+      }
+    }catch(e){}
+  }
+  try{
+    if(typeof setTerrainEnabled==='function'){
+      setTerrainEnabled=function(){removeTerrain();};
+    }
+    if(typeof ensureTerrainSource==='function'){
+      ensureTerrainSource=function(){};
+    }
+  }catch(e){}
+
+  function toneMap(){
+    if(typeof map==='undefined'||!map)return;
+    removeTerrain();
+    const safe=(id,prop,val)=>{try{if(map.getLayer(id))map.setPaintProperty(id,prop,val);}catch(e){}};
+    safe('satL','raster-saturation',-.42);
+    safe('satL','raster-contrast',.16);
+    safe('satL','raster-brightness-min',.03);
+    safe('satL','raster-brightness-max',.72);
+    safe('satL','raster-opacity',.86);
+    safe('dark','raster-opacity',.68);
+    safe('hillL','raster-opacity',.54);
+  }
+
+  function ensureTransportVisible(){
+    const tr=$('tr');
+    if(!tr)return;
+    tr.style.removeProperty('display');
+    if(typeof sel!=='undefined'&&sel)tr.classList.add('on');
+  }
+
+  function patchSelection(){
+    if(typeof selectQuake!=='function'||selectQuake.__v155)return;
+    const old=selectQuake;
+    const wrapped=function(q,noFly){
+      const result=old(q,noFly);
+      removeTerrain();
+      requestAnimationFrame(()=>{
+        toneMap();
+        ensureTransportVisible();
+      });
+      return result;
+    };
+    wrapped.__v155=true;
+    selectQuake=wrapped;
+
+    if(typeof deselect==='function'&&!deselect.__v155){
+      const oldD=deselect;
+      const wrappedD=function(){const r=oldD();removeTerrain();toneMap();return r;};
+      wrappedD.__v155=true;
+      deselect=wrappedD;
+    }
+  }
+
+  /* 2) ナビの文字記号を線画SVGへ置換。Unicode記号の簡易感を除く */
+  const icons={
+    map:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="1.5"/></svg>',
+    analysis:'<svg viewBox="0 0 24 24"><path d="M4 18V9M10 18V4M16 18v-6M22 18H2"/><path d="m3 8 6-4 6 7 6-5"/></svg>',
+    catalog:'<svg viewBox="0 0 24 24"><path d="M6 5h14M6 12h14M6 19h14"/><circle cx="3" cy="5" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="19" r="1"/></svg>',
+    method:'<svg viewBox="0 0 24 24"><path d="M12 3 21 8v8l-9 5-9-5V8z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>'
+  };
+  function patchIcons(){
+    document.querySelectorAll('.pro-tab').forEach(btn=>{
+      const ico=btn.querySelector('.ico');
+      if(ico&&icons[btn.dataset.proTab])ico.innerHTML=icons[btn.dataset.proTab];
+    });
+  }
+
+  /* ---------- 高密度チャート ---------- */
+  const tooltip=document.createElement('div');
+  tooltip.className='pro-tooltip';
+  document.body.appendChild(tooltip);
+  const chartModels=new WeakMap();
+
+  function fit(canvas,h=188){
+    const dpr=Math.min(3,window.devicePixelRatio||1);
+    const w=Math.max(280,canvas.clientWidth||320);
+    canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
+    const c=canvas.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);
+    return{c,w,h,dpr};
+  }
+  function line(c,x1,y1,x2,y2,color='rgba(158,226,255,.08)',width=1){c.strokeStyle=color;c.lineWidth=width;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();}
+  function rr(c,x,y,w,h,r){const q=Math.min(r,w/2,h/2);c.beginPath();c.moveTo(x+q,y);c.arcTo(x+w,y,x+w,y+h,q);c.arcTo(x+w,y+h,x,y+h,q);c.arcTo(x,y+h,x,y,q);c.arcTo(x,y,x+w,y,q);c.closePath();}
+  function depthRGB(d){if(typeof depthColor==='function')return depthColor(d);return[120,220,230];}
+  function font(c,size=8,color='#71899c',weight=500){c.font=`${weight} ${size}px 'IBM Plex Mono',monospace`;c.fillStyle=color;}
+
+  function installTooltip(canvas){
+    if(canvas.__proTip)return;canvas.__proTip=true;
+    canvas.addEventListener('pointermove',e=>{
+      const m=chartModels.get(canvas);if(!m||!m.items?.length)return;
+      const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+      let best=null,bd=Infinity;
+      for(const it of m.items){const d=Math.hypot(x-it.x,y-it.y);if(d<bd){bd=d;best=it;}}
+      if(!best||bd>32){tooltip.classList.remove('on');return;}
+      tooltip.innerHTML=best.html;
+      tooltip.style.left=Math.min(window.innerWidth-120,e.clientX+10)+'px';
+      tooltip.style.top=Math.max(8,e.clientY-34)+'px';
+      tooltip.classList.add('on');
+    });
+    canvas.addEventListener('pointerleave',()=>tooltip.classList.remove('on'));
+  }
+
+  function drawMagnitude(canvas,data){
+    const bins=[{l:'3.5–4',a:3.5,b:4},{l:'4–5',a:4,b:5},{l:'5–6',a:5,b:6},{l:'6–7',a:6,b:7},{l:'7+',a:7,b:99}];
+    const vals=bins.map(B=>data.filter(h=>+h[3]>=B.a&&+h[3]<B.b).length);
+    const cum=vals.map((_,i)=>vals.slice(i).reduce((a,b)=>a+b,0));
+    const {c,w,h}=fit(canvas,188),p={l:34,r:30,t:18,b:30},mx=Math.max(1,...vals),cmx=Math.max(1,...cum),bw=(w-p.l-p.r)/vals.length,items=[];
+    for(let i=0;i<5;i++){const y=p.t+(h-p.t-p.b)*i/4;line(c,p.l,y,w-p.r,y);font(c,7,'#607587');const v=Math.round(mx*(1-i/4));c.fillText(String(v),4,y+3);}
+    vals.forEach((v,i)=>{const bh=(h-p.t-p.b)*v/mx,x=p.l+i*bw+8,y=h-p.b-bh;const g=c.createLinearGradient(0,y,0,h-p.b);g.addColorStop(0,'#8af9ef');g.addColorStop(.55,'#73c8ff');g.addColorStop(1,'#7e78ff');c.fillStyle=g;rr(c,x,y,Math.max(10,bw-16),bh,5);c.fill();font(c,8,'#dff8ff',600);c.textAlign='center';c.fillText(String(v),x+(bw-16)/2,y-6);font(c,7,'#72889a');c.fillText(bins[i].l,x+(bw-16)/2,h-10);items.push({x:x+(bw-16)/2,y:y+Math.max(5,bh/2),html:`${bins[i].l}<br><b>${v.toLocaleString()}件</b>`});});
+    c.textAlign='left';c.strokeStyle='#c296ff';c.lineWidth=1.6;c.beginPath();
+    cum.forEach((v,i)=>{const x=p.l+i*bw+bw/2,y=p.t+(h-p.t-p.b)*(1-v/cmx);if(i)c.lineTo(x,y);else c.moveTo(x,y);});c.stroke();
+    cum.forEach((v,i)=>{const x=p.l+i*bw+bw/2,y=p.t+(h-p.t-p.b)*(1-v/cmx);c.fillStyle='#e0c8ff';c.beginPath();c.arc(x,y,2.5,0,Math.PI*2);c.fill();});
+    font(c,7,'#8f7eb2');c.fillText('累積 N≥M',w-78,10);chartModels.set(canvas,{items});installTooltip(canvas);
+  }
+
+  function drawDepth(canvas,data){
+    const bins=[['0–20',0,20],['20–40',20,40],['40–100',40,100],['100–230',100,230],['230–400',230,400],['400+',400,9999]];
+    const vals=bins.map(B=>data.filter(h=>+h[2]>=B[1]&&+h[2]<B[2]).length),total=Math.max(1,data.length);
+    const {c,w,h}=fit(canvas,188),p={l:54,r:42,t:12,b:14},row=(h-p.t-p.b)/bins.length,items=[];
+    bins.forEach((B,i)=>{const y=p.t+i*row+5,barH=row-10,pct=vals[i]/total,x=p.l;line(c,x,y+barH/2,w-p.r,y+barH/2,'rgba(158,226,255,.055)',barH);const rgb=depthRGB(Math.min(500,(B[1]+Math.min(B[2],500))/2));const g=c.createLinearGradient(x,0,w-p.r,0);g.addColorStop(0,`rgba(${rgb[0]},${rgb[1]},${rgb[2]},.52)`);g.addColorStop(1,`rgba(${rgb[0]},${rgb[1]},${rgb[2]},.98)`);c.fillStyle=g;rr(c,x,y,(w-p.l-p.r)*pct,barH,4);c.fill();font(c,8,'#8ba0b1',600);c.textAlign='right';c.fillText(B[0],p.l-8,y+barH/2+3);font(c,8,'#dff8ff',600);c.textAlign='left';c.fillText(`${vals[i].toLocaleString()}  ${(pct*100).toFixed(1)}%`,w-p.r+7,y+barH/2+3);items.push({x:x+(w-p.l-p.r)*pct,y:y+barH/2,html:`深さ ${B[0]}km<br><b>${vals[i].toLocaleString()}件</b> · ${(pct*100).toFixed(1)}%`});});
+    c.textAlign='left';chartModels.set(canvas,{items});installTooltip(canvas);
+  }
+
+  function drawArea(canvas,values,labels,colorA='#79f7ed',colorB='#777cff',h=188){
+    const {c,w}=fit(canvas,h),p={l:30,r:10,t:18,b:28},mx=Math.max(1,...values),dx=(w-p.l-p.r)/Math.max(1,values.length-1),Y=v=>p.t+(h-p.t-p.b)*(1-v/mx),items=[];
+    for(let i=0;i<5;i++){const y=p.t+(h-p.t-p.b)*i/4;line(c,p.l,y,w-p.r,y);font(c,7,'#5f7486');c.fillText(String(Math.round(mx*(1-i/4))),3,y+3);}
+    const grad=c.createLinearGradient(0,p.t,0,h-p.b);grad.addColorStop(0,'rgba(121,247,237,.30)');grad.addColorStop(1,'rgba(119,124,255,.015)');c.beginPath();c.moveTo(p.l,h-p.b);values.forEach((v,i)=>c.lineTo(p.l+i*dx,Y(v)));c.lineTo(w-p.r,h-p.b);c.closePath();c.fillStyle=grad;c.fill();
+    const lg=c.createLinearGradient(p.l,0,w-p.r,0);lg.addColorStop(0,colorA);lg.addColorStop(1,colorB);c.strokeStyle=lg;c.lineWidth=1.8;c.beginPath();values.forEach((v,i)=>{const x=p.l+i*dx,y=Y(v);if(i)c.lineTo(x,y);else c.moveTo(x,y);items.push({x,y,html:`${labels[i]||i}<br><b>${v.toLocaleString()}件</b>`});});c.stroke();
+    font(c,7,'#6f8495');c.textAlign='center';labels.forEach((t,i)=>{if(t)c.fillText(t,p.l+i*dx,h-9);});c.textAlign='left';chartModels.set(canvas,{items});installTooltip(canvas);
+  }
+
+  function drawScatter(canvas,data){
+    const sample=data.length>1600?data.filter((_,i)=>i%Math.ceil(data.length/1600)===0):data;
+    const {c,w,h}=fit(canvas,216),p={l:34,r:12,t:16,b:30},X=m=>p.l+(w-p.l-p.r)*(m-3.5)/(8.2-3.5),Y=d=>p.t+(h-p.t-p.b)*Math.min(500,d)/500,items=[];
+    [0,100,200,300,400,500].forEach(d=>{const y=Y(d);line(c,p.l,y,w-p.r,y);font(c,7,'#627788');c.fillText(String(d),3,y+3);});
+    [4,5,6,7,8].forEach(m=>{const x=X(m);line(c,x,p.t,x,h-p.b,'rgba(158,226,255,.045)');font(c,7,'#627788');c.textAlign='center';c.fillText('M'+m,x,h-9);});c.textAlign='left';
+    sample.forEach(hh=>{const m=+hh[3],d=+hh[2];if(!Number.isFinite(m)||!Number.isFinite(d))return;const x=X(m),y=Y(d),rgb=depthRGB(d);c.fillStyle=`rgba(${rgb[0]},${rgb[1]},${rgb[2]},.48)`;c.beginPath();c.arc(x,y,m>=6?2.3:1.25,0,Math.PI*2);c.fill();items.push({x,y,html:`M${m.toFixed(1)} · ${Math.round(d)}km<br>${hh[4]||''}`});});
+    font(c,7,'#718798');c.fillText('深さ km',2,10);chartModels.set(canvas,{items});installTooltip(canvas);
+  }
+
+  function bValue(data){
+    const pts=[];for(let m=4.5;m<=6.5;m+=.1){const mm=+m.toFixed(1),n=data.filter(h=>+h[3]>=mm).length;if(n>=10)pts.push([mm,Math.log10(n)]);}if(pts.length<5)return null;
+    const N=pts.length,sx=pts.reduce((a,p)=>a+p[0],0),sy=pts.reduce((a,p)=>a+p[1],0),sxx=pts.reduce((a,p)=>a+p[0]*p[0],0),sxy=pts.reduce((a,p)=>a+p[0]*p[1],0);return-(N*sxy-sx*sy)/(N*sxx-sx*sx);
+  }
+
+  function installAnalysisStructure(){
+    const body=document.querySelector('#proAnalysis .pro-body');if(!body||$('proMonthChart'))return;
+    const hour=$('proHourChart')?.closest('.pro-section');
+    if(hour){
+      const month=document.createElement('div');month.className='pro-section';month.innerHTML='<div class="pro-chart-head"><div class="pro-chart-title">MONTHLY TREND · LAST 12 MONTHS</div><div class="pro-chart-meta" id="proMonthMeta">JST</div></div><div class="pro-card"><canvas class="pro-chart" id="proMonthChart"></canvas><div class="pro-chart-caption">各月の件数推移。観測網やカタログ条件の変化も含みます。</div></div>';
+      hour.after(month);
+      const scatter=document.createElement('div');scatter.className='pro-section';scatter.innerHTML='<div class="pro-chart-head"><div class="pro-chart-title">MAGNITUDE × DEPTH</div><div class="pro-chart-meta" id="proScatterMeta">sample</div></div><div class="pro-card"><canvas class="pro-chart pro-chart-tall" id="proScatterChart"></canvas><div class="pro-chart-caption">横軸はマグニチュード、縦軸は深さ。色も深さを表します。</div></div>';
+      month.after(scatter);
+    }
+    const mapTitles=[['proMagChart','MAGNITUDE FREQUENCY + CUMULATIVE'],['proDepthChart','DEPTH COMPOSITION'],['proHourChart','HOURLY ACTIVITY · JST']];
+    mapTitles.forEach(([id,title])=>{const sec=$(id)?.closest('.pro-section');const t=sec?.querySelector('.pro-section-title');if(t)t.textContent=title;});
+  }
+
+  function renderAnalysisPro(){
+    installAnalysisStructure();
+    const data=(typeof HISTO_F!=='undefined'&&Array.isArray(HISTO_F)?HISTO_F:(typeof HISTO!=='undefined'&&Array.isArray(HISTO)?HISTO:[]));
+    if(!data.length)return;
+    const mags=data.map(h=>+h[3]||0),depths=data.map(h=>+h[2]||0).sort((a,b)=>a-b),maxM=Math.max(...mags),median=depths[Math.floor(depths.length*.5)]||0,p90=depths[Math.floor(depths.length*.9)]||0,b=bValue(data),deep=data.filter(h=>+h[2]>=100).length;
+    const k=$('proKpis');if(k)k.innerHTML=`
+      <div class="pro-card pro-kpi"><div class="k">EVENTS</div><div class="v">${data.length.toLocaleString()}</div><div class="s">現在の期間・深さ条件</div></div>
+      <div class="pro-card pro-kpi"><div class="k">MAX MAGNITUDE</div><div class="v">M${maxM.toFixed(1)}</div><div class="s">カタログ最大</div></div>
+      <div class="pro-card pro-kpi"><div class="k">MEDIAN DEPTH</div><div class="v">${Math.round(median)}km</div><div class="s">50パーセンタイル</div></div>
+      <div class="pro-card pro-kpi"><div class="k">P90 DEPTH</div><div class="v">${Math.round(p90)}km</div><div class="s">90パーセンタイル</div></div>
+      <div class="pro-card pro-kpi"><div class="k">b-VALUE</div><div class="v">${b?b.toFixed(2):'–'}</div><div class="s">M4.5–6.5回帰</div></div>
+      <div class="pro-card pro-kpi"><div class="k">DEEP SHARE</div><div class="v">${(deep/data.length*100).toFixed(1)}%</div><div class="s">深さ100km以上</div></div>`;
+    drawMagnitude($('proMagChart'),data);
+    drawDepth($('proDepthChart'),data);
+    const hours=new Array(24).fill(0);data.forEach(h=>{if(h[5])hours[(+h[5]+9)%24]++;});drawArea($('proHourChart'),hours,hours.map((_,i)=>i%3===0?`${i}h`:''));
+    const months=[];const now=new Date();for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;months.push([ym,0]);}
+    const mi=new Map(months.map((m,i)=>[m[0],i]));data.forEach(h=>{const i=mi.get(h[4]);if(i!=null)months[i][1]++;});drawArea($('proMonthChart'),months.map(x=>x[1]),months.map((x,i)=>i%2===0?x[0].slice(5):''),'#86f7ef','#c080ff');
+    drawScatter($('proScatterChart'),data);
+    const note=$('proAnalysisNote');if(note)note.innerHTML=`深さ100km以上は <b style="color:#dff8ff">${(deep/data.length*100).toFixed(1)}%</b>。b値は <b style="color:#dff8ff">${b?b.toFixed(2):'算出不能'}</b>。グラフは現在の期間・深さフィルタに連動します。件数差には自然変動だけでなく、観測網・検出能力・カタログ条件の影響も含まれます。`;
+  }
+
+  function scheduleAnalysis(){setTimeout(()=>requestAnimationFrame(renderAnalysisPro),60);}
+
+  function boot(){
+    const ver=$('ver');if(ver)ver.textContent=VERSION;
+    patchIcons();patchSelection();removeTerrain();toneMap();installAnalysisStructure();
+    document.querySelector('[data-pro-tab="analysis"]')?.addEventListener('click',scheduleAnalysis);
+    document.querySelectorAll('#dfMin,#dfMax,#istat .ichips button').forEach(el=>el.addEventListener('change',()=>{if($('proAnalysis')?.classList.contains('on'))scheduleAnalysis();}));
+    $('btnMap')?.addEventListener('click',()=>setTimeout(toneMap,80));
+    window.addEventListener('resize',()=>{if($('proAnalysis')?.classList.contains('on'))scheduleAnalysis();});
+    if(typeof map!=='undefined'&&map){if(map.loaded())toneMap();else map.on('load',toneMap);map.on('styledata',removeTerrain);}
+    setInterval(removeTerrain,1500);
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
 </script>
 
