@@ -916,5 +916,352 @@ body::after{
 
 </script>
 
+
+
+<!-- ===== v15.1 NEXUS FINAL VISUAL OVERRIDES ===== -->
+<style id="v151-final-style">
+/*
+  震源3D v15.1 NEXUS
+  - タイトルをフレームレス・ホログラフィック化
+  - 左情報パネルをフレームレス・小型化
+  - 右下凡例を文字だけへ変更
+  - 震源を多層コア＋リング＋光軸へ刷新
+*/
+
+/* ---------- タイトル ---------- */
+.brand{
+  position:relative;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+.brand::after{display:none!important;}
+.bdot{
+  width:10px!important;
+  height:10px!important;
+  border-radius:50%!important;
+  background:radial-gradient(circle at 35% 35%,#fff1ec 0%,#ffab94 18%,#ff5b4a 46%,rgba(255,91,74,.12) 100%)!important;
+  box-shadow:0 0 10px rgba(255,105,82,.95),0 0 28px rgba(255,91,74,.48),0 0 54px rgba(255,91,74,.18)!important;
+}
+.b1{
+  font-family:var(--mono)!important;
+  font-size:23px!important;
+  font-weight:700!important;
+  letter-spacing:.08em!important;
+  line-height:1!important;
+  color:transparent!important;
+  background:linear-gradient(92deg,#f8fbff 0%,#aafff3 30%,#75cfff 62%,#ff9b76 100%)!important;
+  -webkit-background-clip:text!important;
+  background-clip:text!important;
+  text-shadow:0 0 18px rgba(104,236,255,.12),0 2px 18px rgba(0,0,0,.55)!important;
+}
+.b1 b{
+  font-family:var(--mono)!important;
+  font-weight:700!important;
+  color:transparent!important;
+  background:linear-gradient(90deg,#ff7561 0%,#ffc987 100%)!important;
+  -webkit-background-clip:text!important;
+  background-clip:text!important;
+  letter-spacing:.02em!important;
+  font-size:19px!important;
+}
+.b2{
+  font-family:var(--mono)!important;
+  font-size:8px!important;
+  letter-spacing:.27em!important;
+  color:#78f4df!important;
+  text-shadow:0 0 12px rgba(120,244,223,.22),0 2px 8px rgba(0,0,0,.85)!important;
+}
+.b2 em{color:#ff9b8e!important;letter-spacing:.09em!important;}
+
+/* ---------- 左情報パネル ---------- */
+.panel{
+  left:15px!important;
+  top:calc(66px + var(--st))!important;
+  max-width:156px!important;
+  padding:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+.panel::before{display:none!important;}
+.pk{
+  font-size:8px!important;
+  letter-spacing:.09em!important;
+  margin-top:9px!important;
+  color:#92a5b4!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.98),0 3px 12px rgba(0,0,0,.74)!important;
+}
+.pv{
+  font-weight:700!important;
+  line-height:1.1!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.98),0 3px 15px rgba(0,0,0,.78)!important;
+}
+.pv.lg{font-size:20px!important;}
+.pv.md{font-size:12.5px!important;}
+.pv.sm{font-size:10px!important;color:#d6e6ef!important;}
+.prun{
+  font-size:9px!important;
+  margin-top:9px!important;
+  color:#68f1dc!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.98),0 3px 12px rgba(0,0,0,.76)!important;
+}
+
+/* ---------- DATA CONFIDENCEも軽量化 ---------- */
+.v15-accuracy{
+  left:14px!important;
+  top:calc(326px + var(--st))!important;
+  width:min(232px,calc(100vw - 28px))!important;
+  padding:7px 8px!important;
+  border-radius:8px!important;
+  background:linear-gradient(140deg,rgba(5,11,18,.52),rgba(5,11,18,.18))!important;
+  border:1px solid rgba(255,255,255,.04)!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.20)!important;
+  backdrop-filter:blur(8px) saturate(1.05)!important;
+  -webkit-backdrop-filter:blur(8px) saturate(1.05)!important;
+}
+.v15-accuracy-head{font-size:8px!important;}
+.v15-accuracy-score{font-size:10px!important;}
+.v15-accuracy-grid{font-size:8px!important;gap:2px 8px!important;margin-top:5px!important;}
+.v15-disclaimer{font-size:8px!important;line-height:1.38!important;margin-top:5px!important;padding-top:5px!important;}
+
+/* ---------- 凡例を文字だけに ---------- */
+.v15-legend{
+  right:12px!important;
+  bottom:calc(88px + var(--sb))!important;
+  width:auto!important;
+  max-width:190px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  font:600 9px/1.65 var(--mono)!important;
+  color:#d9e8ef!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.98),0 3px 12px rgba(0,0,0,.76)!important;
+}
+.v15-legend b,.v15-legend-row,.v15-legend-swatch{display:none!important;}
+.v15-legend-note{display:block!important;}
+.v15-legend-note em{font-style:normal;color:#73f4df;}
+.v15-legend-note i{font-style:normal;color:#ffc66f;}
+
+/* iPhoneの縦長画面で情報同士が衝突しにくいよう微調整 */
+@media (max-width:430px){
+  .top{left:16px!important;right:10px!important;}
+  .tools{gap:6px!important;}
+  .tbtn{width:42px!important;height:42px!important;border-radius:13px!important;}
+  .v15-accuracy{top:calc(322px + var(--st))!important;}
+}
+@media (max-height:760px){
+  .panel{top:calc(60px + var(--st))!important;}
+  .v15-accuracy{top:calc(300px + var(--st))!important;}
+  .v15-disclaimer{display:none!important;}
+}
+</style>
+<script id="v151-final-script">
+(() => {
+  "use strict";
+
+  const $v = id => document.getElementById(id);
+
+  function patchLegend(){
+    const legend=$v("v15Legend");
+    if(!legend)return;
+    legend.innerHTML=`<div class="v15-legend-note"><em>青緑</em> = 観測が密<br><i>黄系</i> = 補間の不確かさ</div>`;
+  }
+
+  function patchVersion(){
+    const ver=$v("ver");
+    if(ver)ver.textContent="v15.1 NEXUS";
+    document.documentElement.dataset.shingenVersion="15.1";
+  }
+
+  function installNexusLayers(){
+    if(typeof selLayers!=="function" || typeof deck==="undefined")return false;
+    if(selLayers.__v151NexusInstalled)return true;
+
+    const previousSelLayers=selLayers;
+
+    const removeIds=new Set([
+      "pw","sw","epiglow","epi","hypoglow","hypo","plumb","depthlabel",
+      "v15-p-wave","v15-s-wave","v15-depth-beam-glow","v15-depth-beam",
+      "v15-depth-beam-mid","v15-depth-beam-core","v15-hypo-bloom",
+      "v15-epicenter-halo","v15-epicenter-ring-1","v15-epicenter-ring-2",
+      "v15-hypo-halo-far","v15-hypo-halo-near","v15-hypo-core","v15-depth-label",
+      "v15-observation-columns","v15-arrival-arcs"
+    ]);
+
+    const nexus=function selLayersV151(){
+      let layers=previousSelLayers().filter(layer=>layer&&!removeIds.has(layer.id));
+      if(typeof sel==="undefined"||!sel||typeof deck==="undefined")return layers;
+
+      const reveal=!!(playing||tSim>0);
+      const reachedNow=reveal?reachedArr():[];
+      const depth=Number(sel.depth)||10;
+      const z=-depth*1000*(typeof zSquash!=="undefined"?zSquash:1);
+      const pulse=.5+.5*Math.sin(performance.now()/330);
+      const ringPulse=.5+.5*Math.sin(performance.now()/520);
+
+      if(reveal&&window.ShingenV15?.EarthMath){
+        const EM=window.ShingenV15.EarthMath;
+        const pPath=EM.velocity(depth,"P")*Number(tSim||0);
+        const sPath=EM.velocity(depth,"S")*Number(tSim||0);
+        const pRadius=pPath>depth?Math.sqrt(pPath*pPath-depth*depth):0;
+        const sRadius=sPath>depth?Math.sqrt(sPath*sPath-depth*depth):0;
+
+        if(pRadius>1)layers.push(new deck.ScatterplotLayer({
+          id:"v151-p-wave",data:[{r:pRadius}],getPosition:()=>[sel.lng,sel.lat,0],
+          getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,
+          getLineColor:[118,218,255,215],lineWidthUnits:"pixels",getLineWidth:2.15,
+          parameters:{depthTest:false}
+        }));
+        if(sRadius>1)layers.push(new deck.ScatterplotLayer({
+          id:"v151-s-wave",data:[{r:sRadius}],getPosition:()=>[sel.lng,sel.lat,0],
+          getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,
+          getLineColor:[255,89,68,238],lineWidthUnits:"pixels",getLineWidth:2.7,
+          parameters:{depthTest:false}
+        }));
+      }
+
+      /* 光軸：外側の淡い発光、中間、白い芯の3層 */
+      layers.push(new deck.LineLayer({
+        id:"v151-beam-aura",data:[sel],
+        getSourcePosition:q=>[q.lng,q.lat,0],getTargetPosition:q=>[q.lng,q.lat,z],
+        getColor:[64,238,220,28],getWidth:11,widthUnits:"pixels",parameters:{depthTest:false}
+      }));
+      layers.push(new deck.LineLayer({
+        id:"v151-beam-mid",data:[sel],
+        getSourcePosition:q=>[q.lng,q.lat,0],getTargetPosition:q=>[q.lng,q.lat,z],
+        getColor:[98,255,236,86],getWidth:3.2,widthUnits:"pixels",parameters:{depthTest:false}
+      }));
+      layers.push(new deck.LineLayer({
+        id:"v151-beam-core",data:[sel],
+        getSourcePosition:q=>[q.lng,q.lat,0],getTargetPosition:q=>[q.lng,q.lat,z],
+        getColor:[238,255,252,218],getWidth:1.15,widthUnits:"pixels",parameters:{depthTest:false}
+      }));
+
+      /* 地表側ロケーター */
+      layers.push(new deck.ScatterplotLayer({
+        id:"v151-epi-aura",data:[sel],getPosition:q=>[q.lng,q.lat,0],
+        getRadius:30+ringPulse*12,radiusUnits:"pixels",getFillColor:[82,244,224,15+Math.round(18*ringPulse)],
+        stroked:false,parameters:{depthTest:false}
+      }));
+      layers.push(new deck.ScatterplotLayer({
+        id:"v151-epi-ring-outer",data:[sel],getPosition:q=>[q.lng,q.lat,0],
+        getRadius:18+ringPulse*4,radiusUnits:"pixels",filled:false,stroked:true,
+        getLineColor:[100,246,225,205],lineWidthUnits:"pixels",getLineWidth:2,
+        parameters:{depthTest:false}
+      }));
+      layers.push(new deck.ScatterplotLayer({
+        id:"v151-epi-ring-inner",data:[sel],getPosition:q=>[q.lng,q.lat,0],
+        getRadius:8.5,radiusUnits:"pixels",filled:false,stroked:true,
+        getLineColor:[247,255,254,230],lineWidthUnits:"pixels",getLineWidth:1.2,
+        parameters:{depthTest:false}
+      }));
+      layers.push(new deck.ScatterplotLayer({
+        id:"v151-epi-dot",data:[sel],getPosition:q=>[q.lng,q.lat,0],
+        getRadius:2.8,radiusUnits:"pixels",getFillColor:[235,255,251,255],
+        stroked:false,parameters:{depthTest:false}
+      }));
+
+      /* 深部震源：ぼやけたシミではなく、多層の精密コア */
+      layers.push(new deck.ScatterplotLayer({
+        id:"v151-hypo-aura",data:[sel],getPosition:q=>[q.lng,q.lat,z],
+        getRadius:28+pulse*11,radiusUnits:"pixels",getFillColor:[69,236,218,10+Math.round(15*pulse)],
+        stroked:false,parameters:{depthTest:false}
+      }));
+      layers.push(new deck.ScatterplotLayer({
+        id:"v151-hypo-energy-ring",data:[sel],getPosition:q=>[q.lng,q.lat,z],
+        getRadius:15+pulse*5,radiusUnits:"pixels",filled:false,stroked:true,
+        getLineColor:[255,105,82,95+Math.round(55*pulse)],lineWidthUnits:"pixels",getLineWidth:1.35,
+        parameters:{depthTest:false}
+      }));
+      layers.push(new deck.ScatterplotLayer({
+        id:"v151-hypo-shell",data:[sel],getPosition:q=>[q.lng,q.lat,z],
+        getRadius:10.5,radiusUnits:"pixels",getFillColor:[255,92,70,42],
+        stroked:true,getLineColor:[255,171,142,205],lineWidthUnits:"pixels",getLineWidth:1.5,
+        parameters:{depthTest:false}
+      }));
+      layers.push(new deck.ScatterplotLayer({
+        id:"v151-hypo-core",data:[sel],getPosition:q=>[q.lng,q.lat,z],
+        getRadius:5.3,radiusUnits:"pixels",getFillColor:[255,250,246,255],
+        stroked:true,getLineColor:[255,103,76,245],lineWidthUnits:"pixels",getLineWidth:1.55,
+        parameters:{depthTest:false}
+      }));
+      layers.push(new deck.ScatterplotLayer({
+        id:"v151-hypo-pin",data:[sel],getPosition:q=>[q.lng,q.lat,z],
+        getRadius:1.9,radiusUnits:"pixels",getFillColor:[255,78,58,255],
+        stroked:false,parameters:{depthTest:false}
+      }));
+
+      layers.push(new deck.TextLayer({
+        id:"v151-depth-label",data:[sel],getPosition:q=>[q.lng,q.lat,z],
+        getText:q=>((q.depth!=null)?q.depth:10)+"km",getSize:14,
+        getColor:[124,248,231,242],getPixelOffset:[20,-2],
+        fontFamily:"IBM Plex Mono, monospace",fontSettings:{sdf:true},
+        outlineWidth:2,outlineColor:[5,8,13,238],parameters:{depthTest:false}
+      }));
+
+      if(reachedNow.length){
+        const columns=reachedNow.length>360
+          ?reachedNow.filter((_,i)=>i%Math.ceil(reachedNow.length/360)===0)
+          :reachedNow;
+
+        layers.push(new deck.ColumnLayer({
+          id:"v151-observation-columns",data:columns,diskResolution:10,radius:1050,
+          getPosition:o=>[o.lng,o.lat],
+          getElevation:o=>Math.max(800,Math.pow(Math.max(.7,o.I),1.72)*1900),
+          getFillColor:o=>{const c=typeof colNum==="function"?colNum(o.I):[58,226,200];return[c[0],c[1],c[2],92];},
+          getLineColor:[255,255,255,52],lineWidthMinPixels:.35,extruded:true,wireframe:false,
+          elevationScale:1,pickable:false,material:false,parameters:{depthTest:true}
+        }));
+
+        const arcs=[...reachedNow].sort((a,b)=>b.I-a.I||b.delta-a.delta).slice(0,56);
+        layers.push(new deck.ArcLayer({
+          id:"v151-arrival-arcs",data:arcs,
+          getSourcePosition:()=>[sel.lng,sel.lat],getTargetPosition:o=>[o.lng,o.lat],
+          getSourceColor:[255,91,71,82],
+          getTargetColor:o=>{const c=typeof colNum==="function"?colNum(o.I):[58,226,200];return[c[0],c[1],c[2],98];},
+          getWidth:o=>.4+o.I*.14,widthUnits:"pixels",greatCircle:true,
+          getHeight:o=>Math.min(.14,.022+o.delta/10000),parameters:{depthTest:false}
+        }));
+      }
+
+      return layers;
+    };
+
+    nexus.__v151NexusInstalled=true;
+    selLayers=nexus;
+    if(typeof updateLayers==="function")updateLayers();
+    return true;
+  }
+
+  function boot(){
+    patchLegend();
+    patchVersion();
+    if(!installNexusLayers())setTimeout(boot,120);
+  }
+
+  if(document.readyState==="loading"){
+    document.addEventListener("DOMContentLoaded",boot,{once:true});
+  }else{
+    boot();
+  }
+  window.addEventListener("load",()=>{
+    patchLegend();
+    patchVersion();
+    installNexusLayers();
+  },{once:true});
+})();
+</script>
 </body>
 </html>
