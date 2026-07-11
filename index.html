@@ -93,7 +93,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(circle
 <div id="map"></div>
 <div id="aurora"></div>
 <div id="vignette"></div>
-<div class="top"><div class="brand"><span class="bdot"></span><div class="bt"><div class="b1">震源<b>3D</b></div><div class="b2">SEISMIC DEPTH EXPLORER <em id="ver">v14.2</em></div></div></div><div class="spacer"></div><div class="tools"><button class="tbtn" id="btnMap" title="地図切替">◐</button><button class="tbtn" id="btnRefresh" title="更新">⟳</button><button class="tbtn" id="btnList" title="一覧">☰</button><button class="tbtn" id="btnShare" title="共有">↗</button><button class="tbtn hidden" id="btnClose" title="閉じる">×</button></div></div>
+<div class="top"><div class="brand"><span class="bdot"></span><div class="bt"><div class="b1">震源<b>3D</b></div><div class="b2">日本の地震を立体表示 <em id="ver">v16.1</em></div></div></div><div class="spacer"></div><div class="tools"><button class="tbtn" id="btnMap" title="地図切替">◐</button><button class="tbtn" id="btnRefresh" title="更新">⟳</button><button class="tbtn" id="btnList" title="一覧">☰</button><button class="tbtn" id="btnShare" title="共有">↗</button><button class="tbtn hidden" id="btnClose" title="閉じる">×</button></div></div>
 <div class="hint" id="hint">☰ から地震を選ぶ ／ 2本指で傾ける・回す</div>
 <div class="dleg" id="dleg" style="display:none"><div class="dcap">過去の震源 ・ 深さ5km刻み（緑=浅 → 紫=深500km）</div><div class="dlr"><span>0km</span><i></i><span>500km</span></div></div>
 <div class="panel" id="panel"><div class="pk">発生日時</div><div class="pv sm" id="pDate">–</div><div class="pv lg" id="pTime">–</div><div class="pk">震央地名</div><div class="pv md" id="pPlace">–</div><div class="pk">震源の深さ</div><div class="pv lg" id="pDep">–</div><div class="pk">最大震度</div><div class="pv lg" id="pInt">–</div><div class="pk">マグニチュード</div><div class="pv lg" id="pMag">–</div><div class="prun" id="pRun"><span id="hudT">0.0s</span> · 到達 <span id="hudR">0/0</span></div></div>
@@ -366,7 +366,7 @@ body::after{
   "use strict";
 
   const V15 = {
-    version: "v15.5 PRO AURORA",
+    version: "v16.1 日本版",
     fieldSeq: 0,
     fieldWorker: null,
     stationIndex: null,
@@ -393,7 +393,7 @@ body::after{
     accuracy.innerHTML = `
       <div class="v15-accuracy-head">
         <span class="v15-accuracy-dot" id="v15AccuracyDot"></span>
-        <span>DATA CONFIDENCE</span>
+        <span>データ信頼度</span>
         <span class="v15-accuracy-score" id="v15AccuracyScore">–</span>
       </div>
       <div class="v15-accuracy-grid">
@@ -408,7 +408,7 @@ body::after{
     const live = document.createElement("div");
     live.id = "v15Livebar";
     live.className = "v15-livebar";
-    live.innerHTML = `<i></i><span>SELECTED</span><strong id="v15LiveText">–</strong>`;
+    live.innerHTML = `<i></i><span>選択中</span><strong id="v15LiveText">–</strong>`;
     document.body.appendChild(live);
 
     const legend = document.createElement("div");
@@ -928,10 +928,10 @@ body::after{
 
 
 
-<!-- ===== v15.5 PRO AURORA FINAL VISUAL OVERRIDES ===== -->
+<!-- ===== v16.1 日本版 FINAL VISUAL OVERRIDES ===== -->
 <style id="v151-final-style">
 /*
-  震源3D v15.5 PRO AURORA
+  震源3D v16.1 日本版
   - タイトルをフレームレス・ホログラフィック化
   - 左情報パネルをフレームレス・小型化
   - 右下凡例を文字だけへ変更
@@ -1024,7 +1024,7 @@ body::after{
   text-shadow:0 1px 2px rgba(0,0,0,.98),0 3px 12px rgba(0,0,0,.76)!important;
 }
 
-/* ---------- DATA CONFIDENCEも軽量化 ---------- */
+/* ---------- データ信頼度も軽量化 ---------- */
 .v15-accuracy{
   left:14px!important;
   top:calc(326px + var(--st))!important;
@@ -1091,7 +1091,7 @@ body::after{
 
   function patchVersion(){
     const ver=$v("ver");
-    if(ver)ver.textContent="v15.5 PRO AURORA";
+    if(ver)ver.textContent="v16.1 日本版";
     document.documentElement.dataset.shingenVersion="15.1";
   }
 
@@ -1357,29 +1357,29 @@ body::after{
 </style>
 
 <nav class="pro-nav" id="proNav" aria-label="主要画面">
-  <button class="pro-tab on" data-pro-tab="map"><span class="ico">⌖</span><span>MAP</span></button>
-  <button class="pro-tab" data-pro-tab="analysis"><span class="ico">⌁</span><span>ANALYSIS</span></button>
-  <button class="pro-tab" data-pro-tab="catalog"><span class="ico">≡</span><span>CATALOG</span></button>
-  <button class="pro-tab" data-pro-tab="method"><span class="ico">◇</span><span>METHOD</span></button>
+  <button class="pro-tab on" data-pro-tab="map"><span class="ico">⌖</span><span>地図</span></button>
+  <button class="pro-tab" data-pro-tab="analysis"><span class="ico">⌁</span><span>分析</span></button>
+  <button class="pro-tab" data-pro-tab="catalog"><span class="ico">≡</span><span>地震一覧</span></button>
+  <button class="pro-tab" data-pro-tab="method"><span class="ico">◇</span><span>仕様</span></button>
 </nav>
 
 <section class="pro-view" id="proAnalysis" aria-hidden="true">
   <header class="pro-head">
-    <div><div class="eyebrow">SEISMIC INTELLIGENCE</div><h2>ANALYSIS</h2><div class="sub">カタログ全体を定量的に読む</div></div>
+    <div><div class="eyebrow">地震カタログ分析</div><h2>分析</h2><div class="sub">カタログ全体を定量的に読む</div></div>
     <div class="grow"></div><button class="pro-close" data-pro-close>×</button>
   </header>
   <div class="pro-body">
     <div class="pro-section"><div class="pro-grid" id="proKpis"></div></div>
-    <div class="pro-section"><div class="pro-section-title">MAGNITUDE DISTRIBUTION</div><div class="pro-card"><canvas class="pro-chart" id="proMagChart"></canvas></div></div>
-    <div class="pro-section"><div class="pro-section-title">DEPTH DISTRIBUTION</div><div class="pro-card"><canvas class="pro-chart" id="proDepthChart"></canvas></div></div>
-    <div class="pro-section"><div class="pro-section-title">TIME DISTRIBUTION · JST</div><div class="pro-card"><canvas class="pro-chart" id="proHourChart"></canvas></div></div>
-    <div class="pro-section"><div class="pro-section-title">INTERPRETATION</div><div class="pro-card pro-note" id="proAnalysisNote"></div></div>
+    <div class="pro-section"><div class="pro-section-title">規模別の分布</div><div class="pro-card"><canvas class="pro-chart" id="proMagChart"></canvas></div></div>
+    <div class="pro-section"><div class="pro-section-title">深さ別の分布</div><div class="pro-card"><canvas class="pro-chart" id="proDepthChart"></canvas></div></div>
+    <div class="pro-section"><div class="pro-section-title">時間帯別の発生数・日本時間</div><div class="pro-card"><canvas class="pro-chart" id="proHourChart"></canvas></div></div>
+    <div class="pro-section"><div class="pro-section-title">分析結果の読み方</div><div class="pro-card pro-note" id="proAnalysisNote"></div></div>
   </div>
 </section>
 
 <section class="pro-view" id="proCatalog" aria-hidden="true">
   <header class="pro-head">
-    <div><div class="eyebrow">EARTHQUAKE DATABASE</div><h2>CATALOG</h2><div class="sub" id="proCatalogSub">最近の地震</div></div>
+    <div><div class="eyebrow">地震情報データベース</div><h2>地震一覧</h2><div class="sub" id="proCatalogSub">最近の地震</div></div>
     <div class="grow"></div><button class="pro-close" data-pro-close>×</button>
   </header>
   <div class="pro-body">
@@ -1397,7 +1397,7 @@ body::after{
 
 <section class="pro-view" id="proMethod" aria-hidden="true">
   <header class="pro-head">
-    <div><div class="eyebrow">METHOD & DATA</div><h2>METHOD</h2><div class="sub">何が実測で、何が推定か</div></div>
+    <div><div class="eyebrow">計算方法とデータ</div><h2>仕様</h2><div class="sub">何が実測で、何が推定か</div></div>
     <div class="grow"></div><button class="pro-close" data-pro-close>×</button>
   </header>
   <div class="pro-body">
@@ -1405,7 +1405,7 @@ body::after{
       <div class="pro-card"><h3><span class="pro-status-dot"></span>データ状態</h3><dl id="proDataState"></dl></div>
       <div class="pro-card"><h3>実測データ</h3><p>震源時刻、震央位置、深さ、マグニチュード、最大震度、各観測点の震度は取得データに基づきます。表示上の補間面や波面とは明確に区別しています。</p></div>
       <div class="pro-card"><h3>推定・可視化</h3><p>色面は観測震度からの空間補間、P波・S波リングは1次元速度モデル、深発地震面は過去震源分布から推定した可視化です。公式の等震度線や確定した地下構造ではありません。</p></div>
-      <div class="pro-card"><h3>距離と走時</h3><dl><dt>地表距離</dt><dd>WGS84 Vincenty逆解法</dd><dt>走時モデル</dt><dd>深さ別1-D近似</dd><dt>補間</dt><dd>近傍重み付きIDW</dd><dt>時刻</dt><dd>JST表示</dd></dl></div>
+      <div class="pro-card"><h3>距離と走時</h3><dl><dt>地表距離</dt><dd>WGS84 Vincenty逆解法</dd><dt>走時モデル</dt><dd>深さ別1-D近似</dd><dt>補間</dt><dd>近傍重み付きIDW</dd><dt>時刻</dt><dd>日本時間表示</dd></dl></div>
       <div class="pro-card"><h3>深さカラースケール</h3><div class="pro-legend-line"></div><div class="pro-caption">浅い震源 0km → 深い震源 500km</div></div>
       <div class="pro-card"><h3>専門利用の前提</h3><p>この画面は状況把握と探索のための可視化です。防災判断、構造物評価、業務上の確定判断には気象庁や各機関の一次資料と正式発表を併用してください。</p></div>
     </div>
@@ -1497,7 +1497,7 @@ body::after{
     const mags=data.map(h=>Number(h[3])||0),depths=data.map(h=>Number(h[2])||0).sort((a,b)=>a-b);
     const maxM=Math.max(...mags),medianD=depths[Math.floor(depths.length/2)]||0,b=calcBValue(data);
     const deep=data.filter(h=>Number(h[2])>=100).length;
-    $p('proKpis').innerHTML=`<div class="pro-card pro-kpi"><div class="k">EVENTS</div><div class="v">${data.length}</div><div class="s">現在の期間・深さ条件</div></div><div class="pro-card pro-kpi"><div class="k">MAX MAGNITUDE</div><div class="v">M${maxM.toFixed(1)}</div><div class="s">カタログ最大</div></div><div class="pro-card pro-kpi"><div class="k">MEDIAN DEPTH</div><div class="v">${Math.round(medianD)}km</div><div class="s">深さ中央値</div></div><div class="pro-card pro-kpi"><div class="k">b-VALUE</div><div class="v">${b?b.toFixed(2):'–'}</div><div class="s">M4.5–6.5回帰</div></div>`;
+    $p('proKpis').innerHTML=`<div class="pro-card pro-kpi"><div class="k">対象件数</div><div class="v">${data.length}</div><div class="s">現在の期間・深さ条件</div></div><div class="pro-card pro-kpi"><div class="k">最大マグニチュード</div><div class="v">M${maxM.toFixed(1)}</div><div class="s">カタログ最大</div></div><div class="pro-card pro-kpi"><div class="k">深さ中央値</div><div class="v">${Math.round(medianD)}km</div><div class="s">深さ中央値</div></div><div class="pro-card pro-kpi"><div class="k">b値</div><div class="v">${b?b.toFixed(2):'–'}</div><div class="s">M4.5–6.5回帰</div></div>`;
     const magBins=[0,0,0,0,0];data.forEach(h=>{const m=Number(h[3]);if(m>=7)magBins[4]++;else if(m>=6)magBins[3]++;else if(m>=5)magBins[2]++;else if(m>=4)magBins[1]++;else magBins[0]++;});
     drawBarChart($p('proMagChart'),magBins,['3.5','M4','M5','M6','M7+'],{top:'#8af9ef',bottom:'#7775ff'});
     const dBins=[0,0,0,0,0,0];data.forEach(h=>{const d=Number(h[2]);if(d<20)dBins[0]++;else if(d<40)dBins[1]++;else if(d<100)dBins[2]++;else if(d<230)dBins[3]++;else if(d<400)dBins[4]++;else dBins[5]++;});
@@ -1512,7 +1512,7 @@ body::after{
     const hist=typeof HISTO!=='undefined'&&Array.isArray(HISTO)?HISTO.length:0;
     const recent=typeof DATA!=='undefined'&&Array.isArray(DATA)?DATA.length:0;
     const stations=typeof STATIONS!=='undefined'&&STATIONS?Object.keys(STATIONS).length:0;
-    $p('proDataState').innerHTML=`<dt>最近の地震</dt><dd>${recent}件</dd><dt>過去震源</dt><dd>${hist}件</dd><dt>観測点座標</dt><dd>${stations?stations+'地点':'未取得'}</dd><dt>表示バージョン</dt><dd>v15.5 PRO AURORA</dd>`;
+    $p('proDataState').innerHTML=`<dt>最近の地震</dt><dd>${recent}件</dd><dt>過去震源</dt><dd>${hist}件</dd><dt>観測点座標</dt><dd>${stations?stations+'地点':'未取得'}</dd><dt>表示バージョン</dt><dd>v16.1 日本版</dd>`;
   }
 
   document.querySelectorAll('.pro-tab').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.proTab)));
@@ -1521,7 +1521,7 @@ body::after{
   document.querySelectorAll('.pro-filter').forEach(b=>b.addEventListener('click',()=>{catalogFilter=b.dataset.filter;document.querySelectorAll('.pro-filter').forEach(x=>x.classList.toggle('on',x===b));renderCatalog();}));
 
   window.addEventListener('load',()=>{
-    const ver=$p('ver');if(ver)ver.textContent='v15.5 PRO AURORA';
+    const ver=$p('ver');if(ver)ver.textContent='v16.1 日本版';
     const listBtn=$p('btnList');
     if(listBtn) listBtn.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();setTab('catalog');},{capture:true});
   });
@@ -1562,7 +1562,7 @@ body::after{
   -webkit-backdrop-filter:blur(16px) saturate(1.12)!important;
 }
 
-/* モバイルではタイトルに重なっていた SELECTED バーを出さない */
+/* モバイルではタイトルに重なっていた 選択中 バーを出さない */
 @media(max-width:700px){.v15-livebar{display:none!important;}}
 
 .panel{left:16px!important;top:calc(118px + var(--st))!important;max-width:150px!important;}
@@ -1671,7 +1671,7 @@ body::after{
 <script id="v155-professional-fix">
 (() => {
   'use strict';
-  const VERSION='v15.5 PRO AURORA';
+  const VERSION='v16.1 日本版';
   const $=id=>document.getElementById(id);
 
   /* 1) 灰色ベタ面の原因だったMapLibre terrainを完全停止する。
@@ -1831,12 +1831,12 @@ body::after{
     const body=document.querySelector('#proAnalysis .pro-body');if(!body||$('proMonthChart'))return;
     const hour=$('proHourChart')?.closest('.pro-section');
     if(hour){
-      const month=document.createElement('div');month.className='pro-section';month.innerHTML='<div class="pro-chart-head"><div class="pro-chart-title">MONTHLY TREND · LAST 12 MONTHS</div><div class="pro-chart-meta" id="proMonthMeta">JST</div></div><div class="pro-card"><canvas class="pro-chart" id="proMonthChart"></canvas><div class="pro-chart-caption">各月の件数推移。観測網やカタログ条件の変化も含みます。</div></div>';
+      const month=document.createElement('div');month.className='pro-section';month.innerHTML='<div class="pro-chart-head"><div class="pro-chart-title">直近12か月の発生推移</div><div class="pro-chart-meta" id="proMonthMeta">日本時間</div></div><div class="pro-card"><canvas class="pro-chart" id="proMonthChart"></canvas><div class="pro-chart-caption">各月の件数推移。観測網やカタログ条件の変化も含みます。</div></div>';
       hour.after(month);
-      const scatter=document.createElement('div');scatter.className='pro-section';scatter.innerHTML='<div class="pro-chart-head"><div class="pro-chart-title">MAGNITUDE × DEPTH</div><div class="pro-chart-meta" id="proScatterMeta">sample</div></div><div class="pro-card"><canvas class="pro-chart pro-chart-tall" id="proScatterChart"></canvas><div class="pro-chart-caption">横軸はマグニチュード、縦軸は深さ。色も深さを表します。</div></div>';
+      const scatter=document.createElement('div');scatter.className='pro-section';scatter.innerHTML='<div class="pro-chart-head"><div class="pro-chart-title">マグニチュードと深さ</div><div class="pro-chart-meta" id="proScatterMeta">標本</div></div><div class="pro-card"><canvas class="pro-chart pro-chart-tall" id="proScatterChart"></canvas><div class="pro-chart-caption">横軸はマグニチュード、縦軸は深さ。色も深さを表します。</div></div>';
       month.after(scatter);
     }
-    const mapTitles=[['proMagChart','MAGNITUDE FREQUENCY + CUMULATIVE'],['proDepthChart','DEPTH COMPOSITION'],['proHourChart','HOURLY ACTIVITY · JST']];
+    const mapTitles=[['proMagChart','規模別件数と累積件数'],['proDepthChart','深さ別の構成'],['proHourChart','時間帯別の活動・日本時間']];
     mapTitles.forEach(([id,title])=>{const sec=$(id)?.closest('.pro-section');const t=sec?.querySelector('.pro-section-title');if(t)t.textContent=title;});
   }
 
@@ -1846,12 +1846,12 @@ body::after{
     if(!data.length)return;
     const mags=data.map(h=>+h[3]||0),depths=data.map(h=>+h[2]||0).sort((a,b)=>a-b),maxM=Math.max(...mags),median=depths[Math.floor(depths.length*.5)]||0,p90=depths[Math.floor(depths.length*.9)]||0,b=bValue(data),deep=data.filter(h=>+h[2]>=100).length;
     const k=$('proKpis');if(k)k.innerHTML=`
-      <div class="pro-card pro-kpi"><div class="k">EVENTS</div><div class="v">${data.length.toLocaleString()}</div><div class="s">現在の期間・深さ条件</div></div>
-      <div class="pro-card pro-kpi"><div class="k">MAX MAGNITUDE</div><div class="v">M${maxM.toFixed(1)}</div><div class="s">カタログ最大</div></div>
-      <div class="pro-card pro-kpi"><div class="k">MEDIAN DEPTH</div><div class="v">${Math.round(median)}km</div><div class="s">50パーセンタイル</div></div>
-      <div class="pro-card pro-kpi"><div class="k">P90 DEPTH</div><div class="v">${Math.round(p90)}km</div><div class="s">90パーセンタイル</div></div>
-      <div class="pro-card pro-kpi"><div class="k">b-VALUE</div><div class="v">${b?b.toFixed(2):'–'}</div><div class="s">M4.5–6.5回帰</div></div>
-      <div class="pro-card pro-kpi"><div class="k">DEEP SHARE</div><div class="v">${(deep/data.length*100).toFixed(1)}%</div><div class="s">深さ100km以上</div></div>`;
+      <div class="pro-card pro-kpi"><div class="k">対象件数</div><div class="v">${data.length.toLocaleString()}</div><div class="s">現在の期間・深さ条件</div></div>
+      <div class="pro-card pro-kpi"><div class="k">最大マグニチュード</div><div class="v">M${maxM.toFixed(1)}</div><div class="s">カタログ最大</div></div>
+      <div class="pro-card pro-kpi"><div class="k">深さ中央値</div><div class="v">${Math.round(median)}km</div><div class="s">50パーセンタイル</div></div>
+      <div class="pro-card pro-kpi"><div class="k">深さ90%値</div><div class="v">${Math.round(p90)}km</div><div class="s">90パーセンタイル</div></div>
+      <div class="pro-card pro-kpi"><div class="k">b値</div><div class="v">${b?b.toFixed(2):'–'}</div><div class="s">M4.5–6.5回帰</div></div>
+      <div class="pro-card pro-kpi"><div class="k">深発地震の割合</div><div class="v">${(deep/data.length*100).toFixed(1)}%</div><div class="s">深さ100km以上</div></div>`;
     drawMagnitude($('proMagChart'),data);
     drawDepth($('proDepthChart'),data);
     const hours=new Array(24).fill(0);data.forEach(h=>{if(h[5])hours[(+h[5]+9)%24]++;});drawArea($('proHourChart'),hours,hours.map((_,i)=>i%3===0?`${i}h`:''));
@@ -2053,7 +2053,7 @@ body::after{display:none!important;}
 <script id="v16CinematicScript">
 (() => {
   'use strict';
-  const VERSION='v16.0 CINEMATIC';
+  const VERSION='v16.1 日本版';
   const $v=id=>document.getElementById(id);
   const perf={low:(navigator.deviceMemory||4)<=3||(navigator.hardwareConcurrency||4)<=4};
   let cinema=false,cinemaRaf=0,cinemaLast=0;
@@ -2117,7 +2117,7 @@ body::after{display:none!important;}
     const box=document.createElement('div');box.id='v16Transport';box.innerHTML=`
       <button class="v16-play" id="v16Play" aria-label="再生">▶</button>
       <div class="v16-track">
-        <div class="v16-track-head"><span>SEISMIC REPLAY</span><strong id="v16TrackTitle">–</strong><span class="grow"></span><span class="v16-time" id="v16Time">0.0s</span></div>
+        <div class="v16-track-head"><span>地震波再生</span><strong id="v16TrackTitle">–</strong><span class="grow"></span><span class="v16-time" id="v16Time">0.0s</span></div>
         <input class="v16-range" id="v16Range" type="range" min="0" max="1000" value="0">
       </div>
       <button class="v16-speed" id="v16Speed">×2</button>`;
@@ -2208,7 +2208,7 @@ body::after{display:none!important;}
 
   function installAnalysis(){
     const body=document.querySelector('#proAnalysis .pro-body');if(!body||$v('v16EnergyChart'))return;
-    const wrap=document.createElement('div');wrap.className='pro-section';wrap.innerHTML=`<div class="pro-section-title">ADVANCED SEISMIC SIGNATURE</div><div class="v16-analysis-grid"><div class="pro-card v16-chart-card"><div class="v16-chart-head"><strong>ENERGY PROXY · MONTHLY</strong><span>Σ10^(1.5M)</span></div><canvas class="v16-chart" id="v16EnergyChart"></canvas><div class="v16-chart-note">放出エネルギーの相対指標。正式なエネルギー評価ではありません。</div></div><div class="pro-card v16-chart-card"><div class="v16-chart-head"><strong>DEPTH × MAGNITUDE DENSITY</strong><span>2D BIN</span></div><canvas class="v16-chart" id="v16MatrixChart"></canvas><div class="v16-chart-note">色が明るいほど、同じ深さ・規模帯に震源が集中しています。</div></div><div class="pro-card v16-chart-card"><div class="v16-chart-head"><strong>GUTENBERG–RICHTER</strong><span>log N = a − bM</span></div><canvas class="v16-chart small" id="v16GRChart"></canvas><div class="v16-chart-note">M4.5以上の累積頻度を回帰。検出下限と期間に強く依存します。</div></div><div class="pro-card v16-chart-card"><div class="v16-chart-head"><strong>SEISMIC FINGERPRINT</strong><span>NORMALIZED</span></div><canvas class="v16-chart small" id="v16RadarChart"></canvas><div class="v16-chart-note">規模・深さ・時間偏りを同一尺度で比較する探索用指標です。</div></div></div>`;
+    const wrap=document.createElement('div');wrap.className='pro-section';wrap.innerHTML=`<div class="pro-section-title">詳細分析</div><div class="v16-analysis-grid"><div class="pro-card v16-chart-card"><div class="v16-chart-head"><strong>月別・相対エネルギー</strong><span>Σ10^(1.5M)</span></div><canvas class="v16-chart" id="v16EnergyChart"></canvas><div class="v16-chart-note">放出エネルギーの相対指標。正式なエネルギー評価ではありません。</div></div><div class="pro-card v16-chart-card"><div class="v16-chart-head"><strong>深さと規模の集中度</strong><span>区分集計</span></div><canvas class="v16-chart" id="v16MatrixChart"></canvas><div class="v16-chart-note">色が明るいほど、同じ深さ・規模帯に震源が集中しています。</div></div><div class="pro-card v16-chart-card"><div class="v16-chart-head"><strong>規模別累積頻度</strong><span>log N = a − bM</span></div><canvas class="v16-chart small" id="v16GRChart"></canvas><div class="v16-chart-note">M4.5以上の累積頻度を回帰。検出下限と期間に強く依存します。</div></div><div class="pro-card v16-chart-card"><div class="v16-chart-head"><strong>地震活動の特徴</strong><span>相対値</span></div><canvas class="v16-chart small" id="v16RadarChart"></canvas><div class="v16-chart-note">規模・深さ・時間偏りを同一尺度で比較する探索用指標です。</div></div></div>`;
     body.insertBefore(wrap,body.querySelector('.pro-section:last-child'));
   }
 
@@ -2216,10 +2216,10 @@ body::after{display:none!important;}
   function line(c,x1,y1,x2,y2,color='rgba(145,222,255,.07)',width=1){c.strokeStyle=color;c.lineWidth=width;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();}
   function font(c,size=8,color='#71889b',weight=500){c.font=`${weight} ${size}px IBM Plex Mono, monospace`;c.fillStyle=color;}
   function analysisData(){return typeof HISTO_F!=='undefined'&&Array.isArray(HISTO_F)?HISTO_F:(typeof HISTO!=='undefined'&&Array.isArray(HISTO)?HISTO:[]);}
-  function drawEnergy(cv,data){const {c,w,h}=canvasFit(cv,224),p={l:34,r:12,t:18,b:30};const months=[];const now=new Date();for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;months.push([ym,0]);}const mi=new Map(months.map((m,i)=>[m[0],i]));data.forEach(e=>{const i=mi.get(e[4]);if(i!=null)months[i][1]+=Math.pow(10,1.5*(+e[3]||0));});const vals=months.map(m=>Math.log10(m[1]+1)),mx=Math.max(1,...vals),dx=(w-p.l-p.r)/(vals.length-1),Y=v=>p.t+(h-p.t-p.b)*(1-v/mx);for(let i=0;i<5;i++){const y=p.t+(h-p.t-p.b)*i/4;line(c,p.l,y,w-p.r,y);font(c,7);c.fillText((mx*(1-i/4)).toFixed(1),2,y+3);}const g=c.createLinearGradient(0,p.t,0,h-p.b);g.addColorStop(0,'rgba(130,255,240,.34)');g.addColorStop(1,'rgba(115,110,255,.015)');c.beginPath();c.moveTo(p.l,h-p.b);vals.forEach((v,i)=>c.lineTo(p.l+i*dx,Y(v)));c.lineTo(w-p.r,h-p.b);c.closePath();c.fillStyle=g;c.fill();const lg=c.createLinearGradient(p.l,0,w-p.r,0);lg.addColorStop(0,'#82fff0');lg.addColorStop(.5,'#73bfff');lg.addColorStop(1,'#a883ff');c.strokeStyle=lg;c.lineWidth=2;c.beginPath();vals.forEach((v,i)=>{const x=p.l+i*dx,y=Y(v);i?c.lineTo(x,y):c.moveTo(x,y);});c.stroke();font(c,7);c.textAlign='center';months.forEach((m,i)=>{if(i%2===0)c.fillText(m[0].slice(5),p.l+i*dx,h-9);});c.textAlign='left';font(c,7,'#5d7487');c.fillText('log10 relative energy',p.l,10);}
-  function drawMatrix(cv,data){const {c,w,h}=canvasFit(cv,224),p={l:34,r:10,t:16,b:28},cols=9,rows=8,grid=Array.from({length:rows},()=>Array(cols).fill(0));data.forEach(e=>{const m=+e[3],d=Math.min(499,+e[2]||0);const x=Math.max(0,Math.min(cols-1,Math.floor((m-3.5)/(8-3.5)*cols))),y=Math.max(0,Math.min(rows-1,Math.floor(d/500*rows)));grid[y][x]++;});const mx=Math.max(1,...grid.flat()),cw=(w-p.l-p.r)/cols,ch=(h-p.t-p.b)/rows;for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){const q=grid[y][x]/mx,xx=p.l+x*cw,yy=p.t+y*ch;const r=Math.round(85+100*q),g=Math.round(110+135*q),b=Math.round(180+75*q);c.fillStyle=`rgba(${r},${g},${b},${.06+.86*Math.pow(q,.65)})`;c.fillRect(xx+1,yy+1,cw-2,ch-2);}font(c,7);[4,5,6,7,8].forEach(m=>{const x=p.l+(m-3.5)/(8-3.5)*(w-p.l-p.r);c.textAlign='center';c.fillText(`M${m}`,x,h-8);});c.textAlign='right';[0,100,200,300,400,500].forEach(d=>{const y=p.t+d/500*(h-p.t-p.b);c.fillText(String(d),p.l-5,y+3);});c.textAlign='left';font(c,7,'#5d7487');c.fillText('depth km',2,9);}
+  function drawEnergy(cv,data){const {c,w,h}=canvasFit(cv,224),p={l:34,r:12,t:18,b:30};const months=[];const now=new Date();for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;months.push([ym,0]);}const mi=new Map(months.map((m,i)=>[m[0],i]));data.forEach(e=>{const i=mi.get(e[4]);if(i!=null)months[i][1]+=Math.pow(10,1.5*(+e[3]||0));});const vals=months.map(m=>Math.log10(m[1]+1)),mx=Math.max(1,...vals),dx=(w-p.l-p.r)/(vals.length-1),Y=v=>p.t+(h-p.t-p.b)*(1-v/mx);for(let i=0;i<5;i++){const y=p.t+(h-p.t-p.b)*i/4;line(c,p.l,y,w-p.r,y);font(c,7);c.fillText((mx*(1-i/4)).toFixed(1),2,y+3);}const g=c.createLinearGradient(0,p.t,0,h-p.b);g.addColorStop(0,'rgba(130,255,240,.34)');g.addColorStop(1,'rgba(115,110,255,.015)');c.beginPath();c.moveTo(p.l,h-p.b);vals.forEach((v,i)=>c.lineTo(p.l+i*dx,Y(v)));c.lineTo(w-p.r,h-p.b);c.closePath();c.fillStyle=g;c.fill();const lg=c.createLinearGradient(p.l,0,w-p.r,0);lg.addColorStop(0,'#82fff0');lg.addColorStop(.5,'#73bfff');lg.addColorStop(1,'#a883ff');c.strokeStyle=lg;c.lineWidth=2;c.beginPath();vals.forEach((v,i)=>{const x=p.l+i*dx,y=Y(v);i?c.lineTo(x,y):c.moveTo(x,y);});c.stroke();font(c,7);c.textAlign='center';months.forEach((m,i)=>{if(i%2===0)c.fillText(m[0].slice(5),p.l+i*dx,h-9);});c.textAlign='left';font(c,7,'#5d7487');c.fillText('相対エネルギー log10',p.l,10);}
+  function drawMatrix(cv,data){const {c,w,h}=canvasFit(cv,224),p={l:34,r:10,t:16,b:28},cols=9,rows=8,grid=Array.from({length:rows},()=>Array(cols).fill(0));data.forEach(e=>{const m=+e[3],d=Math.min(499,+e[2]||0);const x=Math.max(0,Math.min(cols-1,Math.floor((m-3.5)/(8-3.5)*cols))),y=Math.max(0,Math.min(rows-1,Math.floor(d/500*rows)));grid[y][x]++;});const mx=Math.max(1,...grid.flat()),cw=(w-p.l-p.r)/cols,ch=(h-p.t-p.b)/rows;for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){const q=grid[y][x]/mx,xx=p.l+x*cw,yy=p.t+y*ch;const r=Math.round(85+100*q),g=Math.round(110+135*q),b=Math.round(180+75*q);c.fillStyle=`rgba(${r},${g},${b},${.06+.86*Math.pow(q,.65)})`;c.fillRect(xx+1,yy+1,cw-2,ch-2);}font(c,7);[4,5,6,7,8].forEach(m=>{const x=p.l+(m-3.5)/(8-3.5)*(w-p.l-p.r);c.textAlign='center';c.fillText(`M${m}`,x,h-8);});c.textAlign='right';[0,100,200,300,400,500].forEach(d=>{const y=p.t+d/500*(h-p.t-p.b);c.fillText(String(d),p.l-5,y+3);});c.textAlign='left';font(c,7,'#5d7487');c.fillText('深さ km',2,9);}
   function drawGR(cv,data){const {c,w,h}=canvasFit(cv,190),p={l:34,r:12,t:16,b:28},pts=[];for(let m=4.5;m<=6.6;m+=.1){const mm=+m.toFixed(1),n=data.filter(e=>(+e[3]||0)>=mm).length;if(n>=5)pts.push([mm,Math.log10(n)]);}if(pts.length<3)return;const sx=pts.reduce((a,p)=>a+p[0],0),sy=pts.reduce((a,p)=>a+p[1],0),sxx=pts.reduce((a,p)=>a+p[0]*p[0],0),sxy=pts.reduce((a,p)=>a+p[0]*p[1],0),N=pts.length,slope=(N*sxy-sx*sy)/(N*sxx-sx*sx),ic=(sy-slope*sx)/N,b=-slope,minX=4.5,maxX=6.6,maxY=Math.max(...pts.map(p=>p[1]))*1.05,X=m=>p.l+(w-p.l-p.r)*(m-minX)/(maxX-minX),Y=v=>p.t+(h-p.t-p.b)*(1-v/maxY);for(let i=0;i<5;i++){const y=p.t+(h-p.t-p.b)*i/4;line(c,p.l,y,w-p.r,y);font(c,7);c.fillText((maxY*(1-i/4)).toFixed(1),2,y+3);}c.strokeStyle='#82fff0';c.lineWidth=1.8;c.beginPath();pts.forEach((q,i)=>i?c.lineTo(X(q[0]),Y(q[1])):c.moveTo(X(q[0]),Y(q[1])));c.stroke();c.strokeStyle='#b28cff';c.setLineDash([4,4]);c.beginPath();c.moveTo(X(minX),Y(slope*minX+ic));c.lineTo(X(maxX),Y(slope*maxX+ic));c.stroke();c.setLineDash([]);pts.forEach(q=>{c.fillStyle='#dffeff';c.beginPath();c.arc(X(q[0]),Y(q[1]),2,0,Math.PI*2);c.fill();});font(c,8,'#bceef0',600);c.fillText(`b = ${b.toFixed(2)}`,w-64,11);font(c,7);[4.5,5,5.5,6,6.5].forEach(m=>{c.textAlign='center';c.fillText(m.toFixed(1),X(m),h-8);});c.textAlign='left';}
-  function drawRadar(cv,data){const {c,w,h}=canvasFit(cv,190),cx=w/2,cy=h/2+4,R=Math.min(w,h)*.34,axes=['M6+','DEEP','SHALLOW','NIGHT','CLUSTER','MAX M'],mags=data.map(e=>+e[3]||0),n=data.length||1,vals=[data.filter(e=>(+e[3]||0)>=6).length/n,data.filter(e=>(+e[2]||0)>=100).length/n,data.filter(e=>(+e[2]||0)<=30).length/n,data.filter(e=>{const hr=((+e[5]||0)+9)%24;return hr<6||hr>=21;}).length/n,Math.min(1,n/20000),Math.min(1,(Math.max(...mags)-3.5)/4.5)];for(let ring=1;ring<=4;ring++){c.strokeStyle='rgba(145,222,255,.07)';c.beginPath();axes.forEach((_,i)=>{const a=-Math.PI/2+i*Math.PI*2/axes.length,x=cx+Math.cos(a)*R*ring/4,y=cy+Math.sin(a)*R*ring/4;i?c.lineTo(x,y):c.moveTo(x,y);});c.closePath();c.stroke();}axes.forEach((a,i)=>{const ang=-Math.PI/2+i*Math.PI*2/axes.length;line(c,cx,cy,cx+Math.cos(ang)*R,cy+Math.sin(ang)*R);font(c,7,'#71889b',600);c.textAlign=Math.cos(ang)>.3?'left':Math.cos(ang)<-.3?'right':'center';c.fillText(a,cx+Math.cos(ang)*(R+13),cy+Math.sin(ang)*(R+13)+3);});const grad=c.createRadialGradient(cx,cy,0,cx,cy,R);grad.addColorStop(0,'rgba(130,255,240,.28)');grad.addColorStop(1,'rgba(139,113,255,.18)');c.beginPath();vals.forEach((v,i)=>{const a=-Math.PI/2+i*Math.PI*2/axes.length,x=cx+Math.cos(a)*R*Math.max(.05,v),y=cy+Math.sin(a)*R*Math.max(.05,v);i?c.lineTo(x,y):c.moveTo(x,y);});c.closePath();c.fillStyle=grad;c.fill();c.strokeStyle='#9cfff4';c.lineWidth=1.6;c.stroke();c.textAlign='left';}
+  function drawRadar(cv,data){const {c,w,h}=canvasFit(cv,190),cx=w/2,cy=h/2+4,R=Math.min(w,h)*.34,axes=['M6以上','深発','浅発','夜間','集中度','最大M'],mags=data.map(e=>+e[3]||0),n=data.length||1,vals=[data.filter(e=>(+e[3]||0)>=6).length/n,data.filter(e=>(+e[2]||0)>=100).length/n,data.filter(e=>(+e[2]||0)<=30).length/n,data.filter(e=>{const hr=((+e[5]||0)+9)%24;return hr<6||hr>=21;}).length/n,Math.min(1,n/20000),Math.min(1,(Math.max(...mags)-3.5)/4.5)];for(let ring=1;ring<=4;ring++){c.strokeStyle='rgba(145,222,255,.07)';c.beginPath();axes.forEach((_,i)=>{const a=-Math.PI/2+i*Math.PI*2/axes.length,x=cx+Math.cos(a)*R*ring/4,y=cy+Math.sin(a)*R*ring/4;i?c.lineTo(x,y):c.moveTo(x,y);});c.closePath();c.stroke();}axes.forEach((a,i)=>{const ang=-Math.PI/2+i*Math.PI*2/axes.length;line(c,cx,cy,cx+Math.cos(ang)*R,cy+Math.sin(ang)*R);font(c,7,'#71889b',600);c.textAlign=Math.cos(ang)>.3?'left':Math.cos(ang)<-.3?'right':'center';c.fillText(a,cx+Math.cos(ang)*(R+13),cy+Math.sin(ang)*(R+13)+3);});const grad=c.createRadialGradient(cx,cy,0,cx,cy,R);grad.addColorStop(0,'rgba(130,255,240,.28)');grad.addColorStop(1,'rgba(139,113,255,.18)');c.beginPath();vals.forEach((v,i)=>{const a=-Math.PI/2+i*Math.PI*2/axes.length,x=cx+Math.cos(a)*R*Math.max(.05,v),y=cy+Math.sin(a)*R*Math.max(.05,v);i?c.lineTo(x,y):c.moveTo(x,y);});c.closePath();c.fillStyle=grad;c.fill();c.strokeStyle='#9cfff4';c.lineWidth=1.6;c.stroke();c.textAlign='left';}
   function renderAdvanced(){installAnalysis();const data=analysisData();if(!data.length)return;drawEnergy($v('v16EnergyChart'),data);drawMatrix($v('v16MatrixChart'),data);drawGR($v('v16GRChart'),data);drawRadar($v('v16RadarChart'),data);}
 
   function patchTabs(){
@@ -2234,6 +2234,139 @@ body::after{display:none!important;}
     const observer=new MutationObserver(()=>syncTransport());observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
     setInterval(()=>{removeTerrainForever();syncTransport();},1200);
   }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
+</script>
+
+
+<style id="v161JapaneseFix">
+:root{
+  --jp-bg:#05090d;
+  --jp-panel:rgba(7,14,19,.82);
+  --jp-panel-soft:rgba(7,14,19,.62);
+  --jp-line:rgba(151,198,204,.14);
+  --jp-accent:#7fd3ca;
+  --jp-accent-2:#7ca8c2;
+  --jp-text:#eef4f4;
+  --jp-muted:#7f9499;
+  --jp-warn:#e2b86f;
+}
+html,body{background:var(--jp-bg)!important;color:var(--jp-text)!important;}
+#cinematicAurora{opacity:.18!important;mix-blend-mode:soft-light!important;}
+#cinematicGrain{opacity:.035!important;}
+#cinematicScan{opacity:.018!important;}
+#vignette{background:radial-gradient(circle at 50% 42%,transparent 0 54%,rgba(1,5,9,.18) 80%,rgba(0,2,5,.52) 100%)!important;}
+.maplibregl-canvas{filter:saturate(.78) brightness(.73) contrast(1.10)!important;}
+
+/* 上部はタイトルと操作を明確に分離。幅不足でもボタンを画面外へ出さない */
+.top{
+  left:12px!important;right:10px!important;top:calc(12px + var(--st))!important;
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:start!important;column-gap:8px!important;overflow:visible!important;
+}
+.brand{min-width:0!important;max-width:100%!important;gap:8px!important;position:relative!important;}
+.brand::before,.brand::after{display:none!important;content:none!important;}
+.bdot{width:7px!important;height:7px!important;margin-top:8px!important;background:#dffbf7!important;box-shadow:0 0 8px rgba(223,251,247,.88),0 0 20px rgba(127,211,202,.42)!important;}
+.bt{min-width:0!important;overflow:visible!important;}
+.b1{font-family:var(--sans)!important;font-size:22px!important;line-height:1!important;font-weight:700!important;letter-spacing:.02em!important;color:#f0f5f5!important;background:none!important;-webkit-text-fill-color:initial!important;text-shadow:0 2px 14px rgba(0,0,0,.60)!important;white-space:nowrap!important;}
+.b1 b{font-family:var(--mono)!important;font-size:14px!important;color:var(--jp-accent)!important;background:none!important;-webkit-text-fill-color:initial!important;margin-left:5px!important;letter-spacing:.05em!important;}
+.b2{font-family:var(--sans)!important;font-size:8px!important;line-height:1.3!important;letter-spacing:.10em!important;color:#82a4a4!important;margin-top:6px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.b2 em{font-family:var(--mono)!important;font-style:normal!important;color:#93aeb4!important;letter-spacing:.04em!important;margin-left:5px!important;}
+.tools{display:grid!important;grid-auto-flow:column!important;grid-auto-columns:38px!important;gap:5px!important;flex:0 0 auto!important;max-width:167px!important;overflow:visible!important;}
+.tbtn{width:38px!important;height:38px!important;border-radius:10px!important;background:rgba(6,13,19,.78)!important;border:1px solid var(--jp-line)!important;color:#b3c2c5!important;box-shadow:0 8px 22px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.025)!important;}
+#v15Livebar{display:none!important;}
+
+/* 画面全体の配色を、青紫のネオンから墨色＋青緑へ整理 */
+.ichips button.on,.pro-filter.on{background:var(--jp-accent)!important;color:#071211!important;border-color:transparent!important;box-shadow:0 0 16px rgba(127,211,202,.14)!important;}
+.pro-nav{background:rgba(5,12,18,.88)!important;border-color:var(--jp-line)!important;box-shadow:0 16px 42px rgba(0,0,0,.44)!important;}
+.pro-tab{color:#71858a!important;font-family:var(--sans)!important;font-size:9px!important;letter-spacing:.02em!important;}
+.pro-tab.on{background:rgba(127,211,202,.09)!important;color:#eef8f7!important;box-shadow:inset 0 0 0 1px rgba(127,211,202,.12)!important;}
+.pro-tab.on::after{background:var(--jp-accent)!important;box-shadow:0 0 8px rgba(127,211,202,.35)!important;}
+.pro-tab .ico{color:#7f979d!important;}
+.pro-tab.on .ico{color:var(--jp-accent)!important;text-shadow:none!important;}
+.pro-view{background:linear-gradient(180deg,#061016 0%,#050a0e 100%)!important;}
+.pro-head{background:rgba(5,12,18,.94)!important;border-bottom-color:var(--jp-line)!important;}
+.pro-head .eyebrow{font-family:var(--sans)!important;font-size:9px!important;letter-spacing:.06em!important;color:#74989a!important;}
+.pro-head h2{font-family:var(--sans)!important;font-size:24px!important;letter-spacing:.01em!important;color:#f0f5f5!important;}
+.pro-head .sub{font-family:var(--sans)!important;font-size:10px!important;color:#788e93!important;}
+.pro-section-title,.pro-chart-title,.v16-chart-head strong{font-family:var(--sans)!important;font-size:11px!important;letter-spacing:.03em!important;color:#91bab8!important;}
+.pro-card{background:rgba(7,15,21,.80)!important;border-color:rgba(151,198,204,.10)!important;border-radius:12px!important;box-shadow:0 10px 26px rgba(0,0,0,.16)!important;}
+.pro-kpi::after{display:none!important;}
+.pro-kpi .k{font-family:var(--sans)!important;font-size:9px!important;letter-spacing:.03em!important;color:#779093!important;}
+.pro-kpi .v{font-family:var(--mono)!important;color:#edf4f4!important;}
+.pro-kpi .s,.v16-chart-note,.pro-chart-caption{font-family:var(--sans)!important;color:#71868b!important;}
+.v16-chart-head span{font-family:var(--sans)!important;color:#657b80!important;}
+.v16-play{background:var(--jp-accent)!important;color:#071211!important;box-shadow:0 0 0 1px rgba(255,255,255,.18),0 10px 24px rgba(0,0,0,.34)!important;}
+.v16-play.playing{background:#91b8c9!important;}
+.v16-range::-webkit-slider-runnable-track{background:linear-gradient(90deg,var(--jp-accent) 0 var(--v16-progress,0%),rgba(127,151,158,.16) var(--v16-progress,0%) 100%)!important;}
+.v16-range::-webkit-slider-thumb{background:#f2f7f7!important;border-color:var(--jp-accent)!important;box-shadow:0 0 10px rgba(127,211,202,.40)!important;}
+.v16-track-head{font-family:var(--sans)!important;letter-spacing:.02em!important;}
+.v16-track-head strong{font-family:var(--sans)!important;}
+.v16-time{color:var(--jp-accent)!important;}
+.v15-accuracy-head,.v15-accuracy-grid{font-family:var(--sans)!important;letter-spacing:.02em!important;}
+.v15-accuracy-dot{background:var(--jp-accent)!important;box-shadow:0 0 8px rgba(127,211,202,.40)!important;}
+
+/* タイトルと4ボタンを小型端末でも必ず同一画面内へ収める */
+@media(max-width:430px){
+  .top{left:10px!important;right:8px!important;column-gap:5px!important;}
+  .brand{gap:6px!important;}
+  .b1{font-size:20px!important;}
+  .b1 b{font-size:12px!important;margin-left:3px!important;}
+  .b2{font-size:7.2px!important;letter-spacing:.05em!important;max-width:190px!important;}
+  .tools{grid-auto-columns:35px!important;gap:4px!important;max-width:152px!important;}
+  .tbtn{width:35px!important;height:35px!important;border-radius:9px!important;}
+  .istat{top:calc(72px + var(--st))!important;right:8px!important;width:158px!important;}
+}
+@media(max-width:360px){
+  .b1{font-size:18px!important;}
+  .b2{max-width:150px!important;font-size:6.6px!important;}
+  .tools{grid-auto-columns:33px!important;max-width:144px!important;}
+  .tbtn{width:33px!important;height:33px!important;}
+}
+</style>
+
+<script id="v161JapaneseScript">
+(() => {
+  'use strict';
+  const localize = () => {
+    const ver=document.getElementById('ver'); if(ver) ver.textContent='v16.1';
+    const subtitle=document.querySelector('.b2');
+    if(subtitle) subtitle.innerHTML='日本の地震を立体表示 <em id="ver">v16.1</em>';
+
+    const accuracy=document.querySelector('#v15Accuracy .v15-accuracy-head span:nth-child(2)');
+    if(accuracy) accuracy.textContent='データ信頼度';
+    const live=document.querySelector('#v15Livebar span'); if(live) live.textContent='選択中';
+
+    const tabNames={map:'地図',analysis:'分析',catalog:'地震一覧',method:'仕様'};
+    document.querySelectorAll('.pro-tab').forEach(btn=>{
+      const label=btn.querySelector('span:last-child');
+      if(label&&tabNames[btn.dataset.proTab]) label.textContent=tabNames[btn.dataset.proTab];
+    });
+
+    const heads=[
+      ['#proAnalysis .eyebrow','地震カタログ分析'],['#proAnalysis h2','分析'],
+      ['#proCatalog .eyebrow','地震情報データベース'],['#proCatalog h2','地震一覧'],
+      ['#proMethod .eyebrow','計算方法とデータ'],['#proMethod h2','仕様・精度']
+    ];
+    heads.forEach(([q,t])=>{const el=document.querySelector(q);if(el)el.textContent=t;});
+
+    const replacements={
+      '対象件数':'対象件数','EVENTS':'対象件数','MAX MAGNITUDE':'最大マグニチュード',
+      'MEDIAN DEPTH':'深さ中央値','P90 DEPTH':'深さ90%値','b-VALUE':'b値','DEEP SHARE':'深発地震の割合',
+      'ADVANCED SEISMIC SIGNATURE':'詳細分析','ENERGY PROXY · MONTHLY':'月別・相対エネルギー',
+      'DEPTH × MAGNITUDE DENSITY':'深さと規模の集中度','GUTENBERG–RICHTER':'規模別累積頻度',
+      'SEISMIC FINGERPRINT':'地震活動の特徴','NORMALIZED':'相対値','2D BIN':'区分集計'
+    };
+    document.querySelectorAll('.pro-kpi .k,.pro-section-title,.pro-chart-title,.v16-chart-head strong,.v16-chart-head span').forEach(el=>{
+      const t=el.textContent.trim(); if(replacements[t])el.textContent=replacements[t];
+    });
+
+    const replay=document.querySelector('.v16-track-head > span:first-child');
+    if(replay) replay.textContent='地震波再生';
+  };
+
+  const observer=new MutationObserver(localize);
+  const boot=()=>{localize();observer.observe(document.body,{subtree:true,childList:true});};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
 </script>
