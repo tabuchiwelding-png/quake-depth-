@@ -3,51 +3,51 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#050a12">
+<meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="震源3D">
-<title>震源3D｜地殻観測機構</title>
+<title>震源3D｜地殻観測機構 v17.2</title>
 <meta name="description" content="直近1年の日本周辺の震源と、気象庁の地震情報を立体的に観測・再生する地殻観測アプリ。">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.css'">
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.js'"></script>
 <script src="https://unpkg.com/deck.gl@8.9.35/dist.min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/deck.gl@8.9.35/dist.min.js'"></script>
 <style>
 :root{
-  --bg:#050a12;
-  --bg2:#07111d;
-  --panel:#08131f;
-  --panel2:#0b1826;
-  --line:rgba(151,211,230,.14);
-  --line2:rgba(151,211,230,.24);
-  --text:#f1f7fb;
-  --muted:#8fa6b4;
-  --dim:#5d7484;
-  --ice:#aef8f0;
-  --cyan:#58d9d1;
-  --blue:#5db9ef;
-  --indigo:#7587f4;
-  --violet:#9b79e8;
-  --amber:#f2bf66;
-  --danger:#ff7867;
-  --ok:#71e2b3;
+  --bg:#000000;
+  --bg2:#030405;
+  --panel:#050607;
+  --panel2:#090b0d;
+  --line:rgba(218,231,238,.14);
+  --line2:rgba(218,231,238,.26);
+  --text:#f4f7f9;
+  --muted:#a0abb2;
+  --dim:#69747b;
+  --ice:#a9f8f0;
+  --cyan:#62dfe0;
+  --blue:#72c9ff;
+  --indigo:#8b97ff;
+  --violet:#ad82f2;
+  --amber:#f4b95e;
+  --danger:#ff6b60;
+  --ok:#72ddb0;
   --safe-top:env(safe-area-inset-top,0px);
   --safe-bottom:env(safe-area-inset-bottom,0px);
   --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;min-height:100dvh;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-text-size-adjust:100%}
+html,body{margin:0;width:100%;height:100%;min-height:100dvh;overflow:hidden;background:#000;color:var(--text);font-family:var(--sans);-webkit-text-size-adjust:100%}
 button,input{font:inherit}
 button{touch-action:manipulation}
 .hidden{display:none!important}
-#map{position:fixed;inset:0;background:radial-gradient(circle at 48% 36%,#0c1d29 0%,#071019 42%,#03070d 100%)}
-#fxCanvas{position:fixed;inset:0;z-index:5;pointer-events:none;mix-blend-mode:screen;opacity:.76}
+#map{position:fixed;inset:0;background:#000}
+#fxCanvas{position:fixed;inset:0;z-index:5;pointer-events:none;mix-blend-mode:screen;opacity:.30}
 #shade{position:fixed;inset:0;z-index:6;pointer-events:none;background:
-  radial-gradient(circle at 50% 42%,transparent 22%,rgba(3,8,14,.07) 58%,rgba(2,5,10,.26) 100%),
-  linear-gradient(180deg,rgba(2,6,11,.18),transparent 22%,transparent 72%,rgba(2,6,11,.30));
+  radial-gradient(circle at 48% 40%,transparent 28%,rgba(0,0,0,.05) 64%,rgba(0,0,0,.18) 100%),
+  linear-gradient(180deg,rgba(0,0,0,.10),transparent 24%,transparent 76%,rgba(0,0,0,.24));
 }
-#scanline{position:fixed;left:0;right:0;height:1px;z-index:7;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(174,248,240,.14),transparent);box-shadow:0 0 12px rgba(88,217,209,.08);animation:scan 9s linear infinite}
+#scanline{display:none}
 @keyframes scan{from{top:6%}to{top:94%}}
 .maplibregl-ctrl-attrib{font-size:8px!important;background:rgba(3,8,14,.55)!important;color:#728794!important}
 .maplibregl-ctrl-attrib a{color:#8baab9!important}
@@ -74,20 +74,25 @@ button{touch-action:manipulation}
 /* 上部 */
 .topbar{
   position:fixed;left:14px;right:14px;top:calc(10px + var(--safe-top));z-index:40;
-  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;pointer-events:none;
+  display:grid;grid-template-columns:minmax(0,190px) auto;justify-content:space-between;gap:10px;align-items:start;pointer-events:none;
 }
-.brand{min-width:0;overflow:hidden;padding:6px 0;pointer-events:none;text-shadow:0 2px 14px rgba(0,0,0,.75)}
-.brand-main{display:flex;align-items:center;gap:9px;white-space:nowrap;overflow:hidden}
-.brand-dot{width:9px;height:9px;border-radius:50%;background:#e5fffb;box-shadow:0 0 13px #7ce8df,0 0 28px rgba(93,185,239,.36);flex:none}
-.brand-name{font-size:22px;font-weight:800;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis}
-.brand-name b{font:700 15px/1 var(--mono);color:var(--ice);letter-spacing:.02em}
-.brand-sub{margin:5px 0 0 18px;color:#a3bdca;font:600 9px/1.2 var(--mono);letter-spacing:.13em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.brand-sub em{font-style:normal;color:#d3fff9;margin-left:8px;letter-spacing:.04em}
+.brand{
+  min-width:0;position:relative;padding:10px 14px 10px 18px;pointer-events:none;
+  border:1px solid rgba(230,238,242,.22);border-radius:0 18px 18px 0;background:rgba(0,0,0,.62);
+  box-shadow:0 12px 32px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.025);
+}
+.brand::before{content:"";position:absolute;left:0;top:11px;bottom:11px;width:3px;border-radius:2px;background:#f1f5f7}
+.brand-main{display:flex;align-items:baseline;gap:8px;white-space:nowrap;overflow:hidden}
+.brand-dot{display:none}
+.brand-name{font-size:22px;font-weight:760;letter-spacing:.015em;overflow:hidden;text-overflow:ellipsis;color:#f5f7f8}
+.brand-name b{font:700 17px/1 var(--sans);color:#d8e3e8;letter-spacing:.02em}
+.brand-sub{margin:5px 0 0;color:#c5cdd1;font-size:11px;font-weight:650;letter-spacing:.045em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-sub em{font-style:normal;color:#8d9aa1;margin-left:7px;letter-spacing:.02em;font:600 9px/1 var(--mono)}
 .top-actions{display:flex;gap:7px;pointer-events:auto}
 .icon-btn{
-  width:42px;height:42px;border-radius:12px;border:1px solid var(--line2);color:#dcebf2;
-  background:linear-gradient(180deg,rgba(10,23,36,.92),rgba(6,14,24,.90));
-  box-shadow:inset 0 1px rgba(255,255,255,.035),0 8px 24px rgba(0,0,0,.22);
+  width:42px;height:42px;border-radius:13px;border:1px solid rgba(216,232,239,.20);color:#e1e9ed;
+  background:linear-gradient(180deg,rgba(9,12,15,.96),rgba(2,4,6,.96));
+  box-shadow:inset 0 1px rgba(255,255,255,.035),0 10px 26px rgba(0,0,0,.28);
   display:grid;place-items:center;padding:0;
 }
 .icon-btn:active{transform:scale(.96)}
@@ -107,7 +112,7 @@ button{touch-action:manipulation}
 .modebar{
   position:fixed;left:50%;top:calc(96px + var(--safe-top));z-index:38;transform:translateX(-50%);
   display:grid;grid-template-columns:repeat(4,1fr);gap:3px;width:min(376px,calc(100vw - 28px));padding:4px;
-  border:1px solid var(--line);border-radius:14px;background:rgba(5,13,22,.86);box-shadow:0 10px 32px rgba(0,0,0,.28);
+  border:1px solid var(--line);border-radius:14px;background:rgba(2,3,4,.90);box-shadow:0 10px 32px rgba(0,0,0,.28);
   pointer-events:auto;
 }
 .modebar button{height:34px;border:0;border-radius:10px;background:transparent;color:#7f98a7;font-size:11px;font-weight:700;white-space:nowrap;padding:0 5px}
@@ -117,7 +122,7 @@ button{touch-action:manipulation}
 .map-summary{
   position:fixed;right:15px;top:calc(143px + var(--safe-top));z-index:32;width:145px;
   padding:10px 10px 9px;border-left:1px solid rgba(126,230,221,.24);
-  background:linear-gradient(90deg,rgba(5,12,20,0),rgba(5,12,20,.70) 22%,rgba(5,12,20,.82));
+  background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.68) 22%,rgba(0,0,0,.86));
   text-align:right;pointer-events:none;text-shadow:0 2px 8px rgba(0,0,0,.82);
 }
 .map-summary .cap{font:600 9px/1.4 var(--mono);color:#6f8796}
@@ -136,16 +141,25 @@ button{touch-action:manipulation}
 
 /* 選択情報 */
 .event-hud{
-  position:fixed;left:16px;top:calc(142px + var(--safe-top));z-index:36;width:170px;
-  opacity:0;transform:translateX(-8px);transition:.25s ease;pointer-events:none;
-  text-shadow:0 2px 10px rgba(0,0,0,.88);
+  position:fixed;right:14px;left:auto;top:calc(142px + var(--safe-top));z-index:36;width:188px;
+  padding:13px 14px 14px;border:1px solid rgba(225,234,238,.28);border-radius:17px;
+  background:linear-gradient(180deg,rgba(6,7,8,.94),rgba(0,0,0,.96));
+  box-shadow:0 18px 50px rgba(0,0,0,.40),inset 0 1px 0 rgba(255,255,255,.025);
+  opacity:0;transform:translateX(8px);transition:.25s ease;pointer-events:none;
+  text-shadow:0 2px 10px rgba(0,0,0,.84);
 }
 .event-hud.on{opacity:1;transform:none}
-.event-hud .k{margin-top:10px;color:#8199a7;font:600 8px/1 var(--mono);letter-spacing:.08em}
-.event-hud .v{margin-top:3px;color:#f5fbfd;font:800 16px/1.12 var(--mono)}
-.event-hud .v.large{font-size:24px}
-.event-hud .v.accent{color:var(--ice)}
-.event-hud .run{margin-top:12px;color:#8deee4;font:700 10px/1.5 var(--mono)}
+.event-alert{display:inline-flex;align-items:center;min-height:23px;padding:0 9px;border-radius:999px;background:rgba(106,119,126,.18);color:#cbd4d8;font-size:9px;font-weight:800;letter-spacing:.02em}
+.event-alert.strong{background:rgba(255,73,60,.16);color:#ff756b}
+.event-mag{margin:10px 0 11px;font:760 34px/1 var(--sans);letter-spacing:-.02em;color:#f2f5f6}
+.event-mag.strong{color:#ff6d62}
+.event-rule{height:1px;background:rgba(220,231,236,.12);margin:0 0 10px}
+.event-hud .k{margin-top:9px;color:#8f9ba1;font-size:9px;font-weight:650;letter-spacing:.02em}
+.event-hud .v{margin-top:3px;color:#eef2f4;font-size:12px;font-weight:700;line-height:1.22}
+.event-hud .v.large{font-size:14px}
+.event-hud .v.accent{color:#efc06a}
+.event-hud .run{margin-top:11px;padding-top:10px;border-top:1px solid rgba(220,231,236,.10);color:#a6dedd;font:700 9px/1.5 var(--mono)}
+body.has-selection .map-summary,body.has-selection .depth-scale{opacity:0;visibility:hidden}
 
 /* 年間時間航行 */
 .time-console{
@@ -174,13 +188,13 @@ button{touch-action:manipulation}
 .replay-meta{margin-top:3px;font:600 9px/1.3 var(--mono);color:#8fa8b5}
 .replay-range{width:100%;margin-top:8px;-webkit-appearance:none;height:4px;border-radius:4px;background:#183044}
 .replay-range::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:#dffffb;box-shadow:0 0 12px rgba(88,217,209,.50)}
-.replay-speed{height:40px;min-width:45px;padding:0 8px;border-radius:10px;border:1px solid var(--line2);background:#0b1a29;color:#d9eef4;font:700 10px/1 var(--mono)}
+.replay-speed{height:40px;min-width:45px;padding:0 8px;border-radius:10px;border:1px solid var(--line2);background:#07090a;color:#d9eef4;font:700 10px/1 var(--mono)}
 
 /* 下部ナビ */
 .bottom-nav{
   position:fixed;left:14px;right:14px;bottom:calc(10px + var(--safe-bottom));z-index:50;height:68px;
   display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:5px;border:1px solid var(--line2);border-radius:17px;
-  background:rgba(4,12,20,.96);box-shadow:0 14px 42px rgba(0,0,0,.40);pointer-events:auto;
+  background:rgba(1,2,3,.96);box-shadow:0 14px 42px rgba(0,0,0,.40);pointer-events:auto;
 }
 .nav-btn{border:0;border-radius:12px;background:transparent;color:#708897;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;font-weight:800;white-space:nowrap}
 .nav-btn svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round}
@@ -189,7 +203,7 @@ button{touch-action:manipulation}
 /* パネル */
 .section{
   position:fixed;inset:0;z-index:29;display:none;padding:calc(92px + var(--safe-top)) 14px calc(92px + var(--safe-bottom));
-  overflow:auto;background:linear-gradient(180deg,rgba(4,10,18,.98),rgba(6,13,22,.99));
+  overflow:auto;background:linear-gradient(180deg,rgba(0,0,0,.985),rgba(4,5,6,.995));
   -webkit-overflow-scrolling:touch;
 }
 .section.on{display:block}
@@ -197,11 +211,11 @@ button{touch-action:manipulation}
 .section-title{font-size:22px;font-weight:850;letter-spacing:.02em}
 .section-desc{margin-top:4px;color:#78909f;font-size:10px;line-height:1.5}
 .section-badge{font:700 9px/1 var(--mono);color:#9cc0cc;border:1px solid var(--line);border-radius:999px;padding:7px 9px;white-space:nowrap}
-.card{border:1px solid var(--line);background:linear-gradient(145deg,rgba(10,23,36,.92),rgba(5,14,24,.94));box-shadow:inset 0 1px rgba(255,255,255,.025),0 10px 30px rgba(0,0,0,.14);border-radius:14px;padding:12px;margin-bottom:10px}
+.card{border:1px solid var(--line);background:linear-gradient(145deg,rgba(10,11,12,.96),rgba(2,3,4,.98));box-shadow:inset 0 1px rgba(255,255,255,.025),0 10px 30px rgba(0,0,0,.14);border-radius:14px;padding:12px;margin-bottom:10px}
 .card-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px;font-size:12px;font-weight:850;color:#dcecf2}
 .card-title small{font:600 8px/1 var(--mono);color:#708897}
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
-.kpi{min-width:0;border:1px solid var(--line);border-radius:13px;padding:11px;background:linear-gradient(145deg,rgba(11,25,39,.92),rgba(6,15,25,.94))}
+.kpi{min-width:0;border:1px solid var(--line);border-radius:13px;padding:11px;background:linear-gradient(145deg,rgba(12,13,14,.96),rgba(3,4,5,.98))}
 .kpi .n{font:800 18px/1.2 var(--mono);color:#effbfc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kpi .l{margin-top:5px;color:#78909e;font-size:9px;font-weight:700}
 .chart{display:block;width:100%;height:180px}
@@ -210,13 +224,13 @@ button{touch-action:manipulation}
 
 /* 一覧 */
 .catalog-tools{position:sticky;top:-1px;z-index:2;padding:0 0 10px;background:linear-gradient(180deg,#06101a 78%,transparent)}
-.search{width:100%;height:44px;border:1px solid var(--line2);border-radius:12px;background:#081724;color:#eef8fa;padding:0 12px;outline:none;font-size:13px}
+.search{width:100%;height:44px;border:1px solid var(--line2);border-radius:12px;background:#050607;color:#eef8fa;padding:0 12px;outline:none;font-size:13px}
 .filters{display:flex;gap:6px;overflow:auto;padding-top:7px;scrollbar-width:none}.filters::-webkit-scrollbar{display:none}
-.filters button{height:32px;padding:0 11px;border-radius:999px;border:1px solid var(--line);background:#081622;color:#78909e;white-space:nowrap;font-size:10px;font-weight:800}
+.filters button{height:32px;padding:0 11px;border-radius:999px;border:1px solid var(--line);background:#050607;color:#78909e;white-space:nowrap;font-size:10px;font-weight:800}
 .filters button.on{color:#e8fffc;border-color:rgba(88,217,209,.34);background:rgba(88,217,209,.12)}
 .quake-row{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 2px;border-bottom:1px solid rgba(151,211,230,.08)}
-.quake-mag{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:#0b1a29;border:1px solid var(--line);font:800 13px/1 var(--mono);color:#dffffb}
-.quake-place{font-size:12px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quake-mag{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:#07090a;border:1px solid var(--line);font:800 13px/1 var(--mono);color:#dffffb;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.quake-place{font-size:12px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.quake-int{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:18px;padding:0 6px;border-radius:999px;margin-right:7px;font:800 10px/1 var(--mono);color:#081018;vertical-align:1px}.quake-place.warn{color:#ffd274}.quake-place.danger{color:#ff9d8d}.quake-place.extreme{color:#f7b2ff}
 .quake-sub{margin-top:4px;color:#768d9a;font:600 9px/1.35 var(--mono)}
 .quake-action{font:700 9px/1 var(--mono);color:#8ddfd9}
 
@@ -254,6 +268,20 @@ button{touch-action:manipulation}
 @media(max-height:700px){.map-summary{display:none}.depth-scale{height:170px}.event-hud .k{margin-top:7px}.event-hud .v.large{font-size:21px}}
 @media(prefers-reduced-motion:reduce){#scanline{animation:none}.boot-mark::after{animation:none}}
 </style>
+<style id="v172-responsive-fixes">
+@media(max-width:430px){
+  .topbar{grid-template-columns:minmax(0,168px) auto;left:10px;right:10px}
+  .brand{padding:9px 10px 9px 15px}.brand-name{font-size:20px}.brand-name b{font-size:15px}.brand-sub{font-size:9px}
+  .top-actions{gap:5px}.icon-btn{width:39px;height:39px}
+  .event-hud{right:10px;width:174px;top:calc(136px + var(--safe-top));padding:12px}
+  .event-mag{font-size:31px}
+}
+@media(max-width:370px){
+  .topbar{grid-template-columns:minmax(0,145px) auto}.brand-sub{display:none}.brand{padding-top:11px;padding-bottom:11px}
+  .icon-btn{width:36px;height:36px}.top-actions{gap:4px}
+  .event-hud{width:158px}.event-mag{font-size:28px}
+}
+</style>
 </head>
 <body>
 <div id="map"></div>
@@ -265,7 +293,7 @@ button{touch-action:manipulation}
   <div class="boot-core">
     <div class="boot-mark"><i></i></div>
     <div class="boot-title">地殻観測機構</div>
-    <div class="boot-sub">震源3D v17.0</div>
+    <div class="boot-sub">震源3D v17.2</div>
     <div class="boot-log" id="bootLog">
       <div>観測系統 <span>接続中</span></div>
       <div>衛星測位 <span>同期中</span></div>
@@ -277,7 +305,7 @@ button{touch-action:manipulation}
 <div class="topbar">
   <div class="brand">
     <div class="brand-main"><span class="brand-dot"></span><span class="brand-name">震源<b>3D</b></span></div>
-    <div class="brand-sub">地殻観測機構 <em>v17.0</em></div>
+    <div class="brand-sub">地殻観測機構 <em>v17.2</em></div>
   </div>
   <div class="top-actions">
     <button class="icon-btn" id="btnBase" aria-label="地図切替" title="地図切替">
@@ -317,11 +345,13 @@ button{touch-action:manipulation}
 </div>
 
 <div class="event-hud" id="eventHud">
+  <div class="event-alert" id="eventAlert">地震情報</div>
+  <div class="event-mag" id="eventMag">M--</div>
+  <div class="event-rule"></div>
   <div class="k">発生日時</div><div class="v" id="hudDate">--</div><div class="v large" id="hudTime">--:--</div>
   <div class="k">震央地名</div><div class="v" id="hudPlace">--</div>
   <div class="k">震源の深さ</div><div class="v large accent" id="hudDepth">--km</div>
   <div class="k">最大震度</div><div class="v large" id="hudIntensity">--</div>
-  <div class="k">マグニチュード</div><div class="v large" id="hudMag">--</div>
   <div class="run" id="hudRun">待機中</div>
 </div>
 
@@ -343,7 +373,7 @@ button{touch-action:manipulation}
 
 <nav class="bottom-nav">
   <button class="nav-btn on" data-section="map">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="8"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg><span>観測</span>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="8"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg><span>地図</span>
   </button>
   <button class="nav-btn" data-section="analysis">
     <svg viewBox="0 0 24 24"><path d="M4 19V9M9 19V5M14 19v-7M19 19V3"/><path d="M2 19h20"/></svg><span>解析</span>
@@ -352,7 +382,7 @@ button{touch-action:manipulation}
     <svg viewBox="0 0 24 24"><path d="M7 5h13M7 12h13M7 19h13"/><circle cx="3" cy="5" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="19" r="1"/></svg><span>地震一覧</span>
   </button>
   <button class="nav-btn" data-section="system">
-    <svg viewBox="0 0 24 24"><path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="m4 7 8 4 8-4M12 11v10"/></svg><span>システム</span>
+    <svg viewBox="0 0 24 24"><path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="m4 7 8 4 8-4M12 11v10"/></svg><span>仕様</span>
   </button>
 </nav>
 
@@ -375,13 +405,13 @@ button{touch-action:manipulation}
   </div>
   <div class="chart-grid">
     <div class="card"><div class="card-title"><span>深さと規模の密度</span><small>分布</small></div><canvas class="chart" id="chartHeat"></canvas></div>
-    <div class="card"><div class="card-title"><span>規模別の累積頻度</span><small>G-R則</small></div><canvas class="chart" id="chartGR"></canvas></div>
+    <div class="card"><div class="card-title"><span>規模別の累積頻度</span><small>規模別頻度則</small></div><canvas class="chart" id="chartGR"></canvas></div>
   </div>
   <div class="chart-grid">
     <div class="card"><div class="card-title"><span>時刻別の発生分布</span><small>日本時間</small></div><canvas class="chart" id="chartHour"></canvas></div>
     <div class="card"><div class="card-title"><span>深さ構成</span><small>0〜500km</small></div><canvas class="chart" id="chartDepth"></canvas></div>
   </div>
-  <div class="card"><div class="card-title"><span>解析上の注意</span></div><div class="note">表示はUSGSの公開カタログを直近1年に限定して集計しています。<b>相対エネルギー</b>は規模比較のための指標であり、被害量を示す値ではありません。b値は簡易推定で、研究用途では検知能力や地域条件を別途考慮する必要があります。</div></div>
+  <div class="card"><div class="card-title"><span>解析上の注意</span></div><div class="note">表示は米国地質調査所の公開カタログを直近1年に限定して集計しています。<b>相対エネルギー</b>は規模比較のための指標であり、被害量を示す値ではありません。b値は簡易推定で、研究用途では検知能力や地域条件を別途考慮する必要があります。</div></div>
 </section>
 
 <section class="section" id="catalogSection">
@@ -404,8 +434,8 @@ button{touch-action:manipulation}
 
 <section class="section" id="systemSection">
   <div class="section-head">
-    <div><div class="section-title">観測システム</div><div class="section-desc">データ、計算方式、表示の意味を確認できます。</div></div>
-    <div class="section-badge">v17.0</div>
+    <div><div class="section-title">仕様</div><div class="section-desc">データ、計算方式、表示の意味を確認できます。</div></div>
+    <div class="section-badge">v17.2</div>
   </div>
   <div class="system-grid">
     <div class="system-item"><div class="k">直近1年の震源</div><div class="v" id="sysHisto">--件</div></div>
@@ -417,7 +447,7 @@ button{touch-action:manipulation}
   </div>
   <div class="card" style="margin-top:10px"><div class="card-title"><span>4つの観測世界</span></div><div class="note"><b>地表観測</b>は活動位置を読み取る基本画面です。<br><b>深部観測</b>は震源を深さ方向へ配置し、地球内部の帯状分布を観測します。<br><b>時間航行</b>は直近1年を奥行きへ変換し、活動の流れを再生します。<br><b>観測網</b>は選択した地震から観測点へ伝わる信号を表示します。</div></div>
   <div class="card"><div class="card-title"><span>実測と演出の区別</span></div><div class="note">震源位置・深さ・規模、観測点震度は取得データです。波面、光軸、粒子、接続線は理解を助けるための視覚演出です。表示上の柱の高さや発光量を物理量として使用しないでください。</div></div>
-  <div class="card"><div class="card-title"><span>データ提供元</span></div><div class="note">最近の地震情報はP2P地震情報を通じた気象庁情報、直近1年の震源カタログはUSGS、背景地図は国土地理院タイルを使用します。通信失敗時は保存済みデータを表示します。</div></div>
+  <div class="card"><div class="card-title"><span>データ提供元</span></div><div class="note">最近の地震情報は気象庁情報、直近1年の震源カタログは米国地質調査所、背景地図は国土地理院タイルを使用します。通信失敗時は保存済みデータを表示します。</div></div>
 </section>
 
 <div class="sheet-backdrop" id="sheetBackdrop"></div>
@@ -452,8 +482,8 @@ const FETCH_TIMEOUT=12000;
 const HISTO_LIMIT=8000;
 const REGION={minLat:22,maxLat:47,minLon:122,maxLon:150};
 const DEPTH_STOPS=[
-  [0,[122,239,218]],[15,[80,224,208]],[35,[76,190,224]],[70,[77,148,232]],
-  [120,[92,116,229]],[200,[117,101,228]],[300,[148,91,218]],[400,[171,83,201]],[500,[190,76,181]]
+  [0,[92,234,230]],[12,[74,223,201]],[28,[74,210,137]],[55,[122,214,84]],
+  [90,[222,219,76]],[140,[243,170,72]],[210,[236,110,69]],[320,[214,82,140]],[500,[144,101,228]]
 ];
 const INTENSITY_COLORS={"1":"#91a7b4","2":"#53bd87","3":"#4b9fd2","4":"#d6bd52","5弱":"#e8a14d","5強":"#e87947","6弱":"#df5549","6強":"#c83b42","7":"#a44bbd"};
 
@@ -550,6 +580,9 @@ function buildObservations(q){const out=[];if(!q?.points||q.lat==null||q.lng==nu
 function depthColor(d,alpha=220){d=clamp(Number(d)||0,0,500);for(let i=0;i<DEPTH_STOPS.length-1;i++){const [a,ca]=DEPTH_STOPS[i],[b,cb]=DEPTH_STOPS[i+1];if(d>=a&&d<=b){const t=(d-a)/(b-a||1);return [Math.round(ca[0]+(cb[0]-ca[0])*t),Math.round(ca[1]+(cb[1]-ca[1])*t),Math.round(ca[2]+(cb[2]-ca[2])*t),alpha];}}const c=DEPTH_STOPS.at(-1)[1];return [...c,alpha];}
 function timeColor(age,alpha=210){const t=clamp(age/365,0,1);return [Math.round(108+(130-108)*t),Math.round(240+(116-240)*t),Math.round(224+(226-224)*t),alpha];}
 function intensityRGB(I,a=230){const key=I>=6.5?"7":I>=6?"6強":I>=5.5?"6弱":I>=5?"5強":I>=4.5?"5弱":I>=3.5?"4":I>=2.5?"3":I>=1.5?"2":"1";const h=INTENSITY_COLORS[key].slice(1),n=parseInt(h,16);return[(n>>16)&255,(n>>8)&255,n&255,a];}
+function magAccent(m,a=220){const v=Number(m)||0;if(v>=6.8)return [255,108,78,a];if(v>=6.2)return [255,150,83,a];if(v>=5.6)return [255,196,87,a];return null;}
+function colorCss(arr){return `rgba(${arr[0]},${arr[1]},${arr[2]},${(arr[3]??255)/255})`;}
+function titleRiskClass(q){const it=q.intensity||"";if(it==="7"||it==="6強"||it==="6弱")return "extreme";if(it==="5強"||it==="5弱")return "danger";if(it==="4")return "warn";if((Number(q.mag)||0)>=6.5)return "danger";if((Number(q.mag)||0)>=5.5)return "warn";return "";}
 
 /* ---------- 地図 ---------- */
 function initMap(){
@@ -561,9 +594,9 @@ function initMap(){
       pale:{type:"raster",tiles:["https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png"],tileSize:256,attribution:"国土地理院",maxzoom:18},
       hill:{type:"raster",tiles:["https://cyberjapandata.gsi.go.jp/xyz/hillshademap/{z}/{x}/{y}.png"],tileSize:256,attribution:"国土地理院",maxzoom:16}
     },layers:[
-      {id:"bg",type:"background",paint:{"background-color":"#06101a"}},
-      {id:"sat",type:"raster",source:"sat",paint:{"raster-brightness-min":.12,"raster-brightness-max":.68,"raster-saturation":-.42,"raster-contrast":.20,"raster-opacity":.92}},
-      {id:"hill",type:"raster",source:"hill",paint:{"raster-brightness-min":0,"raster-brightness-max":.36,"raster-saturation":-1,"raster-contrast":.32,"raster-opacity":.20}},
+      {id:"bg",type:"background",paint:{"background-color":"#000000"}},
+      {id:"sat",type:"raster",source:"sat",paint:{"raster-brightness-min":.08,"raster-brightness-max":.62,"raster-saturation":-.58,"raster-contrast":.32,"raster-opacity":.88}},
+      {id:"hill",type:"raster",source:"hill",paint:{"raster-brightness-min":0,"raster-brightness-max":.30,"raster-saturation":-1,"raster-contrast":.32,"raster-opacity":.20}},
       {id:"pale",type:"raster",source:"pale",layout:{visibility:"none"},paint:{"raster-brightness-min":0,"raster-brightness-max":.24,"raster-saturation":-1,"raster-contrast":.30,"raster-opacity":.82}}
     ]},
     center:[137.5,37.2],zoom:4.55,pitch:26,bearing:0,minZoom:3,maxZoom:13,maxPitch:68,attributionControl:true
@@ -576,7 +609,7 @@ function initMap(){
   map.on("error",e=>{if(e?.error)console.warn("map",e.error);});
 }
 function setBaseMode(){baseMode=baseMode==="sat"?"pale":"sat";if(!map?.isStyleLoaded())return;map.setLayoutProperty("sat","visibility",baseMode==="sat"?"visible":"none");map.setLayoutProperty("hill","visibility",baseMode==="sat"?"visible":"none");map.setLayoutProperty("pale","visibility",baseMode==="pale"?"visible":"none");}
-function resetMap(){selected=null;observations=[];stopReplay();$("eventHud").classList.remove("on");$("replayConsole").classList.remove("on");map?.easeTo({center:[137.5,37.2],zoom:4.55,pitch:mode==="surface"?26:55,bearing:0,duration:900,essential:true});rebuildBaseLayers();updateOverlay();}
+function resetMap(){document.body.classList.remove("has-selection");selected=null;observations=[];stopReplay();$("eventHud").classList.remove("on");$("replayConsole").classList.remove("on");map?.easeTo({center:[137.5,37.2],zoom:4.55,pitch:mode==="surface"?26:55,bearing:0,duration:900,essential:true});rebuildBaseLayers();updateOverlay();}
 
 /* ---------- 基本レイヤー ---------- */
 function filteredHisto(){const now=Date.now(),cut=now-filters.days*86400000;return HISTO.filter(q=>q.t>=cut&&q.mag>=filters.minMag&&q.depth<=filters.maxDepth);}
@@ -613,12 +646,16 @@ function rebuildBaseLayers(){
   const pos=q=>eventPosition(q);
   baseLayers=[...makeGridLayers(),...makeDepthFrames(),...makeTimeFrames()];
   baseLayers.push(new deck.ScatterplotLayer({
-    id:`histo-glow-${mode}`,data,getPosition:pos,getRadius:q=>core*2.35+Math.max(0,q.mag-4)*.42,radiusUnits:"pixels",radiusMinPixels:core*2.2,radiusMaxPixels:10,
-    getFillColor:q=>mode==="time"?timeColor((Date.now()-q.t)/86400000,34):depthColor(q.depth,38),stroked:false,pickable:false,parameters:{depthTest:false}
+    id:`histo-glow-${mode}`,data,getPosition:pos,
+    getRadius:q=>Math.max(1.0,core*1.22+Math.max(0,q.mag-4)*.20),radiusUnits:"pixels",radiusMinPixels:1.0,radiusMaxPixels:5.2,
+    getFillColor:q=>{const warm=magAccent(q.mag,30);return warm||(mode==="time"?timeColor((Date.now()-q.t)/86400000,20):depthColor(q.depth,24));},
+    stroked:false,pickable:false,parameters:{depthTest:false}
   }));
   baseLayers.push(new deck.ScatterplotLayer({
-    id:`histo-core-${mode}`,data,getPosition:pos,getRadius:q=>core+Math.max(0,q.mag-4)*.30,radiusUnits:"pixels",radiusMinPixels:core,radiusMaxPixels:7,
-    getFillColor:q=>mode==="time"?timeColor((Date.now()-q.t)/86400000,205):depthColor(q.depth,210),stroked:zoom>=8,getLineColor:[225,250,252,95],lineWidthUnits:"pixels",getLineWidth:.4,
+    id:`histo-core-${mode}`,data,getPosition:pos,
+    getRadius:q=>Math.max(1.25,core*.82+Math.max(0,q.mag-4)*.23),radiusUnits:"pixels",radiusMinPixels:1.25,radiusMaxPixels:5.8,
+    getFillColor:q=>{const warm=magAccent(q.mag,245);return warm||(mode==="time"?timeColor((Date.now()-q.t)/86400000,232):depthColor(q.depth,238));},
+    stroked:true,getLineColor:[246,250,252,150],lineWidthUnits:"pixels",getLineWidth:.48,
     pickable:true,onClick:info=>{if(info?.object)selectHistorical(info.object);},parameters:{depthTest:false}
   }));
   const major=data.filter(q=>q.mag>=6);
@@ -632,32 +669,117 @@ function rebuildBaseLayers(){
     baseLayers.push(new deck.ScatterplotLayer({id:"jma-nodes",data:recent,getPosition:q=>[q.lng,q.lat,0],getRadius:q=>5+Math.max(0,(q.mag||3)-3)*2,radiusUnits:"pixels",getFillColor:[220,255,250,210],stroked:true,getLineColor:[88,217,209,180],lineWidthUnits:"pixels",getLineWidth:1.1,pickable:true,onClick:i=>i?.object&&selectJMA(i.object),parameters:{depthTest:false}}));
   }
 }
+function makeSelectedDepthTicks(depth){
+  const d=Math.max(1,Number(depth)||10);
+  let ticks=d<=70?[0,10,30,50,70]:d<=160?[0,25,50,100,150]:d<=320?[0,50,100,200,300]:[0,100,200,300,500];
+  if(!ticks.some(v=>Math.abs(v-d)<=3))ticks.push(Math.round(d));
+  return [...new Set(ticks)].sort((a,b)=>a-b);
+}
 function dynamicLayers(){
-  if(!selected)return[];const q=selected,z=mode==="deep"?-q.depth*1000:mode==="time"?-clamp((Date.now()-q.t)/86400000,0,365)*3200:0,layers=[];
-  layers.push(new deck.LineLayer({id:"selected-axis-glow",data:[q],getSourcePosition:d=>[d.lng,d.lat,0],getTargetPosition:d=>[d.lng,d.lat,z],getColor:[101,228,220,40],getWidth:8,widthUnits:"pixels",parameters:{depthTest:false}}));
-  layers.push(new deck.LineLayer({id:"selected-axis",data:[q],getSourcePosition:d=>[d.lng,d.lat,0],getTargetPosition:d=>[d.lng,d.lat,z],getColor:[224,255,251,190],getWidth:1.25,widthUnits:"pixels",parameters:{depthTest:false}}));
-  const pulse=.5+.5*Math.sin(performance.now()/360);
-  layers.push(new deck.ScatterplotLayer({id:"selected-halo",data:[q],getPosition:d=>[d.lng,d.lat,z],getRadius:18+pulse*8,radiusUnits:"pixels",getFillColor:[83,225,214,20+Math.round(pulse*26)],stroked:true,getLineColor:[146,247,239,90+Math.round(pulse*70)],lineWidthUnits:"pixels",getLineWidth:1.4,parameters:{depthTest:false}}));
-  layers.push(new deck.ScatterplotLayer({id:"selected-core",data:[q],getPosition:d=>[d.lng,d.lat,z],getRadius:5.5,radiusUnits:"pixels",getFillColor:[244,255,253,250],stroked:true,getLineColor:[86,219,211,235],lineWidthUnits:"pixels",getLineWidth:1.5,parameters:{depthTest:false}}));
-  layers.push(new deck.TextLayer({id:"selected-label",data:[q],getPosition:d=>[d.lng,d.lat,z],getText:d=>`${Math.round(d.depth)}km`,getSize:13,getPixelOffset:[21,-2],getColor:[178,249,240,240],fontSettings:{sdf:true},outlineWidth:2,outlineColor:[3,8,14,240],parameters:{depthTest:false}}));
+  if(!selected)return[];
+  const q=selected;
+  const depth=Math.max(1,Number(q.depth)||10);
+  const z=-depth*1000;
+  const layers=[];
+  const pulse=.5+.5*Math.sin(performance.now()/520);
+  const warm=magAccent(q.mag,255)||[245,174,79,255];
 
+  /* 地表の震央。爆発表現ではなく、精密な観測リングとして描画 */
+  const surfaceRings=[
+    {r:8,c:[246,250,252,245],w:1.45},
+    {r:15,c:[100,226,225,225],w:1.35},
+    {r:24,c:[109,194,255,185],w:1.05},
+    {r:35,c:[236,178,89,150],w:.90},
+    {r:47,c:[122,167,222,92],w:.72}
+  ];
+  layers.push(new deck.ScatterplotLayer({
+    id:"selected-surface-rings",data:surfaceRings,getPosition:()=>[q.lng,q.lat,0],
+    getRadius:d=>d.r,radiusUnits:"pixels",filled:false,stroked:true,getLineColor:d=>d.c,
+    lineWidthUnits:"pixels",getLineWidth:d=>d.w,parameters:{depthTest:false}
+  }));
+  layers.push(new deck.ScatterplotLayer({
+    id:"selected-surface-core",data:[q],getPosition:d=>[d.lng,d.lat,0],getRadius:4.2,radiusUnits:"pixels",
+    getFillColor:[248,251,252,255],stroked:true,getLineColor:[238,174,75,245],lineWidthUnits:"pixels",getLineWidth:1.25,
+    parameters:{depthTest:false}
+  }));
+
+  /* 地表から震源までの深度軸。外側を薄く、中心を明確にする */
+  const cos=Math.max(.35,Math.cos(q.lat*Math.PI/180));
+  const dx=.012/cos;
+  const shaftLines=[
+    {a:[q.lng-dx,q.lat,0],b:[q.lng-dx,q.lat,z],c:[118,196,216,55],w:.65},
+    {a:[q.lng+dx,q.lat,0],b:[q.lng+dx,q.lat,z],c:[118,196,216,55],w:.65},
+    {a:[q.lng,q.lat,0],b:[q.lng,q.lat,z],c:[232,244,248,190],w:1.25}
+  ];
+  layers.push(new deck.LineLayer({
+    id:"selected-depth-shaft",data:shaftLines,getSourcePosition:d=>d.a,getTargetPosition:d=>d.b,
+    getColor:d=>d.c,getWidth:d=>d.w,widthUnits:"pixels",parameters:{depthTest:false}
+  }));
+
+  /* 深度断面リング。斜め視点で地表と震源の位置関係を読み取れる */
+  const maxGuide=Math.max(70,Math.ceil(depth/50)*50);
+  const ticks=makeSelectedDepthTicks(depth).filter(d=>d<=Math.max(500,maxGuide));
+  const slices=ticks.map(d=>({
+    d,z:-d*1000,r:12+Math.min(7,d/80),
+    actual:Math.abs(d-depth)<=3,
+    c:Math.abs(d-depth)<=3?[warm[0],warm[1],warm[2],235]:depthColor(d,145)
+  }));
+  layers.push(new deck.ScatterplotLayer({
+    id:"selected-depth-slices",data:slices,getPosition:d=>[q.lng,q.lat,d.z],getRadius:d=>d.r,
+    radiusUnits:"pixels",filled:false,stroked:true,getLineColor:d=>d.c,lineWidthUnits:"pixels",
+    getLineWidth:d=>d.actual?1.75:.85,parameters:{depthTest:false}
+  }));
+  layers.push(new deck.TextLayer({
+    id:"selected-depth-labels",data:slices,getPosition:d=>[q.lng,q.lat,d.z],
+    getText:d=>d.actual?`深さ ${Math.round(depth)}km`:`${d.d}km`,getSize:d=>d.actual?11:9,
+    getPixelOffset:d=>[33,0],getColor:d=>d.actual?[246,184,84,245]:[207,219,225,205],
+    fontFamily:"sans-serif",fontSettings:{sdf:true},outlineWidth:2,outlineColor:[0,0,0,240],parameters:{depthTest:false}
+  }));
+
+  /* 地中の震源。ふんわりした球ではなく、芯と輪郭を明確にする */
+  layers.push(new deck.ScatterplotLayer({
+    id:"selected-hypo-ring",data:[q],getPosition:d=>[d.lng,d.lat,z],getRadius:10.5+pulse*1.2,radiusUnits:"pixels",
+    filled:false,stroked:true,getLineColor:[warm[0],warm[1],warm[2],205],lineWidthUnits:"pixels",getLineWidth:1.35,parameters:{depthTest:false}
+  }));
+  layers.push(new deck.ScatterplotLayer({
+    id:"selected-hypo-core",data:[q],getPosition:d=>[d.lng,d.lat,z],getRadius:4.6,radiusUnits:"pixels",
+    getFillColor:[warm[0],warm[1],warm[2],255],stroked:true,getLineColor:[255,248,230,245],lineWidthUnits:"pixels",getLineWidth:1.15,
+    parameters:{depthTest:false}
+  }));
+
+  /* 地震波再生。輪郭を主体にし、ぼかしは最小限にする */
   if(replay.t>=0){
-    const pPath=Earth.velocity(q.depth,"P")*replay.t,sPath=Earth.velocity(q.depth,"S")*replay.t,pR=pPath>q.depth?Math.sqrt(pPath*pPath-q.depth*q.depth):0,sR=sPath>q.depth?Math.sqrt(sPath*sPath-q.depth*q.depth):0;
-    if(pR>1){
-      layers.push(new deck.ScatterplotLayer({id:"p-wave-glow",data:[{r:pR}],getPosition:()=>[q.lng,q.lat,0],getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,getLineColor:[120,222,248,52],lineWidthUnits:"pixels",getLineWidth:6,parameters:{depthTest:false}}));
-      layers.push(new deck.ScatterplotLayer({id:"p-wave",data:[{r:pR}],getPosition:()=>[q.lng,q.lat,0],getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,getLineColor:[154,235,255,225],lineWidthUnits:"pixels",getLineWidth:1.8,parameters:{depthTest:false}}));
-    }
-    if(sR>1){
-      layers.push(new deck.ScatterplotLayer({id:"s-wave-glow",data:[{r:sR}],getPosition:()=>[q.lng,q.lat,0],getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,getLineColor:[126,129,246,54],lineWidthUnits:"pixels",getLineWidth:7,parameters:{depthTest:false}}));
-      layers.push(new deck.ScatterplotLayer({id:"s-wave",data:[{r:sR}],getPosition:()=>[q.lng,q.lat,0],getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,getLineColor:[151,145,252,230],lineWidthUnits:"pixels",getLineWidth:2.2,parameters:{depthTest:false}}));
-    }
+    const pPath=Earth.velocity(depth,"P")*replay.t,sPath=Earth.velocity(depth,"S")*replay.t;
+    const pR=pPath>depth?Math.sqrt(pPath*pPath-depth*depth):0;
+    const sR=sPath>depth?Math.sqrt(sPath*sPath-depth*depth):0;
+    if(pR>1)layers.push(new deck.ScatterplotLayer({
+      id:"p-wave",data:[{r:pR}],getPosition:()=>[q.lng,q.lat,0],getRadius:d=>d.r*1000,radiusUnits:"meters",
+      filled:false,stroked:true,getLineColor:[132,226,255,225],lineWidthUnits:"pixels",getLineWidth:1.65,parameters:{depthTest:false}
+    }));
+    if(sR>1)layers.push(new deck.ScatterplotLayer({
+      id:"s-wave",data:[{r:sR}],getPosition:()=>[q.lng,q.lat,0],getRadius:d=>d.r*1000,radiusUnits:"meters",
+      filled:false,stroked:true,getLineColor:[157,143,247,220],lineWidthUnits:"pixels",getLineWidth:2.0,parameters:{depthTest:false}
+    }));
     const reached=observations.filter(o=>o.tS<=replay.t);
     if(reached.length){
-      const show=reached.length>380?reached.filter((_,i)=>i%Math.ceil(reached.length/380)===0):reached;
-      layers.push(new deck.ColumnLayer({id:"station-columns",data:show,diskResolution:12,radius:900,getPosition:o=>[o.lng,o.lat],getElevation:o=>700+Math.pow(o.I,1.7)*1500,getFillColor:o=>intensityRGB(o.I,105),getLineColor:[245,255,252,64],lineWidthMinPixels:.35,extruded:true,material:false,pickable:false,parameters:{depthTest:true}}));
-      layers.push(new deck.ScatterplotLayer({id:"station-pulses",data:show,getPosition:o=>[o.lng,o.lat,0],getRadius:o=>5+Math.max(0,1-Math.min(1,(replay.t-o.tS)/1.2))*8,radiusUnits:"pixels",getFillColor:o=>intensityRGB(o.I,225),stroked:true,getLineColor:[248,255,253,180],lineWidthUnits:"pixels",getLineWidth:.8,parameters:{depthTest:false}}));
-      const arcs=[...reached].sort((a,b)=>b.I-a.I||b.distance-a.distance).slice(0,56);
-      layers.push(new deck.ArcLayer({id:"signal-arcs",data:arcs,getSourcePosition:()=>[q.lng,q.lat],getTargetPosition:o=>[o.lng,o.lat],getSourceColor:[95,221,213,65],getTargetColor:o=>intensityRGB(o.I,100),getWidth:o=>.35+o.I*.12,widthUnits:"pixels",greatCircle:true,getHeight:o=>Math.min(.12,.02+o.distance/11000),parameters:{depthTest:false}}));
+      const show=reached.length>320?reached.filter((_,i)=>i%Math.ceil(reached.length/320)===0):reached;
+      layers.push(new deck.ColumnLayer({
+        id:"station-columns",data:show,diskResolution:12,radius:760,getPosition:o=>[o.lng,o.lat],
+        getElevation:o=>650+Math.pow(o.I,1.68)*1350,getFillColor:o=>intensityRGB(o.I,95),
+        getLineColor:[250,252,253,84],lineWidthMinPixels:.38,extruded:true,material:false,pickable:false,parameters:{depthTest:true}
+      }));
+      layers.push(new deck.ScatterplotLayer({
+        id:"station-pulses",data:show,getPosition:o=>[o.lng,o.lat,0],
+        getRadius:o=>4.5+Math.max(0,1-Math.min(1,(replay.t-o.tS)/1.0))*5.5,radiusUnits:"pixels",
+        getFillColor:o=>intensityRGB(o.I,235),stroked:true,getLineColor:[252,253,254,205],lineWidthUnits:"pixels",getLineWidth:.75,
+        parameters:{depthTest:false}
+      }));
+      const arcs=[...reached].sort((a,b)=>b.I-a.I||b.distance-a.distance).slice(0,44);
+      layers.push(new deck.ArcLayer({
+        id:"signal-arcs",data:arcs,getSourcePosition:()=>[q.lng,q.lat],getTargetPosition:o=>[o.lng,o.lat],
+        getSourceColor:[105,211,218,48],getTargetColor:o=>intensityRGB(o.I,88),getWidth:o=>.28+o.I*.09,
+        widthUnits:"pixels",greatCircle:true,getHeight:o=>Math.min(.10,.016+o.distance/13000),parameters:{depthTest:false}
+      }));
     }
   }
   return layers;
@@ -667,13 +789,29 @@ function animateSelected(){if(!selected||section!=="map"){animateSelected._run=0
 
 /* ---------- 選択と再生 ---------- */
 function selectHistorical(q){
-  selected={...q,intensity:null,points:[]};observations=[];showSelected();$("replayConsole").classList.remove("on");map?.flyTo({center:[q.lng,q.lat],zoom:Math.max(map.getZoom(),6),pitch:mode==="deep"?58:45,bearing:-8,duration:1100,essential:true});
+  selected={...q,intensity:null,points:[]};observations=[];showSelected();$("replayConsole").classList.remove("on");map?.flyTo({center:[q.lng,q.lat],offset:[-62,8],zoom:Math.max(map.getZoom(),6.05),pitch:58,bearing:-14,duration:1100,essential:true});
 }
 function selectJMA(q){
-  selected=q;observations=buildObservations(q);replay.t=-2;replay.end=Math.max(18,observations.length?observations.at(-1).tS+3:28);showSelected();$("replayConsole").classList.add("on");$("replayTitle").textContent=q.place;$("replayMeta").textContent=`M${q.mag!=null?q.mag.toFixed(1):"--"}・深さ${q.depth}km・観測点${observations.length}局`;$("replayRange").value=0;map?.flyTo({center:[q.lng,q.lat],zoom:Math.max(map.getZoom(),6.3),pitch:mode==="deep"?58:48,bearing:-10,duration:1200,essential:true});
+  selected=q;observations=buildObservations(q);replay.t=-2;replay.end=Math.max(18,observations.length?observations.at(-1).tS+3:28);showSelected();$("replayConsole").classList.add("on");$("replayTitle").textContent=q.place;$("replayMeta").textContent=`M${q.mag!=null?q.mag.toFixed(1):"--"}・深さ${q.depth}km・観測点${observations.length}局`;$("replayRange").value=0;map?.flyTo({center:[q.lng,q.lat],offset:[-62,8],zoom:Math.max(map.getZoom(),6.25),pitch:58,bearing:-14,duration:1200,essential:true});
 }
 function showSelected(){
-  const q=selected,d=new Date(q.t);$("eventHud").classList.add("on");$("hudDate").textContent=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;$("hudTime").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}`;$("hudPlace").textContent=q.place;$("hudDepth").textContent=`${Math.round(q.depth)}km`;$("hudIntensity").textContent=q.intensity||"--";$("hudIntensity").style.color=q.intensity?(INTENSITY_COLORS[q.intensity]||"#fff"):"#fff";$("hudMag").textContent=q.mag!=null?q.mag.toFixed(1):"--";$("hudRun").textContent=observations.length?`観測点照合 ${observations.length}局`:"震源位置を表示";updateDepthDot();updateOverlay();if(!animateSelected._run){animateSelected._run=1;requestAnimationFrame(animateSelected);}
+  const q=selected,d=new Date(q.t);
+  document.body.classList.add("has-selection");
+  $("eventHud").classList.add("on");
+  $("hudDate").textContent=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  $("hudTime").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  $("hudPlace").textContent=q.place;
+  $("hudDepth").textContent=`約 ${Math.round(q.depth)}km`;
+  $("hudIntensity").textContent=q.intensity?`震度 ${q.intensity}`:"観測値なし";
+  $("hudIntensity").style.color=q.intensity?(INTENSITY_COLORS[q.intensity]||"#fff"):"#aab5ba";
+  $("eventMag").textContent=q.mag!=null?`M${q.mag.toFixed(1)}`:"M--";
+  const strong=q.intensity&&["5弱","5強","6弱","6強","7"].includes(q.intensity);
+  $("eventAlert").textContent=strong?"強い揺れに警戒":"地震情報";
+  $("eventAlert").classList.toggle("strong",!!strong);
+  $("eventMag").classList.toggle("strong",!!strong);
+  $("hudRun").textContent=observations.length?`観測点照合 ${observations.length}局`:"震源位置を表示";
+  updateDepthDot();updateOverlay();
+  if(!animateSelected._run){animateSelected._run=1;requestAnimationFrame(animateSelected);}
 }
 function updateDepthDot(){if(!selected)return;$("depthDot").style.top=`${clamp(selected.depth/500*100,0,100)}%`;}
 function toggleReplay(){if(!selected||!observations.length){toast("この地震には再生できる観測点データがありません");return;}replay.playing=!replay.playing;$("replayPlay").textContent=replay.playing?"Ⅱ":"▶";cancelAnimationFrame(replay.raf);if(replay.playing){replay.last=0;replay.raf=requestAnimationFrame(replayTick);}}
@@ -690,7 +828,7 @@ function setTimeDay(v){timeTravel.playing=false;cancelAnimationFrame(timeTravel.
 /* ---------- モード・画面 ---------- */
 function setMode(next){
   mode=next;document.querySelectorAll("#modebar button").forEach(b=>b.classList.toggle("on",b.dataset.mode===next));$("timeConsole").classList.toggle("on",next==="time"&&!selected);$("replayConsole").classList.toggle("on",!!selected&&observations.length>0);
-  if(next==="surface")map?.easeTo({pitch:26,bearing:0,duration:650,essential:true});
+  if(next==="surface")map?.easeTo({pitch:selected?55:26,bearing:selected?-12:0,duration:650,essential:true});
   else if(next==="deep")map?.easeTo({pitch:60,bearing:-12,duration:700,essential:true});
   else if(next==="time")map?.easeTo({pitch:58,bearing:10,duration:700,essential:true});
   else map?.easeTo({pitch:42,bearing:0,duration:650,essential:true});
@@ -723,7 +861,7 @@ function renderCatalog(){
     return true;
   }).sort((a,b)=>b.t-a.t).slice(0,500);
   $("catalogCount").textContent=`${items.length}件`;
-  $("catalogList").innerHTML=items.map((q,i)=>`<div class="quake-row" data-i="${i}"><div class="quake-mag">M${q.mag!=null?q.mag.toFixed(1):"--"}</div><div><div class="quake-place">${esc(q.place)}</div><div class="quake-sub">${fmtDateTime(q.t)}・深さ${Math.round(q.depth)}km${q.intensity?`・最大震度${q.intensity}`:""}</div></div><div class="quake-action">${q.src==="気象庁"&&q.points?.length?"再生":"表示"}</div></div>`).join("");
+  $("catalogList").innerHTML=items.map((q,i)=>{const risk=titleRiskClass(q);const badge=q.intensity?`<span class="quake-int" style="background:${INTENSITY_COLORS[q.intensity]||'#d9e4ea'}">${q.intensity}</span>`:"";const magWarm=magAccent(q.mag,255);const magStyle=magWarm?`style="background:${colorCss(magWarm)};border-color:rgba(255,255,255,.08);color:#081018"`:"";return `<div class="quake-row" data-i="${i}"><div class="quake-mag" ${magStyle}>M${q.mag!=null?q.mag.toFixed(1):"--"}</div><div><div class="quake-place ${risk}">${badge}${esc(q.place)}</div><div class="quake-sub">${fmtDateTime(q.t)}・深さ${Math.round(q.depth)}km${q.intensity?`・最大震度${q.intensity}`:""}</div></div><div class="quake-action">${q.src==="気象庁"&&q.points?.length?"再生":"表示"}</div></div>`;}).join("");
   document.querySelectorAll("#catalogList .quake-row").forEach(row=>row.addEventListener("click",()=>{const q=items[Number(row.dataset.i)];setSection("map");q.src==="気象庁"?selectJMA(q):selectHistorical(q);}));
 }
 
@@ -745,9 +883,9 @@ function drawDepth(data){const{c,w,h}=setupCanvas("chartDepth",180),bins=[[0,10]
 function initFx(){const cv=$("fxCanvas"),ctx=cv.getContext("2d");function resize(){const dpr=Math.min(2,devicePixelRatio||1);cv.width=Math.round(innerWidth*dpr);cv.height=Math.round(innerHeight*dpr);cv.style.width=`${innerWidth}px`;cv.style.height=`${innerHeight}px`;ctx.setTransform(dpr,0,0,dpr,0,0);fxState.particles=Array.from({length:54},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,s:.3+Math.random()*1.2,v:.08+Math.random()*.24,a:.04+Math.random()*.14}));}resize();addEventListener("resize",resize);
   function draw(ts){if(!fxState.running){requestAnimationFrame(draw);return;}if(ts-fxState.last<33){requestAnimationFrame(draw);return;}fxState.last=ts;ctx.clearRect(0,0,innerWidth,innerHeight);
     const t=ts/1000;ctx.save();ctx.globalCompositeOperation="screen";
-    const g=ctx.createLinearGradient(0,0,innerWidth,innerHeight);g.addColorStop(0,`rgba(78,222,210,${mode==="deep"?.045:.028})`);g.addColorStop(.45,"rgba(0,0,0,0)");g.addColorStop(1,`rgba(92,118,232,${mode==="time"?.055:.025})`);ctx.fillStyle=g;ctx.fillRect(0,0,innerWidth,innerHeight);
+    const g=ctx.createLinearGradient(0,0,innerWidth,innerHeight);g.addColorStop(0,`rgba(78,222,210,${mode==="deep"?.022:.010})`);g.addColorStop(.45,"rgba(0,0,0,0)");g.addColorStop(1,`rgba(92,118,232,${mode==="time"?.026:.010})`);ctx.fillStyle=g;ctx.fillRect(0,0,innerWidth,innerHeight);
     for(const p of fxState.particles){p.y-=p.v;if(p.y<-5){p.y=innerHeight+5;p.x=Math.random()*innerWidth;}ctx.fillStyle=`rgba(154,242,234,${p.a})`;ctx.beginPath();ctx.arc(p.x+Math.sin(t*.2+p.y*.01)*4,p.y,p.s,0,Math.PI*2);ctx.fill();}
-    if(selected&&map){const pt=map.project([selected.lng,selected.lat]),r=22+8*Math.sin(t*2.1);const rg=ctx.createRadialGradient(pt.x,pt.y,0,pt.x,pt.y,r*2.5);rg.addColorStop(0,"rgba(214,255,250,.22)");rg.addColorStop(.25,"rgba(80,222,212,.09)");rg.addColorStop(1,"rgba(80,222,212,0)");ctx.fillStyle=rg;ctx.beginPath();ctx.arc(pt.x,pt.y,r*2.5,0,Math.PI*2);ctx.fill();}
+    if(selected&&map){const pt=map.project([selected.lng,selected.lat]);ctx.strokeStyle="rgba(220,244,246,.20)";ctx.lineWidth=.8;ctx.beginPath();ctx.arc(pt.x,pt.y,15+2*Math.sin(t*1.4),0,Math.PI*2);ctx.stroke();}
     ctx.restore();requestAnimationFrame(draw);
   }requestAnimationFrame(draw);
 }
