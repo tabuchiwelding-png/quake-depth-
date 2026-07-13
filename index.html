@@ -2,12 +2,15 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="震源3D">
-<title>震源3D｜地殻観測機構 v17.3 v17.3</title>
+<title>震源3D｜地殻観測機構 v18.0</title>
 <meta name="description" content="直近1年の日本周辺の震源と、気象庁の地震情報を立体的に観測・再生する地殻観測アプリ。">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.css'">
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.js'"></script>
@@ -281,7 +284,7 @@ body.is-replaying .topbar{opacity:.82}
 @media(max-height:700px){.map-summary{display:none}.depth-scale{height:170px}.event-hud .k{margin-top:7px}.event-hud .v.large{font-size:21px}}
 @media(prefers-reduced-motion:reduce){#scanline{animation:none}.boot-mark::after{animation:none}}
 
-/* v17.3 操作密度の最終調整 */
+/* v18.0 操作密度の最終調整 */
 body.has-selection:not(.is-replaying) .modebar{opacity:.76;background:rgba(0,0,0,.58);border-color:rgba(210,229,236,.10);box-shadow:none}
 body.has-selection:not(.is-replaying) .modebar button{height:31px;font-size:10px}
 body.has-selection .event-hud{max-height:calc(100vh - 270px);overflow:hidden}
@@ -290,6 +293,25 @@ body.has-selection .event-hud{max-height:calc(100vh - 270px);overflow:hidden}
   .replay-play{width:38px;height:38px}.replay-speed{min-width:34px;height:29px}
   .replay-title{font-size:10px}.replay-meta{font-size:8px}
 }
+
+/* v18 深度オーバーレイと再生UI */
+.depth-overlay{position:fixed;inset:0;z-index:31;pointer-events:none;display:none}
+.depth-overlay.on{display:block}
+.depth-overlay svg{width:100%;height:100%;overflow:visible}
+.depth-line{stroke:rgba(231,244,247,.88);stroke-width:1.25;vector-effect:non-scaling-stroke}
+.depth-line-glow{stroke:rgba(91,221,215,.18);stroke-width:7;vector-effect:non-scaling-stroke}
+.depth-tick{stroke:rgba(178,211,220,.72);stroke-width:.8;vector-effect:non-scaling-stroke}
+.depth-ring{fill:none;stroke-width:1.1;vector-effect:non-scaling-stroke}
+.depth-label{fill:#dce9ed;font:700 10px system-ui,-apple-system,sans-serif;paint-order:stroke;stroke:#000;stroke-width:3px;stroke-linejoin:round}
+.depth-label.actual{fill:#ffc66f;font-size:11px}
+.replay-console{left:22px;right:22px;bottom:calc(84px + var(--safe-bottom));grid-template-columns:34px minmax(0,1fr) 34px;gap:8px;filter:drop-shadow(0 1px 5px rgba(0,0,0,.92))}
+.replay-play{width:34px;height:34px;background:rgba(0,0,0,.16);border-color:rgba(225,247,248,.45);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+.replay-speed{height:28px;min-width:34px;background:rgba(0,0,0,.12);backdrop-filter:none;-webkit-backdrop-filter:none}
+.replay-title{font-size:10px}.replay-meta{font-size:8px}.replay-range{margin-top:5px;height:1px}
+body.is-replaying .event-hud{opacity:.58;background:transparent;border-color:transparent;box-shadow:none}
+body.is-replaying .bottom-nav{opacity:.10}
+body.has-selection:not(.is-replaying) .modebar{opacity:.52}
+
 </style>
 <style id="v172-responsive-fixes">
 @media(max-width:430px){
@@ -316,7 +338,7 @@ body.has-selection .event-hud{max-height:calc(100vh - 270px);overflow:hidden}
   <div class="boot-core">
     <div class="boot-mark"><i></i></div>
     <div class="boot-title">地殻観測機構</div>
-    <div class="boot-sub">震源3D v17.3</div>
+    <div class="boot-sub">震源3D v18.0</div>
     <div class="boot-log" id="bootLog">
       <div>観測系統 <span>接続中</span></div>
       <div>衛星測位 <span>同期中</span></div>
@@ -328,7 +350,7 @@ body.has-selection .event-hud{max-height:calc(100vh - 270px);overflow:hidden}
 <div class="topbar">
   <div class="brand">
     <div class="brand-main"><span class="brand-dot"></span><span class="brand-name">震源<b>3D</b></span></div>
-    <div class="brand-sub">地殻観測機構 <em>v17.3</em></div>
+    <div class="brand-sub">地殻観測機構 <em>v18.0</em></div>
   </div>
   <div class="top-actions">
     <button class="icon-btn" id="btnBase" aria-label="地図切替" title="地図切替">
@@ -365,6 +387,9 @@ body.has-selection .event-hud{max-height:calc(100vh - 270px);overflow:hidden}
   <div class="top" id="depthTop">0km</div>
   <div class="rail"><span class="dot" id="depthDot" style="top:0%"></span></div>
   <div class="bottom" id="depthBottom">500km</div>
+</div>
+<div class="depth-overlay" id="depthOverlay" aria-hidden="true">
+  <svg id="depthSvg" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
 </div>
 
 <div class="event-hud" id="eventHud">
@@ -458,7 +483,7 @@ body.has-selection .event-hud{max-height:calc(100vh - 270px);overflow:hidden}
 <section class="section" id="systemSection">
   <div class="section-head">
     <div><div class="section-title">仕様</div><div class="section-desc">データ、計算方式、表示の意味を確認できます。</div></div>
-    <div class="section-badge">v17.3</div>
+    <div class="section-badge">v18.0</div>
   </div>
   <div class="system-grid">
     <div class="system-item"><div class="k">直近1年の震源</div><div class="v" id="sysHisto">--件</div></div>
@@ -492,7 +517,7 @@ body.has-selection .event-hud{max-height:calc(100vh - 270px);overflow:hidden}
 
 /* 旧版のService Workerやキャッシュが新コードを上書きしないよう解除 */
 try{
-  if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(list=>list.forEach(r=>r.unregister())).catch(()=>{});}
+  if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(list=>list.forEach(r=>r.unregister())).catch(()=>{});}try{caches?.keys?.().then(keys=>keys.forEach(k=>caches.delete(k)));}catch(e){}
   if(typeof caches!=="undefined"){caches.keys().then(keys=>Promise.all(keys.filter(k=>/shingen|jeq/i.test(k)).map(k=>caches.delete(k)))).catch(()=>{});}
 }catch(e){}
 
@@ -627,42 +652,24 @@ function initMap(){
   map.touchZoomRotate.enable();map.dragRotate.enable();
   overlay=new deck.MapboxOverlay({interleaved:true,layers:[]});map.addControl(overlay);
   map.on("load",()=>{rebuildBaseLayers();updateOverlay();updateStatus("観測系統 接続済");});
-  map.on("move",()=>{if(selected)updateDepthDot();});
+  map.on("move",()=>{if(selected){updateDepthDot();updateDepthOverlay();}});
   map.on("moveend",()=>{if(mode!=="surface")rebuildBaseLayers();});
   map.on("error",e=>{if(e?.error)console.warn("map",e.error);});
 }
 function setBaseMode(){baseMode=baseMode==="sat"?"pale":"sat";if(!map?.isStyleLoaded())return;map.setLayoutProperty("sat","visibility",baseMode==="sat"?"visible":"none");map.setLayoutProperty("hill","visibility",baseMode==="sat"?"visible":"none");map.setLayoutProperty("pale","visibility",baseMode==="pale"?"visible":"none");}
-function resetMap(){document.body.classList.remove("has-selection","is-replaying");selected=null;observations=[];stopReplay();$("eventHud").classList.remove("on");$("replayConsole").classList.remove("on");map?.easeTo({center:[137.5,37.2],zoom:4.55,pitch:mode==="surface"?26:55,bearing:0,duration:900,essential:true});rebuildBaseLayers();updateOverlay();}
+function resetMap(){document.body.classList.remove("has-selection","is-replaying");selected=null;observations=[];stopReplay();$("eventHud").classList.remove("on");$("replayConsole").classList.remove("on");$("depthOverlay").classList.remove("on");map?.easeTo({center:[137.5,37.2],zoom:4.55,pitch:mode==="surface"?26:55,bearing:0,duration:900,essential:true});rebuildBaseLayers();updateOverlay();}
 
 /* ---------- 基本レイヤー ---------- */
 function filteredHisto(){const now=Date.now(),cut=now-filters.days*86400000;return HISTO.filter(q=>q.t>=cut&&q.mag>=filters.minMag&&q.depth<=filters.maxDepth);}
-function eventPosition(q){
-  if(mode==="deep")return[q.lng,q.lat,-q.depth*1000];
-  if(mode==="time"){const age=(Date.now()-q.t)/86400000;return[q.lng,q.lat,-age*3200];}
-  return[q.lng,q.lat,0];
-}
+function eventPosition(q){return[q.lng,q.lat,0];}
 function makeGridLayers(){
   if(mode==="surface")return[];const lines=[];
   for(let lat=24;lat<=46;lat+=2)lines.push({a:[122,lat,0],b:[150,lat,0]});
   for(let lon=124;lon<=150;lon+=2)lines.push({a:[lon,22,0],b:[lon,47,0]});
   return[new deck.LineLayer({id:"coord-grid",data:lines,getSourcePosition:d=>d.a,getTargetPosition:d=>d.b,getColor:[91,180,194,42],getWidth:.7,widthUnits:"pixels",parameters:{depthTest:false}})];
 }
-function makeDepthFrames(){
-  if(mode!=="deep")return[];const depths=[50,100,200,300,500],segments=[],labels=[];
-  for(const d of depths){const z=-d*1000,box=[[125,25],[149,25],[149,46],[125,46],[125,25]];for(let i=0;i<box.length-1;i++)segments.push({a:[...box[i],z],b:[...box[i+1],z],d});labels.push({p:[149,45.5,z],text:`深さ${d}km`});}
-  return[
-    new deck.LineLayer({id:"depth-frames",data:segments,getSourcePosition:d=>d.a,getTargetPosition:d=>d.b,getColor:d=>depthColor(d.d,70),getWidth:.8,widthUnits:"pixels",parameters:{depthTest:false}}),
-    new deck.TextLayer({id:"depth-frame-labels",data:labels,getPosition:d=>d.p,getText:d=>d.text,getSize:10,getColor:[164,214,223,180],fontFamily:"sans-serif",fontSettings:{sdf:true},outlineWidth:2,outlineColor:[3,8,14,220],parameters:{depthTest:false}})
-  ];
-}
-function makeTimeFrames(){
-  if(mode!=="time")return[];const days=[90,180,270,365],segments=[],labels=[];
-  for(const d of days){const z=-d*3200,box=[[125,25],[149,25],[149,46],[125,46],[125,25]];for(let i=0;i<box.length-1;i++)segments.push({a:[...box[i],z],b:[...box[i+1],z],d});labels.push({p:[149,45.5,z],text:`${d}日前`});}
-  return[
-    new deck.LineLayer({id:"time-frames",data:segments,getSourcePosition:d=>d.a,getTargetPosition:d=>d.b,getColor:[114,139,232,55],getWidth:.8,widthUnits:"pixels",parameters:{depthTest:false}}),
-    new deck.TextLayer({id:"time-labels",data:labels,getPosition:d=>d.p,getText:d=>d.text,getSize:10,getColor:[166,182,235,190],fontSettings:{sdf:true},outlineWidth:2,outlineColor:[3,8,14,220],parameters:{depthTest:false}})
-  ];
-}
+function makeDepthFrames(){return[];}
+function makeTimeFrames(){return[];}
 function rebuildBaseLayers(){
   const data=filteredHisto().filter(q=>mode!=="time"||((Date.now()-q.t)/86400000)<=timeTravel.day);
   const zoom=map?map.getZoom():4.5,core=zoom<5?1.5:zoom<7?1.9:zoom<9?2.4:3.1;
@@ -683,10 +690,6 @@ function rebuildBaseLayers(){
   }));
   const major=data.filter(q=>q.mag>=6);
   if(major.length)baseLayers.push(new deck.ScatterplotLayer({id:`major-rings-${mode}`,data:major,getPosition:pos,getRadius:q=>8+(q.mag-6)*4,radiusUnits:"pixels",filled:false,stroked:true,getLineColor:[205,250,246,145],lineWidthUnits:"pixels",getLineWidth:1.1,parameters:{depthTest:false}}));
-  if(mode==="deep"){
-    const threads=data.filter(q=>q.mag>=5.5).map(q=>({a:[q.lng,q.lat,0],b:[q.lng,q.lat,-q.depth*1000],q}));
-    baseLayers.push(new deck.LineLayer({id:"deep-threads",data:threads,getSourcePosition:d=>d.a,getTargetPosition:d=>d.b,getColor:d=>depthColor(d.q.depth,70),getWidth:.7,widthUnits:"pixels",parameters:{depthTest:false}}));
-  }
   if(mode==="network"&&!selected){
     const recent=JMA.filter(q=>Number.isFinite(q.lat)&&Number.isFinite(q.lng)).slice(0,30);
     baseLayers.push(new deck.ScatterplotLayer({id:"jma-nodes",data:recent,getPosition:q=>[q.lng,q.lat,0],getRadius:q=>5+Math.max(0,(q.mag||3)-3)*2,radiusUnits:"pixels",getFillColor:[220,255,250,210],stroked:true,getLineColor:[88,217,209,180],lineWidthUnits:"pixels",getLineWidth:1.1,pickable:true,onClick:i=>i?.object&&selectJMA(i.object),parameters:{depthTest:false}}));
@@ -700,114 +703,57 @@ function makeSelectedDepthTicks(depth){
 }
 function dynamicLayers(){
   if(!selected)return[];
-  const q=selected;
-  const depth=Math.max(1,Number(q.depth)||10);
-  const z=-depth*1000;
-  const layers=[];
-  const pulse=.5+.5*Math.sin(performance.now()/520);
+  const q=selected,depth=Math.max(1,Number(q.depth)||10),layers=[];
+  const pulse=.5+.5*Math.sin(performance.now()/540);
   const warm=magAccent(q.mag,255)||[245,174,79,255];
-
-  /* 地表の震央。爆発表現ではなく、精密な観測リングとして描画 */
   const surfaceRings=[
-    {r:8,c:[246,250,252,245],w:1.45},
-    {r:15,c:[100,226,225,225],w:1.35},
-    {r:24,c:[109,194,255,185],w:1.05},
-    {r:35,c:[236,178,89,150],w:.90},
-    {r:47,c:[122,167,222,92],w:.72}
+    {r:7,c:[248,252,253,245],w:1.35},
+    {r:13,c:[91,222,216,220],w:1.15},
+    {r:21,c:[101,191,244,170],w:.9},
+    {r:31,c:[236,179,91,120],w:.7}
   ];
-  layers.push(new deck.ScatterplotLayer({
-    id:"selected-surface-rings",data:surfaceRings,getPosition:()=>[q.lng,q.lat,0],
-    getRadius:d=>d.r,radiusUnits:"pixels",filled:false,stroked:true,getLineColor:d=>d.c,
-    lineWidthUnits:"pixels",getLineWidth:d=>d.w,parameters:{depthTest:false}
-  }));
-  layers.push(new deck.ScatterplotLayer({
-    id:"selected-surface-core",data:[q],getPosition:d=>[d.lng,d.lat,0],getRadius:4.2,radiusUnits:"pixels",
-    getFillColor:[248,251,252,255],stroked:true,getLineColor:[238,174,75,245],lineWidthUnits:"pixels",getLineWidth:1.25,
-    parameters:{depthTest:false}
-  }));
-
-  /* 地表から震源までの深度軸。外側を薄く、中心を明確にする */
-  const cos=Math.max(.35,Math.cos(q.lat*Math.PI/180));
-  const dx=.012/cos;
-  const shaftLines=[
-    {a:[q.lng-dx,q.lat,0],b:[q.lng-dx,q.lat,z],c:[118,196,216,55],w:.65},
-    {a:[q.lng+dx,q.lat,0],b:[q.lng+dx,q.lat,z],c:[118,196,216,55],w:.65},
-    {a:[q.lng,q.lat,0],b:[q.lng,q.lat,z],c:[232,244,248,190],w:1.25}
-  ];
-  layers.push(new deck.LineLayer({
-    id:"selected-depth-shaft",data:shaftLines,getSourcePosition:d=>d.a,getTargetPosition:d=>d.b,
-    getColor:d=>d.c,getWidth:d=>d.w,widthUnits:"pixels",parameters:{depthTest:false}
-  }));
-
-  /* 深度断面リング。斜め視点で地表と震源の位置関係を読み取れる */
-  const maxGuide=Math.max(70,Math.ceil(depth/50)*50);
-  const ticks=makeSelectedDepthTicks(depth).filter(d=>d<=Math.max(500,maxGuide));
-  const slices=ticks.map(d=>({
-    d,z:-d*1000,r:12+Math.min(7,d/80),
-    actual:Math.abs(d-depth)<=3,
-    c:Math.abs(d-depth)<=3?[warm[0],warm[1],warm[2],235]:depthColor(d,145)
-  }));
-  layers.push(new deck.ScatterplotLayer({
-    id:"selected-depth-slices",data:slices,getPosition:d=>[q.lng,q.lat,d.z],getRadius:d=>d.r,
-    radiusUnits:"pixels",filled:false,stroked:true,getLineColor:d=>d.c,lineWidthUnits:"pixels",
-    getLineWidth:d=>d.actual?1.75:.85,parameters:{depthTest:false}
-  }));
-  layers.push(new deck.TextLayer({
-    id:"selected-depth-labels",data:slices,getPosition:d=>[q.lng,q.lat,d.z],
-    getText:d=>d.actual?`深さ ${Math.round(depth)}km`:`${d.d}km`,getSize:d=>d.actual?11:9,
-    getPixelOffset:d=>[33,0],getColor:d=>d.actual?[246,184,84,245]:[207,219,225,205],
-    fontFamily:"sans-serif",fontSettings:{sdf:true},outlineWidth:2,outlineColor:[0,0,0,240],parameters:{depthTest:false}
-  }));
-
-  /* 地中の震源。ふんわりした球ではなく、芯と輪郭を明確にする */
-  layers.push(new deck.ScatterplotLayer({
-    id:"selected-hypo-ring",data:[q],getPosition:d=>[d.lng,d.lat,z],getRadius:10.5+pulse*1.2,radiusUnits:"pixels",
-    filled:false,stroked:true,getLineColor:[warm[0],warm[1],warm[2],205],lineWidthUnits:"pixels",getLineWidth:1.35,parameters:{depthTest:false}
-  }));
-  layers.push(new deck.ScatterplotLayer({
-    id:"selected-hypo-core",data:[q],getPosition:d=>[d.lng,d.lat,z],getRadius:4.6,radiusUnits:"pixels",
-    getFillColor:[warm[0],warm[1],warm[2],255],stroked:true,getLineColor:[255,248,230,245],lineWidthUnits:"pixels",getLineWidth:1.15,
-    parameters:{depthTest:false}
-  }));
-
-  /* 地震波再生。輪郭を主体にし、ぼかしは最小限にする */
+  layers.push(new deck.ScatterplotLayer({id:"selected-surface-rings",data:surfaceRings,getPosition:()=>[q.lng,q.lat,0],getRadius:d=>d.r,radiusUnits:"pixels",filled:false,stroked:true,getLineColor:d=>d.c,lineWidthUnits:"pixels",getLineWidth:d=>d.w,parameters:{depthTest:false}}));
+  layers.push(new deck.ScatterplotLayer({id:"selected-surface-core",data:[q],getPosition:d=>[d.lng,d.lat,0],getRadius:4.1,radiusUnits:"pixels",getFillColor:[250,252,253,255],stroked:true,getLineColor:[warm[0],warm[1],warm[2],240],lineWidthUnits:"pixels",getLineWidth:1.2,parameters:{depthTest:false}}));
   if(replay.t>=0){
     const pPath=Earth.velocity(depth,"P")*replay.t,sPath=Earth.velocity(depth,"S")*replay.t;
     const pR=pPath>depth?Math.sqrt(pPath*pPath-depth*depth):0;
     const sR=sPath>depth?Math.sqrt(sPath*sPath-depth*depth):0;
-    if(pR>1)layers.push(new deck.ScatterplotLayer({
-      id:"p-wave",data:[{r:pR}],getPosition:()=>[q.lng,q.lat,0],getRadius:d=>d.r*1000,radiusUnits:"meters",
-      filled:false,stroked:true,getLineColor:[132,226,255,225],lineWidthUnits:"pixels",getLineWidth:1.65,parameters:{depthTest:false}
-    }));
-    if(sR>1)layers.push(new deck.ScatterplotLayer({
-      id:"s-wave",data:[{r:sR}],getPosition:()=>[q.lng,q.lat,0],getRadius:d=>d.r*1000,radiusUnits:"meters",
-      filled:false,stroked:true,getLineColor:[157,143,247,220],lineWidthUnits:"pixels",getLineWidth:2.0,parameters:{depthTest:false}
-    }));
+    if(pR>1)layers.push(new deck.ScatterplotLayer({id:"p-wave",data:[{r:pR}],getPosition:()=>[q.lng,q.lat,0],getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,getLineColor:[128,224,255,220],lineWidthUnits:"pixels",getLineWidth:1.4,parameters:{depthTest:false}}));
+    if(sR>1)layers.push(new deck.ScatterplotLayer({id:"s-wave",data:[{r:sR}],getPosition:()=>[q.lng,q.lat,0],getRadius:d=>d.r*1000,radiusUnits:"meters",filled:false,stroked:true,getLineColor:[157,143,247,210],lineWidthUnits:"pixels",getLineWidth:1.7,parameters:{depthTest:false}}));
     const reached=observations.filter(o=>o.tS<=replay.t);
     if(reached.length){
-      const show=reached.length>320?reached.filter((_,i)=>i%Math.ceil(reached.length/320)===0):reached;
-      layers.push(new deck.ColumnLayer({
-        id:"station-columns",data:show,diskResolution:12,radius:760,getPosition:o=>[o.lng,o.lat],
-        getElevation:o=>650+Math.pow(o.I,1.68)*1350,getFillColor:o=>intensityRGB(o.I,95),
-        getLineColor:[250,252,253,84],lineWidthMinPixels:.38,extruded:true,material:false,pickable:false,parameters:{depthTest:true}
-      }));
-      layers.push(new deck.ScatterplotLayer({
-        id:"station-pulses",data:show,getPosition:o=>[o.lng,o.lat,0],
-        getRadius:o=>4.5+Math.max(0,1-Math.min(1,(replay.t-o.tS)/1.0))*5.5,radiusUnits:"pixels",
-        getFillColor:o=>intensityRGB(o.I,235),stroked:true,getLineColor:[252,253,254,205],lineWidthUnits:"pixels",getLineWidth:.75,
-        parameters:{depthTest:false}
-      }));
-      const arcs=[...reached].sort((a,b)=>b.I-a.I||b.distance-a.distance).slice(0,44);
-      layers.push(new deck.ArcLayer({
-        id:"signal-arcs",data:arcs,getSourcePosition:()=>[q.lng,q.lat],getTargetPosition:o=>[o.lng,o.lat],
-        getSourceColor:[105,211,218,48],getTargetColor:o=>intensityRGB(o.I,88),getWidth:o=>.28+o.I*.09,
-        widthUnits:"pixels",greatCircle:true,getHeight:o=>Math.min(.10,.016+o.distance/13000),parameters:{depthTest:false}
-      }));
+      const show=reached.length>220?reached.filter((_,i)=>i%Math.ceil(reached.length/220)===0):reached;
+      layers.push(new deck.ScatterplotLayer({id:"station-pulses",data:show,getPosition:o=>[o.lng,o.lat,0],getRadius:o=>3.2+Math.max(0,1-Math.min(1,(replay.t-o.tS)/.8))*3.8,radiusUnits:"pixels",getFillColor:o=>intensityRGB(o.I,225),stroked:true,getLineColor:[252,253,254,190],lineWidthUnits:"pixels",getLineWidth:.65,parameters:{depthTest:false}}));
+      const strongest=[...reached].sort((a,b)=>b.I-a.I||b.distance-a.distance).slice(0,28);
+      layers.push(new deck.ArcLayer({id:"signal-arcs",data:strongest,getSourcePosition:()=>[q.lng,q.lat],getTargetPosition:o=>[o.lng,o.lat],getSourceColor:[91,211,218,36],getTargetColor:o=>intensityRGB(o.I,72),getWidth:o=>.25+o.I*.07,widthUnits:"pixels",greatCircle:true,getHeight:o=>Math.min(.08,.012+o.distance/16000),parameters:{depthTest:false}}));
     }
   }
   return layers;
 }
-function updateOverlay(){if(!overlay)return;overlay.setProps({layers:[...baseLayers,...dynamicLayers()]});}
+
+function updateDepthOverlay(){
+  const box=$("depthOverlay"),svg=$("depthSvg");
+  if(!selected||section!=="map"||!map){box.classList.remove("on");return;}
+  const p=map.project([selected.lng,selected.lat]);
+  const w=window.innerWidth,h=window.innerHeight;
+  svg.setAttribute("viewBox",`0 0 ${w} ${h}`);
+  const depth=Math.max(1,Number(selected.depth)||10);
+  const max=Math.max(70,Math.ceil(depth/50)*50);
+  const visibleMax=Math.min(500,max);
+  const length=Math.min(235,Math.max(110,h*.22));
+  const y0=clamp(p.y,110,h-230),y1=Math.min(h-120,y0+length);
+  const x=clamp(p.x,54,w-110);
+  const ticks=depth<=70?[0,10,30,50,70]:depth<=160?[0,25,50,100,150]:depth<=320?[0,50,100,200,300]:[0,100,200,300,500];
+  if(!ticks.some(v=>Math.abs(v-depth)<=3))ticks.push(Math.round(depth));
+  const uniq=[...new Set(ticks)].filter(v=>v<=visibleMax).sort((a,b)=>a-b);
+  const yFor=d=>y0+(d/visibleMax)*(y1-y0);
+  let s=`<line class="depth-line-glow" x1="${x}" y1="${y0}" x2="${x}" y2="${y1}"/><line class="depth-line" x1="${x}" y1="${y0}" x2="${x}" y2="${y1}"/>`;
+  for(const d of uniq){const y=yFor(d),actual=Math.abs(d-depth)<=3,rx=actual?17:12,stroke=actual?'#ffc66f':depthCss(d);s+=`<ellipse class="depth-ring" cx="${x}" cy="${y}" rx="${rx}" ry="${Math.max(3,rx*.22)}" stroke="${stroke}"/><line class="depth-tick" x1="${x+rx+3}" y1="${y}" x2="${x+rx+13}" y2="${y}"/><text class="depth-label${actual?' actual':''}" x="${x+rx+17}" y="${y+3}">${actual?`深さ ${Math.round(depth)}km`:`${d}km`}</text>`;}
+  svg.innerHTML=s;box.classList.add("on");
+}
+function depthCss(d){const c=depthColor(d,255);return`rgb(${c[0]},${c[1]},${c[2]})`;}
+
+function updateOverlay(){if(!overlay)return;overlay.setProps({layers:[...baseLayers,...dynamicLayers()]});updateDepthOverlay();}
 function animateSelected(){if(!selected||section!=="map"){animateSelected._run=0;return;}updateOverlay();requestAnimationFrame(animateSelected);}
 
 /* ---------- 選択と再生 ---------- */
