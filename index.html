@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="震源3D">
-<title>震源3D｜地殻観測機構 v17.2</title>
+<title>震源3D｜地殻観測機構 v17.3 v17.3</title>
 <meta name="description" content="直近1年の日本周辺の震源と、気象庁の地震情報を立体的に観測・再生する地殻観測アプリ。">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.css'">
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.js'"></script>
@@ -175,20 +175,33 @@ body.has-selection .map-summary,body.has-selection .depth-scale{opacity:0;visibi
 .time-label{width:62px;text-align:right;font:700 9px/1.4 var(--mono);color:#bdd1da}
 
 /* 地震波再生 */
+/* 地震波再生：地図を隠さない、枠なしの計器表示 */
 .replay-console{
-  position:fixed;left:14px;right:14px;bottom:calc(89px + var(--safe-bottom));z-index:39;
-  display:none;grid-template-columns:46px minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 10px;
-  border:1px solid rgba(126,230,221,.22);border-radius:14px;background:linear-gradient(180deg,rgba(7,18,29,.97),rgba(4,11,19,.97));
-  box-shadow:0 14px 44px rgba(0,0,0,.38);pointer-events:auto;
+  position:fixed;left:18px;right:18px;bottom:calc(86px + var(--safe-bottom));z-index:52;
+  display:none;grid-template-columns:42px minmax(0,1fr) 38px;align-items:end;gap:10px;padding:0;
+  border:0;border-radius:0;background:transparent;box-shadow:none;pointer-events:auto;
+  filter:drop-shadow(0 2px 7px rgba(0,0,0,.95));
 }
 .replay-console.on{display:grid}
-.replay-play{width:46px;height:46px;border:0;border-radius:12px;background:linear-gradient(135deg,#b7fff7,#67c9ea);color:#07131d;font-size:18px;font-weight:900}
-.replay-main{min-width:0}
-.replay-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;font-weight:800;color:#eaf7fa}
-.replay-meta{margin-top:3px;font:600 9px/1.3 var(--mono);color:#8fa8b5}
-.replay-range{width:100%;margin-top:8px;-webkit-appearance:none;height:4px;border-radius:4px;background:#183044}
-.replay-range::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:#dffffb;box-shadow:0 0 12px rgba(88,217,209,.50)}
-.replay-speed{height:40px;min-width:45px;padding:0 8px;border-radius:10px;border:1px solid var(--line2);background:#07090a;color:#d9eef4;font:700 10px/1 var(--mono)}
+.replay-play{
+  width:42px;height:42px;border-radius:50%;border:1px solid rgba(224,250,250,.55);
+  background:rgba(0,0,0,.42);color:#dffffb;font-size:17px;font-weight:900;
+  box-shadow:0 0 0 4px rgba(88,217,209,.055),0 0 18px rgba(88,217,209,.16);
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)
+}
+.replay-play:active{transform:scale(.95)}
+.replay-main{min-width:0;padding-bottom:2px}
+.replay-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;font-weight:850;color:#f2fbfc;letter-spacing:.02em}
+.replay-meta{margin-top:3px;font:650 8.5px/1.3 var(--mono);color:#9fb6c0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.replay-range{width:100%;margin-top:7px;-webkit-appearance:none;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(96,226,220,.92),rgba(116,188,238,.86) var(--replay-progress,0%),rgba(156,180,192,.22) var(--replay-progress,0%));box-shadow:0 1px 7px rgba(0,0,0,.8)}
+.replay-range::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#efffff;border:2px solid #6adbd4;box-shadow:0 0 10px rgba(88,217,209,.42)}
+.replay-speed{height:32px;min-width:38px;padding:0;border:0;border-radius:999px;background:rgba(0,0,0,.34);color:#d9eef4;font:750 9px/1 var(--mono);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+body.is-replaying .modebar{opacity:0;visibility:hidden;transform:translate(-50%,-8px);pointer-events:none}
+body.is-replaying .bottom-nav{opacity:.16;transform:translateY(12px);pointer-events:none}
+body.is-replaying .status-strip{opacity:.45}
+body.is-replaying .event-hud{background:linear-gradient(180deg,rgba(3,4,5,.72),rgba(0,0,0,.82));border-color:rgba(225,234,238,.14);box-shadow:none}
+body.is-replaying .topbar{opacity:.82}
+.modebar,.bottom-nav,.status-strip,.event-hud,.topbar{transition:opacity .22s ease,transform .22s ease,visibility .22s ease}
 
 /* 下部ナビ */
 .bottom-nav{
@@ -267,6 +280,16 @@ body.has-selection .map-summary,body.has-selection .depth-scale{opacity:0;visibi
 }
 @media(max-height:700px){.map-summary{display:none}.depth-scale{height:170px}.event-hud .k{margin-top:7px}.event-hud .v.large{font-size:21px}}
 @media(prefers-reduced-motion:reduce){#scanline{animation:none}.boot-mark::after{animation:none}}
+
+/* v17.3 操作密度の最終調整 */
+body.has-selection:not(.is-replaying) .modebar{opacity:.76;background:rgba(0,0,0,.58);border-color:rgba(210,229,236,.10);box-shadow:none}
+body.has-selection:not(.is-replaying) .modebar button{height:31px;font-size:10px}
+body.has-selection .event-hud{max-height:calc(100vh - 270px);overflow:hidden}
+@media(max-width:380px){
+  .replay-console{left:12px;right:12px;grid-template-columns:38px minmax(0,1fr) 34px;gap:8px}
+  .replay-play{width:38px;height:38px}.replay-speed{min-width:34px;height:29px}
+  .replay-title{font-size:10px}.replay-meta{font-size:8px}
+}
 </style>
 <style id="v172-responsive-fixes">
 @media(max-width:430px){
@@ -293,7 +316,7 @@ body.has-selection .map-summary,body.has-selection .depth-scale{opacity:0;visibi
   <div class="boot-core">
     <div class="boot-mark"><i></i></div>
     <div class="boot-title">地殻観測機構</div>
-    <div class="boot-sub">震源3D v17.2</div>
+    <div class="boot-sub">震源3D v17.3</div>
     <div class="boot-log" id="bootLog">
       <div>観測系統 <span>接続中</span></div>
       <div>衛星測位 <span>同期中</span></div>
@@ -305,7 +328,7 @@ body.has-selection .map-summary,body.has-selection .depth-scale{opacity:0;visibi
 <div class="topbar">
   <div class="brand">
     <div class="brand-main"><span class="brand-dot"></span><span class="brand-name">震源<b>3D</b></span></div>
-    <div class="brand-sub">地殻観測機構 <em>v17.2</em></div>
+    <div class="brand-sub">地殻観測機構 <em>v17.3</em></div>
   </div>
   <div class="top-actions">
     <button class="icon-btn" id="btnBase" aria-label="地図切替" title="地図切替">
@@ -362,13 +385,13 @@ body.has-selection .map-summary,body.has-selection .depth-scale{opacity:0;visibi
 </div>
 
 <div class="replay-console" id="replayConsole">
-  <button class="replay-play" id="replayPlay">▶</button>
+  <button class="replay-play" id="replayPlay" aria-label="再生・一時停止">▶</button>
   <div class="replay-main">
     <div class="replay-title" id="replayTitle">地震波再生</div>
     <div class="replay-meta" id="replayMeta">選択した地震を再生します</div>
     <input class="replay-range" id="replayRange" type="range" min="0" max="1000" value="0">
   </div>
-  <button class="replay-speed" id="replaySpeed">×2</button>
+  <button class="replay-speed" id="replaySpeed" aria-label="再生速度">×2</button>
 </div>
 
 <nav class="bottom-nav">
@@ -435,7 +458,7 @@ body.has-selection .map-summary,body.has-selection .depth-scale{opacity:0;visibi
 <section class="section" id="systemSection">
   <div class="section-head">
     <div><div class="section-title">仕様</div><div class="section-desc">データ、計算方式、表示の意味を確認できます。</div></div>
-    <div class="section-badge">v17.2</div>
+    <div class="section-badge">v17.3</div>
   </div>
   <div class="system-grid">
     <div class="system-item"><div class="k">直近1年の震源</div><div class="v" id="sysHisto">--件</div></div>
@@ -502,7 +525,7 @@ let filters={minMag:3,maxDepth:500,days:365};
 let pendingFilters={...filters};
 let selected=null,observations=[];
 let baseLayers=[];
-let replay={playing:false,t:-2,end:30,speed:2,last:0,raf:0};
+let replay={playing:false,t:-2,end:30,speed:2,last:0,raf:0,drawTs:0};
 let timeTravel={playing:false,day:365,last:0,raf:0};
 let catalogFilter="all";
 let analysisRendered=false;
@@ -609,7 +632,7 @@ function initMap(){
   map.on("error",e=>{if(e?.error)console.warn("map",e.error);});
 }
 function setBaseMode(){baseMode=baseMode==="sat"?"pale":"sat";if(!map?.isStyleLoaded())return;map.setLayoutProperty("sat","visibility",baseMode==="sat"?"visible":"none");map.setLayoutProperty("hill","visibility",baseMode==="sat"?"visible":"none");map.setLayoutProperty("pale","visibility",baseMode==="pale"?"visible":"none");}
-function resetMap(){document.body.classList.remove("has-selection");selected=null;observations=[];stopReplay();$("eventHud").classList.remove("on");$("replayConsole").classList.remove("on");map?.easeTo({center:[137.5,37.2],zoom:4.55,pitch:mode==="surface"?26:55,bearing:0,duration:900,essential:true});rebuildBaseLayers();updateOverlay();}
+function resetMap(){document.body.classList.remove("has-selection","is-replaying");selected=null;observations=[];stopReplay();$("eventHud").classList.remove("on");$("replayConsole").classList.remove("on");map?.easeTo({center:[137.5,37.2],zoom:4.55,pitch:mode==="surface"?26:55,bearing:0,duration:900,essential:true});rebuildBaseLayers();updateOverlay();}
 
 /* ---------- 基本レイヤー ---------- */
 function filteredHisto(){const now=Date.now(),cut=now-filters.days*86400000;return HISTO.filter(q=>q.t>=cut&&q.mag>=filters.minMag&&q.depth<=filters.maxDepth);}
@@ -792,7 +815,7 @@ function selectHistorical(q){
   selected={...q,intensity:null,points:[]};observations=[];showSelected();$("replayConsole").classList.remove("on");map?.flyTo({center:[q.lng,q.lat],offset:[-62,8],zoom:Math.max(map.getZoom(),6.05),pitch:58,bearing:-14,duration:1100,essential:true});
 }
 function selectJMA(q){
-  selected=q;observations=buildObservations(q);replay.t=-2;replay.end=Math.max(18,observations.length?observations.at(-1).tS+3:28);showSelected();$("replayConsole").classList.add("on");$("replayTitle").textContent=q.place;$("replayMeta").textContent=`M${q.mag!=null?q.mag.toFixed(1):"--"}・深さ${q.depth}km・観測点${observations.length}局`;$("replayRange").value=0;map?.flyTo({center:[q.lng,q.lat],offset:[-62,8],zoom:Math.max(map.getZoom(),6.25),pitch:58,bearing:-14,duration:1200,essential:true});
+  document.body.classList.remove("is-replaying");selected=q;observations=buildObservations(q);replay.t=-2;replay.end=Math.max(18,observations.length?observations.at(-1).tS+3:28);showSelected();$("replayConsole").classList.add("on");$("replayTitle").textContent=q.place;$("replayMeta").textContent=`M${q.mag!=null?q.mag.toFixed(1):"--"}・深さ${q.depth}km・観測点${observations.length}局`;$("replayRange").value=0;map?.flyTo({center:[q.lng,q.lat],offset:[-62,8],zoom:Math.max(map.getZoom(),6.25),pitch:58,bearing:-14,duration:1200,essential:true});
 }
 function showSelected(){
   const q=selected,d=new Date(q.t);
@@ -814,10 +837,33 @@ function showSelected(){
   if(!animateSelected._run){animateSelected._run=1;requestAnimationFrame(animateSelected);}
 }
 function updateDepthDot(){if(!selected)return;$("depthDot").style.top=`${clamp(selected.depth/500*100,0,100)}%`;}
-function toggleReplay(){if(!selected||!observations.length){toast("この地震には再生できる観測点データがありません");return;}replay.playing=!replay.playing;$("replayPlay").textContent=replay.playing?"Ⅱ":"▶";cancelAnimationFrame(replay.raf);if(replay.playing){replay.last=0;replay.raf=requestAnimationFrame(replayTick);}}
-function replayTick(ts){if(!replay.playing)return;if(!replay.last)replay.last=ts;const dt=(ts-replay.last)/1000;replay.last=ts;const before=replay.t;replay.t+=dt*replay.speed;if(before<0&&replay.t>=0){try{navigator.vibrate?.(22);}catch(e){}}if(replay.t>=replay.end){replay.t=replay.end;replay.playing=false;$("replayPlay").textContent="▶";}const pct=clamp((replay.t+2)/(replay.end+2),0,1);$("replayRange").value=Math.round(pct*1000);const reached=observations.filter(o=>o.tS<=replay.t).length;$("hudRun").textContent=replay.t<0?`発生まで ${Math.abs(replay.t).toFixed(1)}秒`:`経過 ${replay.t.toFixed(1)}秒・到達 ${reached}/${observations.length}`;updateOverlay();if(replay.playing)replay.raf=requestAnimationFrame(replayTick);}
-function stopReplay(){replay.playing=false;cancelAnimationFrame(replay.raf);replay.t=-2;$("replayPlay").textContent="▶";$("replayRange").value=0;}
-function seekReplay(v){replay.playing=false;cancelAnimationFrame(replay.raf);$("replayPlay").textContent="▶";replay.t=(v/1000)*(replay.end+2)-2;updateOverlay();}
+function toggleReplay(){
+  if(!selected||!observations.length){toast("この地震には再生できる観測点データがありません");return;}
+  replay.playing=!replay.playing;
+  document.body.classList.toggle("is-replaying",replay.playing);
+  $("replayPlay").textContent=replay.playing?"Ⅱ":"▶";
+  cancelAnimationFrame(replay.raf);
+  if(replay.playing){replay.last=0;replay.drawTs=0;replay.raf=requestAnimationFrame(replayTick);}
+}
+function replayTick(ts){
+  if(!replay.playing)return;
+  if(!replay.last)replay.last=ts;
+  const dt=Math.min(.06,(ts-replay.last)/1000);replay.last=ts;
+  const before=replay.t;replay.t+=dt*replay.speed;
+  if(before<0&&replay.t>=0){try{navigator.vibrate?.(22);}catch(e){}}
+  if(replay.t>=replay.end){replay.t=replay.end;replay.playing=false;document.body.classList.remove("is-replaying");$("replayPlay").textContent="▶";}
+  const pct=clamp((replay.t+2)/(replay.end+2),0,1);
+  $("replayRange").value=Math.round(pct*1000);
+  $("replayRange").style.setProperty("--replay-progress",`${(pct*100).toFixed(2)}%`);
+  let reached=0;while(reached<observations.length&&observations[reached].tS<=replay.t)reached++;
+  const phase=replay.t<0?`発生まで ${Math.abs(replay.t).toFixed(1)}秒`:replay.t<3?"初期微動を観測中":reached<observations.length?"主要動の到達を追跡中":"全観測点への到達完了";
+  $("hudRun").textContent=replay.t<0?phase:`経過 ${replay.t.toFixed(1)}秒・到達 ${reached}/${observations.length}`;
+  $("replayMeta").textContent=`${phase}・${reached}/${observations.length}局`;
+  if(!replay.drawTs||ts-replay.drawTs>=30){replay.drawTs=ts;updateOverlay();}
+  if(replay.playing)replay.raf=requestAnimationFrame(replayTick);
+}
+function stopReplay(){replay.playing=false;document.body.classList.remove("is-replaying");cancelAnimationFrame(replay.raf);replay.t=-2;replay.drawTs=0;$("replayPlay").textContent="▶";$("replayRange").value=0;$("replayRange").style.setProperty("--replay-progress","0%");}
+function seekReplay(v){replay.playing=false;document.body.classList.remove("is-replaying");cancelAnimationFrame(replay.raf);$("replayPlay").textContent="▶";replay.t=(v/1000)*(replay.end+2)-2;$("replayRange").style.setProperty("--replay-progress",`${clamp(v/10,0,100)}%`);let reached=0;while(reached<observations.length&&observations[reached].tS<=replay.t)reached++;$("replayMeta").textContent=`位置を確認中・${reached}/${observations.length}局`;updateOverlay();}
 function cycleSpeed(){const s=[1,2,4,8],i=s.indexOf(replay.speed);replay.speed=s[(i+1)%s.length];$("replaySpeed").textContent=`×${replay.speed}`;}
 
 /* ---------- 時間航行 ---------- */
@@ -835,6 +881,7 @@ function setMode(next){
   rebuildBaseLayers();updateOverlay();updateStatus(next==="surface"?"地表観測":next==="deep"?"深部観測":next==="time"?"時間航行":"観測網");
 }
 function setSection(next){
+  if(next!=="map"&&replay.playing)stopReplay();
   section=next;document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("on",b.dataset.section===next));document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));
   const mapVisible=next==="map";$("modebar").classList.toggle("hidden",!mapVisible);$("mapSummary").classList.toggle("hidden",!mapVisible);$("depthScale").classList.toggle("hidden",!mapVisible);$("eventHud").classList.toggle("hidden",!mapVisible);$("fxCanvas").style.display=mapVisible?"block":"none";$("shade").style.display=mapVisible?"block":"none";$("scanline").style.display=mapVisible?"block":"none";
   if(next==="analysis"){$("analysisSection").classList.add("on");requestAnimationFrame(()=>{if(!analysisRendered)renderAnalysis();});}
@@ -933,7 +980,7 @@ function bind(){
   $("timePlay").addEventListener("click",toggleTime);$("timeRange").addEventListener("input",e=>setTimeDay(e.target.value));
   $("catalogSearch").addEventListener("input",renderCatalog);document.querySelectorAll(".filters button").forEach(b=>b.addEventListener("click",()=>{catalogFilter=b.dataset.filter;document.querySelectorAll(".filters button").forEach(x=>x.classList.toggle("on",x===b));renderCatalog();}));
   addEventListener("orientationchange",()=>setTimeout(()=>map?.resize(),220));addEventListener("resize",()=>setTimeout(()=>map?.resize(),80));
-  document.addEventListener("visibilitychange",()=>{fxState.running=!document.hidden;if(document.hidden){replay.playing=false;timeTravel.playing=false;}});
+  document.addEventListener("visibilitychange",()=>{fxState.running=!document.hidden;if(document.hidden){replay.playing=false;document.body.classList.remove("is-replaying");timeTravel.playing=false;}});
 }
 
 boot();
