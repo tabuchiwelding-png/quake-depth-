@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="震源3D">
-<title>震源3D｜地殻観測機構 v18.3</title>
+<title>震源3D｜地殻観測機構 v18.4</title>
 <meta name="description" content="直近1年の日本周辺の震源と、気象庁の地震情報を立体的に観測・再生する地殻観測アプリ。">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.css'">
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.js'"></script>
@@ -287,7 +287,7 @@ body.is-replaying .topbar{opacity:.82}
 @media(max-height:700px){.map-summary{display:none}.depth-scale{height:170px}.event-hud .k{margin-top:7px}.event-hud .v.large{font-size:21px}}
 @media(prefers-reduced-motion:reduce){#scanline{animation:none}.boot-mark::after{animation:none}}
 
-/* v18.3 操作密度の最終調整 */
+/* v18.4 操作密度の最終調整 */
 body.has-selection:not(.is-replaying) .modebar{opacity:.76;background:rgba(0,0,0,.58);border-color:rgba(210,229,236,.10);box-shadow:none}
 body.has-selection:not(.is-replaying) .modebar button{height:31px;font-size:10px}
 body.has-selection .event-hud{max-height:calc(100vh - 270px);overflow:hidden}
@@ -416,7 +416,7 @@ body.has-selection:not(.is-replaying) .modebar{opacity:.72}
 }
 </style>
 <style id="v182-authoritative-ui">
-/* v18.3: 枠を本当に撤去。旧CSSより後に置き、競合を終わらせる。 */
+/* v18.4: 枠を本当に撤去。旧CSSより後に置き、競合を終わらせる。 */
 .modebar{
   left:14px!important;right:auto!important;top:calc(118px + var(--safe-top))!important;
   transform:none!important;width:auto!important;max-width:calc(100vw - 28px)!important;
@@ -470,7 +470,7 @@ body.is-replaying .brand{opacity:.58!important;}
   .modebar{gap:14px!important;}
 }
 
-/* ===== v18.3 最終統合：精密座標・共通配色・自然地図 ===== */
+/* ===== v18.4 最終統合：精密座標・共通配色・自然地図 ===== */
 :root{--pink:#ff4f98;--pink-soft:#ff7fb2;--grid-pink:rgba(255,72,145,.18)}
 #shade{background:linear-gradient(180deg,rgba(0,0,0,.05),transparent 30%,transparent 78%,rgba(0,0,0,.18))!important}
 #fxCanvas{opacity:.12!important}
@@ -512,13 +512,13 @@ body.has-selection .intensity-legend,body.is-replaying .intensity-legend{opacity
 </style>
 <script>
 (()=>{
-  const BUILD="18.3";
+  const BUILD="18.4";
   try{
     if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});}
     if(window.caches?.keys){caches.keys().then(keys=>keys.forEach(k=>caches.delete(k))).catch(()=>{});}
     const u=new URL(location.href);
-    if(u.searchParams.get("build")!==BUILD && !sessionStorage.getItem("shingen-build-18.3")){
-      sessionStorage.setItem("shingen-build-18.3","1");
+    if(u.searchParams.get("build")!==BUILD && !sessionStorage.getItem("shingen-build-18.4")){
+      sessionStorage.setItem("shingen-build-18.4","1");
       u.searchParams.set("build",BUILD);
       location.replace(u.toString());
     }
@@ -536,7 +536,7 @@ body.has-selection .intensity-legend,body.is-replaying .intensity-legend{opacity
   <div class="boot-core">
     <div class="boot-mark"><i></i></div>
     <div class="boot-title">地殻観測機構</div>
-    <div class="boot-sub">震源3D v18.3</div>
+    <div class="boot-sub">震源3D v18.4</div>
     <div class="boot-log" id="bootLog">
       <div>観測系統 <span>接続中</span></div>
       <div>衛星測位 <span>同期中</span></div>
@@ -548,7 +548,7 @@ body.has-selection .intensity-legend,body.is-replaying .intensity-legend{opacity
 <div class="topbar">
   <div class="brand">
     <div class="brand-main"><span class="brand-dot"></span><span class="brand-name">震源<b>3D</b></span></div>
-    <div class="brand-sub">地殻観測機構 <em>v18.3</em></div>
+    <div class="brand-sub">地殻観測機構 <em>v18.4</em></div>
   </div>
   <div class="top-actions">
     <button class="icon-btn" id="btnBase" aria-label="地図切替" title="地図切替">
@@ -695,7 +695,7 @@ body.has-selection .intensity-legend,body.is-replaying .intensity-legend{opacity
 <section class="section" id="systemSection">
   <div class="section-head">
     <div><div class="section-title">仕様</div><div class="section-desc">データ、計算方式、表示の意味を確認できます。</div></div>
-    <div class="section-badge">v18.3</div>
+    <div class="section-badge">v18.4</div>
   </div>
   <div class="system-grid">
     <div class="system-item"><div class="k">直近1年の震源</div><div class="v" id="sysHisto">--件</div></div>
@@ -722,7 +722,6 @@ body.has-selection .intensity-legend,body.is-replaying .intensity-legend{opacity
 
 <div class="toast" id="toast"></div>
 <div id="errorBox"><div class="error-card"><h2>地図を起動できませんでした</h2><p id="errorText">通信環境を確認して再読み込みしてください。</p></div></div>
-
 <script>
 (() => {
 "use strict";
@@ -734,7 +733,7 @@ try{
 }catch(e){}
 
 /* ---------- 基本設定 ---------- */
-const APP_VERSION="18.3";
+const APP_VERSION="18.4";
 const HISTO_KEY="shingen183_histo_1year_v1";
 const JMA_KEY="shingen183_jma_v1";
 const STATION_KEY="shingen183_stations_v1";
@@ -895,7 +894,12 @@ function exactCoordinate(q){
   if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat<-90||lat>90||lng<-180||lng>180)return null;
   return {lat,lng};
 }
-function eventPosition(q){const c=exactCoordinate(q);return c?[c.lng,c.lat,0]:[0,0,0];}
+function eventPosition(q){
+  const c=exactCoordinate(q);if(!c)return[0,0,0];
+  if(mode==="deep")return[c.lng,c.lat,-(Math.max(0,Number(q.depth)||0))*1000];   /* 実寸: 深さkm→m */
+  if(mode==="time"){const age=(Date.now()-q.t)/86400000;return[c.lng,c.lat,-clamp(age,0,365)/365*330000];}   /* 1年を奥行き330kmに変換 */
+  return[c.lng,c.lat,0];
+}
 function makeGridLayers(){
   const lines=[];
   for(let lat=24;lat<=46;lat+=2)lines.push({a:[122,lat,0],b:[150,lat,0]});
@@ -905,8 +909,49 @@ function makeGridLayers(){
     getColor:[255,72,145,46],getWidth:.62,widthUnits:"pixels",parameters:{depthTest:false}
   })];
 }
-function makeDepthFrames(){return[];}
-function makeTimeFrames(){return[];}
+function makeDepthFrames(){
+  if(mode!=="deep")return[];
+  const rect=[[128,30],[146,30],[146,44],[128,44],[128,30]];
+  const depths=[100,200,300,400,500];
+  const segs=[],labels=[];
+  for(const d of depths){
+    for(let i=0;i<rect.length-1;i++)segs.push({a:[rect[i][0],rect[i][1],-d*1000],b:[rect[i+1][0],rect[i+1][1],-d*1000],d});
+    labels.push({p:[146.25,44,-d*1000],d});
+  }
+  return[
+    new deck.LineLayer({id:"depth-frames",data:segs,
+      getSourcePosition:g=>g.a,getTargetPosition:g=>g.b,
+      getColor:g=>{const c=depthColor(g.d,80);return c;},
+      getWidth:.7,widthUnits:"pixels",parameters:{depthTest:false}}),
+    new deck.TextLayer({id:"depth-frame-labels",data:labels,
+      getPosition:l=>l.p,getText:l=>`${l.d}km`,getSize:10,
+      getColor:l=>depthColor(l.d,215),fontFamily:"system-ui, -apple-system, sans-serif",fontWeight:700,
+      getTextAnchor:"start",getAlignmentBaseline:"center",characterSet:Array.from("0123456789km"),
+      fontSettings:{sdf:true},outlineWidth:2,outlineColor:[0,0,0,235],parameters:{depthTest:false}})
+  ];
+}
+function makeTimeFrames(){
+  if(mode!=="time")return[];
+  const rect=[[128,30],[146,30],[146,44],[128,44],[128,30]];
+  const marks=[{m:0,l:"現在"},{m:3,l:"3か月前"},{m:6,l:"6か月前"},{m:9,l:"9か月前"},{m:12,l:"1年前"}];
+  const segs=[],labels=[];
+  for(const mk of marks){
+    const z=-(mk.m/12)*330000;
+    for(let i=0;i<rect.length-1;i++)segs.push({a:[rect[i][0],rect[i][1],z],b:[rect[i+1][0],rect[i+1][1],z],m:mk.m});
+    labels.push({p:[146.25,44,z],l:mk.l});
+  }
+  return[
+    new deck.LineLayer({id:"time-frames",data:segs,
+      getSourcePosition:g=>g.a,getTargetPosition:g=>g.b,
+      getColor:g=>[255,79,152,g.m===0?96:56],
+      getWidth:.7,widthUnits:"pixels",parameters:{depthTest:false}}),
+    new deck.TextLayer({id:"time-frame-labels",data:labels,
+      getPosition:l=>l.p,getText:l=>l.l,getSize:10,
+      getColor:[255,155,196,220],fontFamily:"system-ui, -apple-system, sans-serif",fontWeight:700,
+      getTextAnchor:"start",getAlignmentBaseline:"center",characterSet:Array.from("0369か月前現在1年"),
+      fontSettings:{sdf:true},outlineWidth:2,outlineColor:[0,0,0,235],parameters:{depthTest:false}})
+  ];
+}
 function rebuildBaseLayers(){
   const data=filteredHisto().filter(q=>mode!=="time"||((Date.now()-q.t)/86400000)<=timeTravel.day);
   const zoom=map?map.getZoom():4.5,core=zoom<5?1.5:zoom<7?1.9:zoom<9?2.4:3.1;
@@ -1092,7 +1137,7 @@ function setMode(next){
 function setSection(next){
   if(next!=="map"&&replay.playing)stopReplay();
   section=next;document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("on",b.dataset.section===next));document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));
-  const mapVisible=next==="map";$("modebar").classList.toggle("hidden",!mapVisible);$("mapSummary").classList.toggle("hidden",!mapVisible);$("depthScale").classList.toggle("hidden",!mapVisible);$("eventHud").classList.toggle("hidden",!mapVisible);$("fxCanvas").style.display=mapVisible?"block":"none";$("shade").style.display=mapVisible?"block":"none";$("scanline").style.display=mapVisible?"block":"none";
+  const mapVisible=next==="map";$("modebar").classList.toggle("hidden",!mapVisible);$("intensityLegend").classList.toggle("hidden",!mapVisible);$("mapSummary").classList.toggle("hidden",!mapVisible);$("depthScale").classList.toggle("hidden",!mapVisible);$("eventHud").classList.toggle("hidden",!mapVisible);$("fxCanvas").style.display=mapVisible?"block":"none";$("shade").style.display=mapVisible?"block":"none";$("scanline").style.display=mapVisible?"block":"none";
   if(next==="analysis"){$("analysisSection").classList.add("on");requestAnimationFrame(()=>{if(!analysisRendered)renderAnalysis();});}
   if(next==="catalog"){$("catalogSection").classList.add("on");requestAnimationFrame(renderCatalog);}
   if(next==="system"){$("systemSection").classList.add("on");updateSystem();}
@@ -1107,7 +1152,7 @@ function updateSystem(){$("sysHisto").textContent=`${HISTO.length}件`;$("sysJma
 
 /* ---------- 一覧 ---------- */
 function renderCatalog(){
-  const query=$("catalogSearch").value.trim().toLowerCase();let items=[...JMA,...HISTO.slice(0,450)];const seen=new Set();items=items.filter(q=>{const k=`${q.t}_${q.lat}_${q.lng}`;if(seen.has(k))return false;seen.add(k);return true;});
+  const query=$("catalogSearch").value.trim().toLowerCase();let items=[...JMA,...HISTO.slice(0,450)];const seen=new Set();items=items.filter(q=>{const k=`${Math.round(q.t/60000)}_${Number(q.lat).toFixed(1)}_${Number(q.lng).toFixed(1)}`;if(seen.has(k))return false;seen.add(k);return true;});
   items=items.filter(q=>{
     if(query&&!String(q.place).toLowerCase().includes(query))return false;
     if(catalogFilter==="replay"&&!(q.src==="気象庁"&&q.points?.length))return false;
