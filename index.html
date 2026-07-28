@@ -722,6 +722,7 @@ body.has-selection .intensity-legend,body.is-replaying .intensity-legend{opacity
 
 <div class="toast" id="toast"></div>
 <div id="errorBox"><div class="error-card"><h2>地図を起動できませんでした</h2><p id="errorText">通信環境を確認して再読み込みしてください。</p></div></div>
+
 <script>
 (() => {
 "use strict";
@@ -896,8 +897,8 @@ function exactCoordinate(q){
 }
 function eventPosition(q){
   const c=exactCoordinate(q);if(!c)return[0,0,0];
-  if(mode==="deep")return[c.lng,c.lat,-(Math.max(0,Number(q.depth)||0))*1000];   /* 実寸: 深さkm→m */
-  if(mode==="time"){const age=(Date.now()-q.t)/86400000;return[c.lng,c.lat,-clamp(age,0,365)/365*330000];}   /* 1年を奥行き330kmに変換 */
+  if(mode==="deep")return[c.lng,c.lat,-(Math.max(0,Number(q.depth)||0))*1000];
+  if(mode==="time"){const age=(Date.now()-q.t)/86400000;return[c.lng,c.lat,-clamp(age,0,365)/365*330000];}
   return[c.lng,c.lat,0];
 }
 function makeGridLayers(){
@@ -909,47 +910,36 @@ function makeGridLayers(){
     getColor:[255,72,145,46],getWidth:.62,widthUnits:"pixels",parameters:{depthTest:false}
   })];
 }
+function frameRect(z){
+  const r=[[128,30],[146,30],[146,44],[128,44]];const segs=[];
+  for(let i=0;i<r.length;i++){const a=r[i],b=r[(i+1)%r.length];segs.push({a:[a[0],a[1],z],b:[b[0],b[1],z]});}
+  return segs;
+}
 function makeDepthFrames(){
   if(mode!=="deep")return[];
-  const rect=[[128,30],[146,30],[146,44],[128,44],[128,30]];
-  const depths=[100,200,300,400,500];
-  const segs=[],labels=[];
+  const depths=[100,200,300,400,500],segs=[],labels=[];
   for(const d of depths){
-    for(let i=0;i<rect.length-1;i++)segs.push({a:[rect[i][0],rect[i][1],-d*1000],b:[rect[i+1][0],rect[i+1][1],-d*1000],d});
-    labels.push({p:[146.25,44,-d*1000],d});
+    const z=-d*1000,col=depthColor(d,84);
+    for(const s of frameRect(z))segs.push({...s,col});
+    labels.push({p:[146.35,44,z],t:`${d}km`,col:depthColor(d,235)});
   }
   return[
-    new deck.LineLayer({id:"depth-frames",data:segs,
-      getSourcePosition:g=>g.a,getTargetPosition:g=>g.b,
-      getColor:g=>{const c=depthColor(g.d,80);return c;},
-      getWidth:.7,widthUnits:"pixels",parameters:{depthTest:false}}),
-    new deck.TextLayer({id:"depth-frame-labels",data:labels,
-      getPosition:l=>l.p,getText:l=>`${l.d}km`,getSize:10,
-      getColor:l=>depthColor(l.d,215),fontFamily:"system-ui, -apple-system, sans-serif",fontWeight:700,
-      getTextAnchor:"start",getAlignmentBaseline:"center",characterSet:Array.from("0123456789km"),
-      fontSettings:{sdf:true},outlineWidth:2,outlineColor:[0,0,0,235],parameters:{depthTest:false}})
+    new deck.LineLayer({id:"depth-frames",data:segs,getSourcePosition:s=>s.a,getTargetPosition:s=>s.b,getColor:s=>s.col,getWidth:.7,widthUnits:"pixels",parameters:{depthTest:false}}),
+    new deck.TextLayer({id:"depth-frame-labels",data:labels,getPosition:l=>l.p,getText:l=>l.t,getSize:10,sizeUnits:"pixels",getColor:l=>l.col,fontWeight:700,fontFamily:"system-ui, -apple-system, sans-serif",getTextAnchor:"start",getAlignmentBaseline:"center",characterSet:Array.from("0123456789km"),fontSettings:{sdf:true},outlineWidth:2,outlineColor:[0,0,0,235],parameters:{depthTest:false}})
   ];
 }
 function makeTimeFrames(){
   if(mode!=="time")return[];
-  const rect=[[128,30],[146,30],[146,44],[128,44],[128,30]];
-  const marks=[{m:0,l:"現在"},{m:3,l:"3か月前"},{m:6,l:"6か月前"},{m:9,l:"9か月前"},{m:12,l:"1年前"}];
+  const marks=[{m:0,t:"現在"},{m:3,t:"3か月前"},{m:6,t:"6か月前"},{m:9,t:"9か月前"},{m:12,t:"1年前"}];
   const segs=[],labels=[];
   for(const mk of marks){
-    const z=-(mk.m/12)*330000;
-    for(let i=0;i<rect.length-1;i++)segs.push({a:[rect[i][0],rect[i][1],z],b:[rect[i+1][0],rect[i+1][1],z],m:mk.m});
-    labels.push({p:[146.25,44,z],l:mk.l});
+    const z=-(mk.m/12)*330000,a=mk.m===0?96:56;
+    for(const s of frameRect(z))segs.push({...s,col:[255,79,152,a]});
+    labels.push({p:[146.35,44,z],t:mk.t});
   }
   return[
-    new deck.LineLayer({id:"time-frames",data:segs,
-      getSourcePosition:g=>g.a,getTargetPosition:g=>g.b,
-      getColor:g=>[255,79,152,g.m===0?96:56],
-      getWidth:.7,widthUnits:"pixels",parameters:{depthTest:false}}),
-    new deck.TextLayer({id:"time-frame-labels",data:labels,
-      getPosition:l=>l.p,getText:l=>l.l,getSize:10,
-      getColor:[255,155,196,220],fontFamily:"system-ui, -apple-system, sans-serif",fontWeight:700,
-      getTextAnchor:"start",getAlignmentBaseline:"center",characterSet:Array.from("0369か月前現在1年"),
-      fontSettings:{sdf:true},outlineWidth:2,outlineColor:[0,0,0,235],parameters:{depthTest:false}})
+    new deck.LineLayer({id:"time-frames",data:segs,getSourcePosition:s=>s.a,getTargetPosition:s=>s.b,getColor:s=>s.col,getWidth:.7,widthUnits:"pixels",parameters:{depthTest:false}}),
+    new deck.TextLayer({id:"time-frame-labels",data:labels,getPosition:l=>l.p,getText:l=>l.t,getSize:10,sizeUnits:"pixels",getColor:[255,181,212,235],fontWeight:700,fontFamily:"system-ui, -apple-system, sans-serif",getTextAnchor:"start",getAlignmentBaseline:"center",characterSet:Array.from("0123469かヶ月前現在年"),fontSettings:{sdf:true},outlineWidth:2,outlineColor:[0,0,0,235],parameters:{depthTest:false}})
   ];
 }
 function rebuildBaseLayers(){
@@ -1137,7 +1127,7 @@ function setMode(next){
 function setSection(next){
   if(next!=="map"&&replay.playing)stopReplay();
   section=next;document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("on",b.dataset.section===next));document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));
-  const mapVisible=next==="map";$("modebar").classList.toggle("hidden",!mapVisible);$("intensityLegend").classList.toggle("hidden",!mapVisible);$("mapSummary").classList.toggle("hidden",!mapVisible);$("depthScale").classList.toggle("hidden",!mapVisible);$("eventHud").classList.toggle("hidden",!mapVisible);$("fxCanvas").style.display=mapVisible?"block":"none";$("shade").style.display=mapVisible?"block":"none";$("scanline").style.display=mapVisible?"block":"none";
+  const mapVisible=next==="map";$("modebar").classList.toggle("hidden",!mapVisible);$("mapSummary").classList.toggle("hidden",!mapVisible);$("depthScale").classList.toggle("hidden",!mapVisible);$("intensityLegend").classList.toggle("hidden",!mapVisible);$("eventHud").classList.toggle("hidden",!mapVisible);$("fxCanvas").style.display=mapVisible?"block":"none";$("shade").style.display=mapVisible?"block":"none";$("scanline").style.display=mapVisible?"block":"none";
   if(next==="analysis"){$("analysisSection").classList.add("on");requestAnimationFrame(()=>{if(!analysisRendered)renderAnalysis();});}
   if(next==="catalog"){$("catalogSection").classList.add("on");requestAnimationFrame(renderCatalog);}
   if(next==="system"){$("systemSection").classList.add("on");updateSystem();}
@@ -1152,7 +1142,7 @@ function updateSystem(){$("sysHisto").textContent=`${HISTO.length}件`;$("sysJma
 
 /* ---------- 一覧 ---------- */
 function renderCatalog(){
-  const query=$("catalogSearch").value.trim().toLowerCase();let items=[...JMA,...HISTO.slice(0,450)];const seen=new Set();items=items.filter(q=>{const k=`${Math.round(q.t/60000)}_${Number(q.lat).toFixed(1)}_${Number(q.lng).toFixed(1)}`;if(seen.has(k))return false;seen.add(k);return true;});
+  const query=$("catalogSearch").value.trim().toLowerCase();let items=[...JMA,...HISTO.slice(0,450)];const seen=new Set();items=items.filter(q=>{const k=`${Math.round(q.t/60000)}_${(+q.lat).toFixed(1)}_${(+q.lng).toFixed(1)}`;if(seen.has(k))return false;seen.add(k);return true;});
   items=items.filter(q=>{
     if(query&&!String(q.place).toLowerCase().includes(query))return false;
     if(catalogFilter==="replay"&&!(q.src==="気象庁"&&q.points?.length))return false;
